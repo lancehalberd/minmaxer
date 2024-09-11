@@ -56,13 +56,12 @@ function updateHero(hero: Hero) {
             delete hero.target;
         }
     } else {
-        hero.target = {
-            x: hero.r + Math.floor(Math.random() * (canvas.width - 2 * hero.r)),
-            y: hero.r + Math.floor(Math.random() * (canvas.height - 2 * hero.r)),
-        };
+        // hero.target = {
+        //     x: hero.r + Math.floor(Math.random() * (canvas.width - 2 * hero.r)),
+        //     y: hero.r + Math.floor(Math.random() * (canvas.height - 2 * hero.r)),
+        // };
     }
 }
-
 
 
 function render() {
@@ -73,6 +72,7 @@ function render() {
 
     window.requestAnimationFrame(render);
 }
+window.requestAnimationFrame(render);
 
 function renderHero(state: GameState) {
     // Draw a circle for the hero centered at their location, with their radius and color.
@@ -94,4 +94,17 @@ function fillCircle(circle: Circle) {
     context.fill();
 }
 
-window.requestAnimationFrame(render);
+canvas.onclick =  function (event: MouseEvent) {
+    state.hero.target = getMousePosition(event, canvas, 3);
+}
+
+export function getMousePosition(event: MouseEvent, container: HTMLElement = null, scale = 1): Point {
+    if (container) {
+        const containerRect:DOMRect = container.getBoundingClientRect();
+        return {
+            x: (event.pageX - containerRect.x) / scale,
+            y: (event.pageY - containerRect.y) / scale,
+        };
+    }
+    return {x: event.pageX / scale, y: event.pageY / scale};
+}
