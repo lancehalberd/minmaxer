@@ -79,6 +79,7 @@ source_assets
 # Don't include rsync command.
 rsync.txt
 yarn.lock
+package-lock.json
 
 # osx file
 .DS_Store
