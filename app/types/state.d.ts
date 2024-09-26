@@ -8,17 +8,25 @@ interface Circle extends Point {
     color?: string
 }
 
+interface Rect extends Point {
+    w: number
+    h: number
+}
+
+
 interface Hero extends Circle {
+    objectType: 'hero'
     target?: Point
     attackTarget?: EnemyTarget
-    speed: number
+    movementSpeed: number
     level: number
     health: number
     maxHealth: number
     // How much damage the enemy deals on attack
     damage: number
     // How fast the enemy attacks in Hertz
-    attackSpeed: number
+    attacksPerSecond: number
+    lastAttackTime?: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
 }
@@ -35,6 +43,7 @@ interface World {
 }
 
 interface Nexus extends Circle {
+    objectType: 'nexus'
     health: number
     maxHealth: number
     essence: number
@@ -45,6 +54,9 @@ interface Nexus extends Circle {
 
 type AllyTarget = Hero | Nexus;
 type EnemyTarget = Enemy | Spawner;
+
+
+type AttackTarget = AllyTarget | EnemyTarget;
 
 type EnemyType = 'snake';
 
@@ -59,7 +71,7 @@ interface EnemyDefinition extends Circle {
     // How much damage the enemy deals on attack
     damage: number
     // How fast the enemy attacks in Hertz
-    attackSpeed: number
+    attacksPerSecond: number
     // How much experience the enemy grants when defeated.
     experience: number
     // How much essence the enemy grants when defeated.
@@ -72,11 +84,15 @@ interface EnemyDefinition extends Circle {
 }
 
 interface Enemy extends EnemyDefinition {
+    objectType: 'enemy'
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
+    // The last time the enemy attacked.
+    lastAttackTime?: number
 }
 
 interface Spawner extends Circle {
+    objectType: 'spawner'
     enemyType: EnemyType
     // How often the spawner can create an enemy in milliseconds.
     spawnCooldown: number
