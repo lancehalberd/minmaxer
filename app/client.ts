@@ -133,6 +133,7 @@ const hero: Hero = {
     maxHealth: 20,
     damage: 1,
     attacksPerSecond: 2,
+    attackRange: 10,
     render(this: Hero, context: CanvasRenderingContext2D, state: GameState) {
         // Draw a circle for the hero centered at their location, with their radius and color.
         fillCircle(context, this);
@@ -153,7 +154,7 @@ const hero: Hero = {
             const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
             const mag = Math.sqrt(dx * dx + dy * dy);
             // Attack the target when it is in range.
-            if (mag <= this.r + this.attackTarget.r) {
+            if (mag <= this.r + this.attackTarget.r + this.attackRange) {
                 // Attack the target if the enemy's attack is not on cooldown.
                 const attackCooldown = 1000 / this.attacksPerSecond;
                 if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
@@ -263,7 +264,7 @@ function updateEnemy(this: Enemy, state: GameState) {
         const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
         const mag = Math.sqrt(dx * dx + dy * dy);
         // Attack the target when it is in range.
-        if (mag <= this.r + this.attackTarget.r) {
+        if (mag <= this.r + this.attackTarget.r + this.attackRange) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.attacksPerSecond;
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
@@ -318,6 +319,7 @@ enemyDefinitions.snake = {
     maxHealth: 4,
     damage: 1,
     attacksPerSecond: 1,
+    attackRange: 5,
     experience: 2,
     essence: 1,
     movementSpeed: 50,

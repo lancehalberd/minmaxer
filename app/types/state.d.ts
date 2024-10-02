@@ -26,6 +26,8 @@ interface Hero extends Circle {
     damage: number
     // How fast the enemy attacks in Hertz
     attacksPerSecond: number
+    // How far away the hero can hit targets from in pixels.
+    attackRange: number
     lastAttackTime?: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
@@ -72,6 +74,8 @@ interface EnemyDefinition extends Circle {
     damage: number
     // How fast the enemy attacks in Hertz
     attacksPerSecond: number
+    // How far away the enemy can hit targets from in pixels.
+    attackRange: number
     // How much experience the enemy grants when defeated.
     experience: number
     // How much essence the enemy grants when defeated.
