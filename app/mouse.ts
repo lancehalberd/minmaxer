@@ -28,9 +28,6 @@ export function registerMouseEventHandlers() {
 function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget {
     const worldPoint = convertToWorldPosition(screenPoint);
     for (const object of state.world.objects) {
-        if (object.objectType !== 'enemy' && object.objectType !== 'spawner') {
-            continue;
-        }
         if (isPointInCircle(object, worldPoint)) {
             return object;
         }
