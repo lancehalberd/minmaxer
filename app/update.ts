@@ -1,7 +1,9 @@
 import {canvas, frameLength} from 'app/gameConstants'
 import {state} from 'app/state';
+import {updateMouseActions} from 'app/mouse';
 
 function update() {
+    updateMouseActions(state);
     for (const object of state.world.objects) {
         object.update(state);
     }

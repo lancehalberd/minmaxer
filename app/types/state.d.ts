@@ -36,6 +36,11 @@ interface Hero extends Circle {
 interface GameState {
     hero: Hero
     world: World
+    mouse: {
+        currentPosition: Point
+        mouseDownPosition?: Point
+        mouseDownTarget?: MouseTarget
+    }
 }
 
 interface World {
@@ -59,6 +64,9 @@ type EnemyTarget = Enemy | Spawner;
 
 
 type AttackTarget = AllyTarget | EnemyTarget;
+
+// This will eventually include clickable targets like buttons or interactive objects.
+type MouseTarget = AttackTarget;
 
 type EnemyType = 'snake';
 
