@@ -8,5 +8,8 @@ export const state: GameState = {
         time: 1000,
         camera: {x: 0, y: 0},
         objects: [nexus, hero, snakeSpawner],
-    }
+    },
+    mouse: {
+        currentPosition: {x: 0, y: 0},
+    },
 };
