@@ -33,3 +33,9 @@ export function renderLifeBar(context: CanvasRenderingContext2D, circle: Circle,
         w: bar.w * health / maxHealth,
     }, health >= maxHealth / 2 ? '#080' : '#F80');
 }
+
+export function renderGameStatus(context: CanvasRenderingContext2D, message: string) {
+    context.font = "20px serif";
+    context.fillStyle = '#8B0000';
+    context.fillText(message, -25, -50);
+}
