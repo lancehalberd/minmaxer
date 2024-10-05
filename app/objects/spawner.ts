@@ -14,11 +14,21 @@ export const snakeSpawner: Spawner = {
     spawnedEnemies: [],
     health: 50,
     maxHealth: 50,
+    experienceWorth: 0,
+    level: 0,
     render(this: Spawner, context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);
         renderLifeBar(context, this, this.health, this.maxHealth);
     },
     update(this: Spawner, state: GameState) {
+        // Set spawner experience worth = 50x the enemy it spawns' worth
+        if (this.experienceWorth === 0) {
+            this.experienceWorth = enemyDefinitions[this.enemyType].experienceWorth*50;
+        }
+        // Set spawner level = 5x level of enemy it spawns
+        if (this.level === 0) {
+            this.level = enemyDefinitions[this.enemyType].level*5;
+        }
         // Remove any dead enemies from the array of spawned enemies this spawner is tracking.
         this.spawnedEnemies = this.spawnedEnemies.filter(enemy => enemy.health > 0);
         if (this.spawnedEnemies.length >= this.spawnLimit) {

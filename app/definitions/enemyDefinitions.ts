@@ -10,7 +10,7 @@ enemyDefinitions.snake = {
     damage: 1,
     attacksPerSecond: 1,
     attackRange: 5,
-    experience: 2,
+    experienceWorth: 2,
     essence: 1,
     movementSpeed: 50,
     aggroRadius: 200,
