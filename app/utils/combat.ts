@@ -10,8 +10,5 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
         if (objectIndex >= 0) {
             state.world.objects.splice(objectIndex, 1);
         }
-   
-        
-        
     }
 }
