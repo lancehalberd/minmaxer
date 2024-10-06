@@ -13,13 +13,14 @@ interface Rect extends Point {
     h: number
 }
 
-
 interface Hero extends Circle {
     objectType: 'hero'
     target?: Point
     attackTarget?: EnemyTarget
     movementSpeed: number
     level: number
+    // Net amount of experience the hero has accumulated
+    experience: number
     health: number
     maxHealth: number
     // How much damage the enemy deals on attack
@@ -85,7 +86,7 @@ interface EnemyDefinition extends Circle {
     // How far away the enemy can hit targets from in pixels.
     attackRange: number
     // How much experience the enemy grants when defeated.
-    experience: number
+    experienceWorth: number
     // How much essence the enemy grants when defeated.
     essence: number
     // This is in pixels per second.
@@ -115,6 +116,9 @@ interface Spawner extends Circle {
     // Current and max life of the spawner.
     health: number
     maxHealth: number
+    // How much experience the enemy grants when defeated.
+    experienceWorth: number
+    level: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
 }
