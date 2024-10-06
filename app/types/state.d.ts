@@ -13,7 +13,6 @@ interface Rect extends Point {
     h: number
 }
 
-
 interface Hero extends Circle {
     objectType: 'hero'
     target?: Point

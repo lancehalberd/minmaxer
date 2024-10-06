@@ -33,14 +33,12 @@ export const hero: Hero = {
     },
     update(this: Hero, state: GameState) {
         // Calculate Hero level increase
-        const levelIncrease = heroLevelIncrease(this.experience, this.level, heroLevelCap)
-        if (levelIncrease) {
+        const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
+        if (newHeroLevel > this.level) {
             // Level up hero
-            this.level += levelIncrease;
+            this.level = newHeroLevel;
             // Update hero stats based on level
-            this.maxHealth = this.level*20;
-            this.damage = this.level*2;
-            this.movementSpeed = this.level*2.5 + 97.5;
+            updateHeroStats(this);
             // Fully heal hero
             this.health = this.maxHealth;
         }
@@ -108,11 +106,18 @@ export const hero: Hero = {
     }
 };
 
-function heroLevelIncrease(exp: number, currentLevel: number, levelCap: number): number {
+function heroLevel(exp: number, currentLevel: number, levelCap: number): number {
     let level = currentLevel;
     // Find level using 10x sum of first n squares = 10*n*(n+1)*(2n+1)/6
     while (level < levelCap && exp >= 10 * level * (level + 1) * (2 * level + 1) / 6) {
         level++;
     }
-    return level - currentLevel;
+    return level;
 }
+
+function updateHeroStats(hero: Hero) {
+    hero.maxHealth = hero.level*20;
+    hero.damage = hero.level*2;
+    hero.movementSpeed = hero.level*2.5 + 97.5;
+}
+updateHeroStats(hero);

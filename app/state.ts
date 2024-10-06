@@ -13,3 +13,5 @@ export const state: GameState = {
         currentPosition: {x: 0, y: 0},
     },
 };
+
+window.state = state;

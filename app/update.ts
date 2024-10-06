@@ -1,4 +1,4 @@
-import {canvas, context, frameLength} from 'app/gameConstants'
+import {canvas, frameLength} from 'app/gameConstants'
 import {state} from 'app/state';
 import {updateMouseActions} from 'app/mouse';
 
