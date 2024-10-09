@@ -8,7 +8,7 @@ export function pad({x, y, w, h}: Rect, amount: number): Rect {
     };
 }
 
-export function isPointInCircle(this: void, circle: Circle, {x, y}: Point) {
+export function isPointInCircle(circle: Circle, {x, y}: Point) {
     const dx = circle.x - x, dy = circle.y - y;
     const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
     return distanceToCenter <= circle.r;

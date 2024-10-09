@@ -13,10 +13,35 @@ interface Rect extends Point {
     h: number
 }
 
+interface HeroLevelDerivedStats {
+    maxHealth: number
+    damage: number
+    movementSpeed: number
+}
+
+type HeroType = 'warrior' | 'ranger' | 'wizard';
+
+interface HeroDefinition {
+    // Name of the hero.
+    name: string
+    // Level that the hero starts at.
+    startingLevel: number
+    // Current and max life of the enemy.
+    getStatsForLevel: (level: number) => HeroLevelDerivedStats
+
+    // How fast the hero attacks in Hertz
+    attacksPerSecond: number
+    // How far away the hero can hit targets from in pixels.
+    attackRange: number
+
+    // Fields needed to render the hero.
+    color: string
+    radius: number
+}
+
 interface Hero extends Circle {
     objectType: 'hero'
-    target?: Point
-    attackTarget?: EnemyTarget
+    definition: HeroDefinition
     movementSpeed: number
     level: number
     // Net amount of experience the hero has accumulated
@@ -29,7 +54,13 @@ interface Hero extends Circle {
     attacksPerSecond: number
     // How far away the hero can hit targets from in pixels.
     attackRange: number
+
+    // Properties that are often being updated during game play
     lastAttackTime?: number
+    target?: Point
+    attackTarget?: EnemyTarget
+
+    // Methods
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
 }
