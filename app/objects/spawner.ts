@@ -14,8 +14,8 @@ export const snakeSpawner: Spawner = {
     spawnedEnemies: [],
     health: 50,
     maxHealth: 50,
-    experienceWorth: enemyDefinitions.snake.experienceWorth*50,
-    level: enemyDefinitions.snake.level + 5,
+    experienceWorth: enemyDefinitions.snake!.experienceWorth*50,
+    level: enemyDefinitions.snake!.level + 5,
     render(this: Spawner, context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);
         renderLifeBar(context, this, this.health, this.maxHealth);
@@ -30,7 +30,7 @@ export const snakeSpawner: Spawner = {
         if (!this.lastSpawnTime || state.world.time - this.lastSpawnTime >= this.spawnCooldown) {
             const enemy: Enemy = {
                 objectType: 'enemy',
-                ...enemyDefinitions[this.enemyType],
+                ...enemyDefinitions[this.enemyType]!,
                 update: updateEnemy,
                 render: renderEnemy,
                 x: this.x,

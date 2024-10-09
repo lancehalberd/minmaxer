@@ -3,7 +3,7 @@ import {nexus} from 'app/objects/nexus';
 import {snakeSpawner} from 'app/objects/spawner';
 
 export const state: GameState = {
-    hero: wizard,
+    selectedHero: wizard,
     world: {
         time: 1000,
         camera: {x: 0, y: 0},

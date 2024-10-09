@@ -4,7 +4,7 @@ import {fillCircle, renderLifeBar} from 'app/utils/draw';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 
 function createHero(heroType: HeroType, {x, y}: Point): Hero {
-    const definition = heroDefinitions[heroType];
+    const definition = heroDefinitions[heroType]!;
     const level = definition.startingLevel;
     const derivedStats = definition.getStatsForLevel(level);
     return {

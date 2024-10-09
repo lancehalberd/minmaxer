@@ -6,7 +6,7 @@ export const framesPerSecond = 1000 / frameLength;
 
 export const canvas: HTMLCanvasElement = document.getElementsByClassName('js-mainCanvas')[0] as HTMLCanvasElement;
 
-export const context = canvas.getContext('2d');
+export const context: CanvasRenderingContext2D = canvas.getContext('2d')!;
 
 export const heroLevelCap = 20;
 

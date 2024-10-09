@@ -66,7 +66,7 @@ interface Hero extends Circle {
 }
 
 interface GameState {
-    hero: Hero
+    selectedHero?: Hero
     world: World
     mouse: {
         currentPosition: Point

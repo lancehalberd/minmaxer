@@ -3,8 +3,10 @@ import { pad } from 'app/utils/geometry';
 export function fillCircle(context: CanvasRenderingContext2D, circle: Circle) {
     context.beginPath();
     context.arc(circle.x, circle.y, circle.r, 0, 2 * Math.PI);
-    context.fillStyle = circle.color;
-    context.fill();
+    if (circle.color) {
+        context.fillStyle = circle.color;
+        context.fill();
+    }
 }
 
 export function fillRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, color?: string) {

@@ -16,8 +16,11 @@ function update() {
         }
     }
     // Move the camera so the hero is in the center of the screen:
-    state.world.camera.x = state.hero.x - canvas.width / 2;
-    state.world.camera.y = state.hero.y - canvas.height / 2;
+    // TODO: the camera should not follow the hero once we support moving the camera.
+    if (state.selectedHero) {
+        state.world.camera.x = state.selectedHero.x - canvas.width / 2;
+        state.world.camera.y = state.selectedHero.y - canvas.height / 2;
+    }
     state.world.time += 20;
 }
 

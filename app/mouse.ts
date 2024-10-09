@@ -2,7 +2,7 @@ import {canvas} from 'app/gameConstants'
 import {state} from 'app/state';
 import {isPointInCircle} from 'app/utils/geometry';
 
-let isMouseDownOnCanvas = false, lastMouseDownPosition: Point, lastMouseUpPosition: Point;
+let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
 let lastMousePosition: Point = {x: 0, y: 0};
 
 export function registerMouseEventHandlers() {
@@ -25,7 +25,7 @@ export function registerMouseEventHandlers() {
 }
 
 // Returns the highest priority mouse target under the given screen point.
-function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget {
+function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget|undefined {
     const worldPoint = convertToWorldPosition(screenPoint);
     for (const object of state.world.objects) {
         if (isPointInCircle(object, worldPoint)) {
@@ -88,16 +88,20 @@ function handleMouseClick(state: GameState, down: Point, up: Point) {
             continue;
         }
         // Currently the only supported action is attacking an attackable target.
-        state.hero.attackTarget = object;
-        delete state.hero.target;
+        if (state.selectedHero) {
+            state.selectedHero.attackTarget = object;
+            delete state.selectedHero.target;
+        }
         return;
     }
 }
 
 function setMovementTarget(state: GameState, mousePosition: Point) {
     const worldTarget = convertToWorldPosition(mousePosition);
-    delete state.hero.attackTarget;
-    state.hero.target = worldTarget;
+    if (state.selectedHero) {
+        delete state.selectedHero.attackTarget;
+        state.selectedHero.target = worldTarget;
+    }
 }
 
 function convertToWorldPosition(canvasPoint: Point): Point {
@@ -107,7 +111,7 @@ function convertToWorldPosition(canvasPoint: Point): Point {
     }
 }
 
-function getMousePosition(event: MouseEvent, container: HTMLElement = null, scale = 1): Point {
+function getMousePosition(event: MouseEvent, container?: HTMLElement, scale = 1): Point {
     if (container) {
         const containerRect:DOMRect = container.getBoundingClientRect();
         return {
