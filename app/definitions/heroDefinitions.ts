@@ -14,6 +14,7 @@ heroDefinitions.warrior = {
     attackRange: 10,
     color: 'red',
     radius: 10,
+    cost: 50,
 };
 
 heroDefinitions.ranger = {
@@ -30,6 +31,7 @@ heroDefinitions.ranger = {
     attackRange: 50,
     color: 'green',
     radius: 10,
+    cost: 50,
 };
 
 heroDefinitions.wizard = {
@@ -46,4 +48,5 @@ heroDefinitions.wizard = {
     attackRange: 35,
     color: 'blue',
     radius: 10,
+    cost: 50,
 };

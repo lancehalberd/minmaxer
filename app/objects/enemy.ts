@@ -1,9 +1,12 @@
 import {framesPerSecond} from 'app/gameConstants';
-import {nexus} from 'app/objects/nexus';
-import {damageTarget} from 'app/utils/combat';
+import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
 
 export function updateEnemy(this: Enemy, state: GameState) {
+    // Remove the current attack target if it is becomes invalid (it dies, for example).
+    if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
+        delete this.attackTarget;
+    }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
         // Move this until it reaches the target.
@@ -17,11 +20,6 @@ export function updateEnemy(this: Enemy, state: GameState) {
                 damageTarget(state, this.attackTarget, this.damage);
                 this.lastAttackTime = state.world.time;
             }
-
-            // Remove the attack target when it is dead.
-            if (this.attackTarget.health <= 0) {
-                delete this.attackTarget;
-            }
             return;
         }
 
@@ -33,7 +31,7 @@ export function updateEnemy(this: Enemy, state: GameState) {
             this.y += pixelsPerFrame * dy / mag;
         }
     } else {
-        this.attackTarget = nexus;
+        this.attackTarget = state.nexus;
     }
 }
 

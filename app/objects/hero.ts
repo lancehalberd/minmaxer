@@ -1,5 +1,7 @@
 import {framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
-import {damageTarget} from 'app/utils/combat';
+import {createPointerButtonForTarget} from 'app/objects/fieldButton';
+import {gainEssence, loseEssence} from 'app/objects/nexus';
+import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 
@@ -22,12 +24,39 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         attackRange: definition.attackRange,
         render: renderHero,
         update: updateHero,
+        getFieldButtons: getHeroFieldButtons,
     };
 }
 
 export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
 export const ranger: Hero = createHero('ranger', {x: 40, y: 30});
 export const wizard: Hero = createHero('wizard', {x: 0, y: -50});
+
+
+function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
+    const buttons: CanvasButton[] = [];
+    const firstEmptyIndex = state.heroSlots.indexOf(null);
+    // If we can choose this hero as a champion, add a button for selecting them.
+    if (firstEmptyIndex >= 0 && !state.heroSlots.includes(this)) {
+        const button = createPointerButtonForTarget(this);
+        button.disabled = state.nexus.essence <= this.definition.cost;
+        button.onPress = (state: GameState) => {
+            if (state.nexus.essence <= this.definition.cost) {
+                return true;
+            }
+            loseEssence(state, this.definition.cost);
+            state.heroSlots[firstEmptyIndex] = this;
+            state.selectedHero = this;
+            return true;
+        }
+        button.onHover = (state: GameState) => {
+            state.nexus.previewEssenceChange = -this.definition.cost;
+            return true;
+        }
+        buttons.push(button);
+    }
+    return buttons;
+}
 
 function updateHero(this: Hero, state: GameState) {
     // Calculate Hero level increase
@@ -41,6 +70,10 @@ function updateHero(this: Hero, state: GameState) {
         this.health = this.maxHealth;
     }
 
+    // Remove the current attack target if it is becomes invalid (it dies, for example).
+    if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
+        delete this.attackTarget;
+    }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
         // Move this until it reaches the target.
@@ -64,7 +97,7 @@ function updateHero(this: Hero, state: GameState) {
                 const levelDisparity = this.level - (this.attackTarget.level + levelBuffer);
                 const experiencePenalty = 1 - 0.1 * Math.max(levelDisparity, 0);
                 this.experience += Math.max(this.attackTarget.experienceWorth * experiencePenalty, 0);
-                delete this.attackTarget;
+                gainEssence(state, this.attackTarget.essenceWorth);
             }
             return;
         }
@@ -115,9 +148,15 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
             color: 'blue',
         });
     }
-    renderLifeBar(context, this, this.health, this.maxHealth);
+    if (state.heroSlots.includes(this)) {
+        renderLifeBar(context, this, this.health, this.maxHealth);
+    }
     // Draw hero level
-    context.fillText(`${this.level}`, this.x - this.r/3, this.y + this.r/3);
+    context.textBaseline = 'middle';
+    context.textAlign = 'center';
+    context.fillStyle = '#FFF';
+    context.font = '10px sans-serif';
+    context.fillText(`${this.level}`, this.x, this.y);
 }
 
 function heroLevel(exp: number, currentLevel: number, levelCap: number): number {
