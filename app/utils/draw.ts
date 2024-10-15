@@ -9,7 +9,7 @@ export function fillCircle(context: CanvasRenderingContext2D, circle: Circle) {
     }
 }
 
-export function fillRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, color?: string) {
+export function fillRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, color?: CanvasFill) {
     if (color) {
         context.fillStyle = color;
     }

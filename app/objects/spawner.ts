@@ -14,7 +14,8 @@ export const snakeSpawner: Spawner = {
     spawnedEnemies: [],
     health: 50,
     maxHealth: 50,
-    experienceWorth: enemyDefinitions.snake!.experienceWorth*50,
+    essenceWorth: enemyDefinitions.snake!.essenceWorth * 50,
+    experienceWorth: enemyDefinitions.snake!.experienceWorth * 50,
     level: enemyDefinitions.snake!.level + 5,
     render(this: Spawner, context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);
