@@ -13,7 +13,6 @@ heroDefinitions.warrior = {
     attacksPerSecond: 2,
     attackRange: 10,
     color: 'red',
-    enemyDefeatCount: 0,
     radius: 10,
     cost: 50,
 };
@@ -31,7 +30,6 @@ heroDefinitions.ranger = {
     attacksPerSecond: 1.8,
     attackRange: 50,
     color: 'green',
-    enemyDefeatCount: 0,
     radius: 10,
     cost: 50,
 };
@@ -49,7 +47,6 @@ heroDefinitions.wizard = {
     attacksPerSecond: 1.2,
     attackRange: 35,
     color: 'blue',
-    enemyDefeatCount: 0,
     radius: 10,
     cost: 50,
 };

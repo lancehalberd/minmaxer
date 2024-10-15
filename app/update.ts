@@ -14,6 +14,7 @@ function update() {
         state.world.camera.y = state.nexus.y;
         if (state.selectedHero){
             console.log(`Selected hero defeated ${state.selectedHero.enemyDefeatCount} enemies in total`);
+            delete state.selectedHero;
         }
         return;
     }

@@ -50,7 +50,6 @@ interface HeroDefinition {
 
     // Fields needed to render the hero.
     color: string
-    enemyDefeatCount: number
     radius: number
 }
 

@@ -22,7 +22,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         health: derivedStats.maxHealth,
         attacksPerSecond: definition.attacksPerSecond,
         attackRange: definition.attackRange,
-        enemyDefeatCount: definition.enemyDefeatCount,
+        enemyDefeatCount: 0,
         render: renderHero,
         update: updateHero,
         getFieldButtons: getHeroFieldButtons,
