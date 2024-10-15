@@ -22,6 +22,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         health: derivedStats.maxHealth,
         attacksPerSecond: definition.attacksPerSecond,
         attackRange: definition.attackRange,
+        enemyDefeatCount: 0,
         render: renderHero,
         update: updateHero,
         getFieldButtons: getHeroFieldButtons,
@@ -97,6 +98,7 @@ function updateHero(this: Hero, state: GameState) {
                 const levelDisparity = this.level - (this.attackTarget.level + levelBuffer);
                 const experiencePenalty = 1 - 0.1 * Math.max(levelDisparity, 0);
                 this.experience += Math.max(this.attackTarget.experienceWorth * experiencePenalty, 0);
+                this.enemyDefeatCount += 1;
                 gainEssence(state, this.attackTarget.essenceWorth);
             }
             return;
