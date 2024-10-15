@@ -50,6 +50,7 @@ interface HeroDefinition {
 
     // Fields needed to render the hero.
     color: string
+    enemyDefeatCount: number
     radius: number
 }
 
@@ -73,7 +74,7 @@ interface Hero extends Circle {
     lastAttackTime?: number
     target?: Point
     attackTarget?: EnemyTarget
-
+    enemyDefeatCount: number
     // Methods
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void

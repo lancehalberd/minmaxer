@@ -12,6 +12,9 @@ function update() {
     if (state.nexus.essence <= 0){
         state.world.camera.x = state.nexus.x;
         state.world.camera.y = state.nexus.y;
+        if (state.selectedHero){
+            console.log(`Selected hero defeated ${state.selectedHero.enemyDefeatCount} enemies in total`);
+        }
         return;
     }
 
