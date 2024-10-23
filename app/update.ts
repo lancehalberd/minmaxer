@@ -1,4 +1,4 @@
-import {frameLength} from 'app/gameConstants'
+import {frameLength, framesPerSecond} from 'app/gameConstants'
 import {state} from 'app/state';
 import {updateMouseActions} from 'app/mouse';
 
@@ -10,12 +10,25 @@ function update() {
     // If the nexus is destroyed, stop update function
     // Pan world.camera to nexus, change background color (gray) and return.
     if (state.nexus.essence <= 0){
-        state.world.camera.x = state.nexus.x;
-        state.world.camera.y = state.nexus.y;
+
+        const movementSpeed = 2.0;
+        const pixelsPerFrame = movementSpeed / framesPerSecond;
+        const dx = state.nexus.x - state.world.camera.x, dy = state.nexus.y - state.world.camera.y;
+        const mag = Math.sqrt(dx * dx + dy * dy);
+
+        if (mag < pixelsPerFrame) {
+            state.world.camera.x = state.nexus.x;
+            state.world.camera.y = state.nexus.y;
+        } else {
+            state.world.camera.x += pixelsPerFrame * dx / mag;
+            state.world.camera.y += pixelsPerFrame * dy / mag;
+        }
+        
         if (state.selectedHero){
             console.log(`Selected hero defeated ${state.selectedHero.enemyDefeatCount} enemies in total`);
             delete state.selectedHero;
         }
+            
         return;
     }
 
