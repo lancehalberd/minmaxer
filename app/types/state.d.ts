@@ -139,13 +139,9 @@ type AttackTarget = AllyTarget | EnemyTarget;
 // This will eventually include clickable targets like buttons or interactive objects.
 type MouseTarget = CanvasButton | AttackTarget;
 
-type EnemyType = 'kobold'|'snake';
+type EnemyType = 'kobold'|'snake'|'mummy';
 
-interface EnemyDefinition extends Circle {
-    // Indicates the type of enemy
-    name: string
-    // How difficult the enemy is.
-    level: number
+interface EnemyLevelDerivedStats {
     // Max life of the enemy
     maxHealth: number
     // How much damage the enemy deals on attack
@@ -160,20 +156,29 @@ interface EnemyDefinition extends Circle {
     essenceWorth: number
     // This is in pixels per second.
     movementSpeed: number
-    movementTarget?: Point
-    attackTarget?: AllyTarget
+}
+interface EnemyDefinition {
+    // Indicates the type of enemy
+    name: string
+    r: number
+    color: string
+    getStatsForLevel: (level: number) => EnemyLevelDerivedStats
     aggroRadius: number
 }
 
-interface Enemy extends EnemyDefinition {
+interface Enemy extends Circle, EnemyLevelDerivedStats {
     objectType: 'enemy'
+    level: number
     // Current life of the enemy
     health: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    aggroRadius: number
     // The last time the enemy attacked.
     lastAttackTime?: number
+    movementTarget?: Point
+    attackTarget?: AllyTarget
 }
 
 interface Spawner extends Circle {

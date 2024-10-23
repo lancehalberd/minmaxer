@@ -1,6 +1,5 @@
 import {ranger, warrior, wizard} from 'app/objects/hero';
 import {nexus} from 'app/objects/nexus';
-import {snakeSpawner} from 'app/objects/spawner';
 
 export const state: GameState = {
     nexus,
@@ -16,7 +15,7 @@ export const state: GameState = {
             speed: 200,
             target: {x: 200, y: -100},
         },
-        objects: [nexus, ranger, warrior, wizard, snakeSpawner],
+        objects: [nexus, ranger, warrior, wizard],
     },
     mouse: {
         currentPosition: {x: 0, y: 0},

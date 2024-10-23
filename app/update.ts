@@ -1,4 +1,5 @@
 import {frameLength} from 'app/gameConstants'
+import {checkToAddNewSpawner} from 'app/objects/spawner';
 import {state} from 'app/state';
 import {updateMouseActions} from 'app/mouse';
 
@@ -15,6 +16,7 @@ function update() {
             delete state.selectedHero;
         }
     } else {
+        checkToAddNewSpawner(state);
         // Don't update the world objects until a hero is selected.
         if (state.selectedHero) {
             for (const object of state.world.objects) {
@@ -23,6 +25,7 @@ function update() {
         }
         state.world.time += 20;
     }
+
 
     updateCamera(state);
 

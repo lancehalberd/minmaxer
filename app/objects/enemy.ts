@@ -1,6 +1,26 @@
+import {enemyDefinitions} from 'app/definitions/enemyDefinitions';
 import {framesPerSecond} from 'app/gameConstants';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
+
+export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point): Enemy {
+    const definition = enemyDefinitions[enemyType]!;
+    const derivedStats = definition.getStatsForLevel(level);
+    const enemy: Enemy = {
+        objectType: 'enemy',
+        level,
+        color: definition.color,
+        r: definition.r,
+        aggroRadius: definition.aggroRadius,
+        update: updateEnemy,
+        render: renderEnemy,
+        health: derivedStats.maxHealth,
+        ...derivedStats,
+        x,
+        y,
+    };
+    return enemy;
+}
 
 export function updateEnemy(this: Enemy, state: GameState) {
     // Remove the current attack target if it is becomes invalid (it dies, for example).

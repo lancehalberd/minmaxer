@@ -1,35 +1,54 @@
 export const enemyDefinitions: {[key in EnemyType]?: EnemyDefinition} = {};
 
-function createEnemyDefinition(name: string, level: number): EnemyDefinition {
+function getBasicEnemyStatsForLevel(level: number): EnemyLevelDerivedStats {
     return {
-        name,
-        level,
-        color: 'red',
-        r: 10, x: 0, y: 0,
-        maxHealth: (4 * level * (1.1 ** level)) | 0,
-        damage: 3 * (level * (1.1 ** level)) | 0,
-        attacksPerSecond: 1 + level / 100,
+        maxHealth: (level * 5 * (1.1 ** level)) | 0,
+        damage: (level * (1.1 ** level)) | 0,
+        attacksPerSecond: 1,
         attackRange: 5,
         experienceWorth: 2 * level,
         essenceWorth: level,
         movementSpeed: 50,
-        aggroRadius: 200,
     };
 }
 
 enemyDefinitions.snake = {
     name: 'Snake',
-    color: 'red',
-    r: 10, x: 0, y: 0,
-    level: 1,
-    maxHealth: 4,
-    damage: 1,
-    attacksPerSecond: 1,
-    attackRange: 5,
-    experienceWorth: 2,
-    essenceWorth: 1,
-    movementSpeed: 50,
+    color: 'green',
+    r: 6,
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            maxHealth: (baseStats.maxHealth * 0.8) | 0,
+            attacksPerSecond: baseStats.attacksPerSecond * 1.2,
+        };
+    },
     aggroRadius: 200,
 };
 
-enemyDefinitions.kobold = createEnemyDefinition('Kobold', 2);
+enemyDefinitions.kobold = {
+    name: 'Kobold',
+    color: 'red',
+    r: 10,
+    getStatsForLevel: getBasicEnemyStatsForLevel,
+    aggroRadius: 200,
+};
+
+enemyDefinitions.mummy = {
+    name: 'The Mummy',
+    color: 'white',
+    r: 20,
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            maxHealth: (10 * baseStats.maxHealth) | 0,
+            damage: (4 * baseStats.damage) | 0,
+            attacksPerSecond: 0.5 * baseStats.attacksPerSecond,
+            attackRange: 10,
+            movementSpeed: 30,
+        };
+    },
+    aggroRadius: 200,
+};
