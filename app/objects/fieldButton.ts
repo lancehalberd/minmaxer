@@ -35,6 +35,27 @@ function renderFieldButton(this: CanvasButton, context: CanvasRenderingContext2D
     }
 }
 
+// Load the pointer graphics, which is 4 16x16 sprites in a row, so 64x16 total dimensions.
+/*const pointerImage = new Image();
+pointerImage.src = 'gfx/downPointer.png';
+
+const downPointerNormal: Frame = {
+    image: pointerImage,
+    x: 0, y: 0, w: 16, h: 16,
+};
+const downPointerHover: Frame = {
+    image: pointerImage,
+    x: 16, y: 0, w: 16, h: 16,
+};
+const downPointerPress: Frame = {
+    image: pointerImage,
+    x: 32, y: 0, w: 16, h: 16,
+};
+const downPointerDisabled: Frame = {
+    image: pointerImage,
+    x: 48, y: 0, w: 16, h: 16,
+};*/
+
 const [
     downPointerNormal,
     downPointerHover,
@@ -64,6 +85,13 @@ export function createPointerButtonForTarget(target: Circle): CanvasButton {
                     frame = downPointerHover;
                 }
             }
+            /*context.drawImage(
+                frame.image,
+                // Where to draw from in the source image.
+                frame.x, frame.y, frame.w, frame.h,
+                // Where to draw to in the context.
+                this.x, this.y, this.w, this.h,
+            );*/
             drawFrameContentAt(context, frame, this);
         }
     };

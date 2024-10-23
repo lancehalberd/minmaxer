@@ -53,6 +53,73 @@ interface HeroDefinition {
     radius: number
 }
 
+interface AbilityTargetingInfo {
+    // Ability can target an enemy unit.
+    canTargetEnemy?: boolean
+    // Ability can target an allied unit.
+    canTargetAlly?: boolean
+    // Ability can target an arbitrary location.
+    canTargetLocation?: boolean
+    // Set if this ability has a circular AoE
+    hitRadius?: number
+    // Set if this ability has its own range. Otherwise the units attack range is used.
+    range?: number
+}
+
+interface ActiveAbilityDefinition {
+    type: 'activeAbility'
+    name: string
+    getTargetingInfo: (state: GameState, hero: Hero, ability: Ability) => AbilityTargetingInfo
+    canActivate?: (state: GameState, hero: Hero, ability: Ability) => boolean
+    onActivate: (state: GameState, hero: Hero, ability: Ability) => void
+    // Returns the cooldown for this ability in seconds.
+    getCooldown: (state: GameState, hero: Hero, ability: Ability) => number
+}
+
+interface PassiveAbilityDefinition {
+    type: 'passiveAbility'
+    name: string
+    // Called when the ability user hits any target.
+    onHitTarget?: (state: GameState, hero: Hero, target: AttackTarget, ability: Ability) => void
+}
+
+type AbilityDefinition = ActiveAbilityDefinition | PassiveAbilityDefinition;
+
+interface Ability {
+    definition: AbilityDefinition
+    level: number
+    cooldown?: number
+}
+
+
+interface ModifiableStat {
+    baseValue: number
+    addedBonus: number
+    percentBonus: number
+    multipliers: number[]
+    finalValue: number
+    isDirty?: boolean
+}
+
+interface BaseEffect<T> {
+    // How much longer the effect will last in seconds.
+    duration?: number
+    apply: (state: GameState, target: T) => void
+    remove: (state: GameState, target: T) => void
+}
+interface AbilityEffect<T> extends BaseEffect<T> {
+    effectType: 'abilityEffect'
+    // The ability that caused this effect, if any.
+    // An ability might use this to check if it is currently effecting a target.
+    ability: Ability
+    // The level of the ability when it was applied.
+    abilityLevel: number
+    // How many stacks the effect has, if the effect stacks.
+    stacks: number
+}
+type Effect<T> = AbilityEffect<T>;
+
+
 interface Hero extends Circle {
     objectType: 'hero'
     definition: HeroDefinition
@@ -65,9 +132,12 @@ interface Hero extends Circle {
     // How much damage the enemy deals on attack
     damage: number
     // How fast the enemy attacks in Hertz
-    attacksPerSecond: number
+    attacksPerSecond: ModifiableStat
+    getAttacksPerSecond: (state: GameState) => number
     // How far away the hero can hit targets from in pixels.
     attackRange: number
+
+    effects: Effect<Hero>[]
 
     // Properties that are often being updated during game play
     lastAttackTime?: number

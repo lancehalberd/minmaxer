@@ -20,12 +20,20 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         color: definition.color,
         experience: 0,
         health: derivedStats.maxHealth,
-        attacksPerSecond: definition.attacksPerSecond,
+        attacksPerSecond: {
+            baseValue: definition.attacksPerSecond,
+            addedBonus: 0,
+            percentBonus: 0,
+            multipliers: [],
+            finalValue: definition.attacksPerSecond,
+        },
+        getAttacksPerSecond: getHeroAttacksPerSecond,
         attackRange: definition.attackRange,
         enemyDefeatCount: 0,
         render: renderHero,
         update: updateHero,
         getFieldButtons: getHeroFieldButtons,
+        effects: [],
     };
 }
 
@@ -33,6 +41,21 @@ export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
 export const ranger: Hero = createHero('ranger', {x: 40, y: 30});
 export const wizard: Hero = createHero('wizard', {x: 0, y: -50});
 
+function getModifiableStatValue(stat: ModifiableStat): number {
+    if (!stat.isDirty) {
+        return stat.finalValue;
+    }
+    delete stat.isDirty;
+    stat.finalValue = (stat.baseValue + stat.addedBonus) * (1 + stat.percentBonus / 100);
+    for (const multiplier of stat.multipliers) {
+        stat.finalValue *= multiplier;
+    }
+    return stat.finalValue;
+}
+
+function getHeroAttacksPerSecond(this: Hero, state: GameState): number {
+    return getModifiableStatValue(this.attacksPerSecond);
+}
 
 function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
     const buttons: CanvasButton[] = [];
@@ -83,7 +106,7 @@ function updateHero(this: Hero, state: GameState) {
         // Attack the target when it is in range.
         if (mag <= this.r + this.attackTarget.r + this.attackRange) {
             // Attack the target if the enemy's attack is not on cooldown.
-            const attackCooldown = 1000 / this.attacksPerSecond;
+            const attackCooldown = 1000 / this.getAttacksPerSecond(state);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
                 damageTarget(state, this.attackTarget, this.damage);
                 this.lastAttackTime = state.world.time;
