@@ -9,7 +9,13 @@ export const state: GameState = {
     time : 0,
     world: {
         time: 1000,
-        camera: {scale: 2, x: 200, y: -100},
+        camera: {
+            scale: 2,
+            x: 200,
+            y: -100,
+            speed: 200,
+            target: {x: 200, y: -100},
+        },
         objects: [nexus, ranger, warrior, wizard, snakeSpawner],
     },
     mouse: {

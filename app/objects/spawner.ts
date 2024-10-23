@@ -29,11 +29,13 @@ export const snakeSpawner: Spawner = {
         }
         // If we have no spawn time or it has been longer than the spawn cooldown, spawn a new enemy.
         if (!this.lastSpawnTime || state.world.time - this.lastSpawnTime >= this.spawnCooldown) {
+            const definition = enemyDefinitions[this.enemyType]!;
             const enemy: Enemy = {
                 objectType: 'enemy',
-                ...enemyDefinitions[this.enemyType]!,
+                ...definition,
                 update: updateEnemy,
                 render: renderEnemy,
+                health: definition.maxHealth,
                 x: this.x,
                 y: this.y,
             };

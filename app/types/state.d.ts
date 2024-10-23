@@ -96,6 +96,9 @@ interface GameState {
 
 interface Camera extends Point {
     scale: number
+    // Pixels per second.
+    speed: number
+    target: Point
 }
 
 interface World {
@@ -136,15 +139,14 @@ type AttackTarget = AllyTarget | EnemyTarget;
 // This will eventually include clickable targets like buttons or interactive objects.
 type MouseTarget = CanvasButton | AttackTarget;
 
-type EnemyType = 'snake';
+type EnemyType = 'kobold'|'snake';
 
 interface EnemyDefinition extends Circle {
     // Indicates the type of enemy
     name: string
     // How difficult the enemy is.
     level: number
-    // Current and max life of the enemy.
-    health: number
+    // Max life of the enemy
     maxHealth: number
     // How much damage the enemy deals on attack
     damage: number
@@ -165,6 +167,8 @@ interface EnemyDefinition extends Circle {
 
 interface Enemy extends EnemyDefinition {
     objectType: 'enemy'
+    // Current life of the enemy
+    health: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
