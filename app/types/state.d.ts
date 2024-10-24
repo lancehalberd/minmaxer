@@ -71,13 +71,18 @@ interface Hero extends Circle {
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
-    target?: Point
+    movementTarget?: Point
+    // The target of the last explicit command the hero was given, if any.
+    // Their actual attack target may be changed to an enemy that attacks them,
+    // but they will go back to this target once the enemy is defeated.
+    selectedAttackTarget?: EnemyTarget
     attackTarget?: EnemyTarget
     enemyDefeatCount: number
     // Methods
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit: (state: GameState, attacker: Enemy) => void
 }
 
 interface GameState {
@@ -128,6 +133,7 @@ interface Nexus extends Circle {
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit?: (state: GameState, attacker: Enemy) => void
 }
 
 type AllyTarget = Hero | Nexus;
@@ -174,6 +180,7 @@ interface Enemy extends Circle, EnemyLevelDerivedStats {
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit: (state: GameState, attacker: Hero) => void
     aggroRadius: number
     // The last time the enemy attacked.
     lastAttackTime?: number
@@ -201,6 +208,7 @@ interface Spawner extends Circle {
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit: (state: GameState, attacker: Hero) => void
 }
 
 

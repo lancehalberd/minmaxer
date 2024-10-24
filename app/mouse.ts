@@ -86,7 +86,8 @@ export function updateMouseActions(state: GameState) {
             } else if (state.selectedHero && (target?.objectType === 'enemy' || target?.objectType === 'spawner')) {
                 // Make the selected hero attack an enemy target.
                 state.selectedHero.attackTarget = target;
-                delete state.selectedHero.target;
+                state.selectedHero.selectedAttackTarget = target;
+                delete state.selectedHero.movementTarget;
             }
         }
     } else {
@@ -140,7 +141,8 @@ function setMovementTarget(state: GameState, mousePosition: Point) {
     const worldTarget = convertToWorldPosition(state, mousePosition);
     if (state.selectedHero) {
         delete state.selectedHero.attackTarget;
-        state.selectedHero.target = worldTarget;
+        delete state.selectedHero.selectedAttackTarget
+        state.selectedHero.movementTarget = worldTarget;
     }
 }
 

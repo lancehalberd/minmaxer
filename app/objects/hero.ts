@@ -26,6 +26,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         render: renderHero,
         update: updateHero,
         getFieldButtons: getHeroFieldButtons,
+        onHit: onHitHero,
     };
 }
 
@@ -33,6 +34,17 @@ export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
 export const ranger: Hero = createHero('ranger', {x: 40, y: 30});
 export const wizard: Hero = createHero('wizard', {x: 0, y: -50});
 
+
+function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
+    // Hero will ignore being attacked if they are completing a movement command.
+    if (this.movementTarget) {
+        return;
+    }
+    // Heroes will prioritize attacking an enemy over an enemy spawner or other targets.
+    if (this.attackTarget?.objectType !== 'enemy') {
+        this.attackTarget = attacker;
+    }
+}
 
 function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
     const buttons: CanvasButton[] = [];
@@ -70,10 +82,14 @@ function updateHero(this: Hero, state: GameState) {
         // Fully heal hero
         this.health = this.maxHealth;
     }
-
-    // Remove the current attack target if it is becomes invalid (it dies, for example).
+    // Remove the selected attack target if it is becomes invalid (it dies, for example).
+    if (this.selectedAttackTarget && !isTargetAvailable(state, this.selectedAttackTarget)) {
+        delete this.selectedAttackTarget;
+    }
+    // Replace the current attack target with the selected attack taret(if any)
+    // if it is becomes invalid (it dies, for example).
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
-        delete this.attackTarget;
+        this.attackTarget = this.selectedAttackTarget
     }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
@@ -86,6 +102,7 @@ function updateHero(this: Hero, state: GameState) {
             const attackCooldown = 1000 / this.attacksPerSecond;
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
                 damageTarget(state, this.attackTarget, this.damage);
+                this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
                 if (this.attackTarget.objectType === 'enemy') {
                     this.attackTarget.attackTarget = this;
@@ -113,22 +130,22 @@ function updateHero(this: Hero, state: GameState) {
         }
         return;
     }
-    if (this.target) {
+    if (this.movementTarget) {
         // Move hero until it reaches the target.
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        const dx = this.target.x - this.x, dy = this.target.y - this.y;
+        const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
         const mag = Math.sqrt(dx * dx + dy * dy);
         if (mag < pixelsPerFrame) {
-            this.x = this.target.x;
-            this.y = this.target.y;
+            this.x = this.movementTarget.x;
+            this.y = this.movementTarget.y;
         } else {
             this.x += pixelsPerFrame * dx / mag;
             this.y += pixelsPerFrame * dy / mag;
         }
 
         // Remove the target once they reach their destination.
-        if (this.x === this.target.x && this.y === this.target.y) {
-            delete this.target;
+        if (this.x === this.movementTarget.x && this.y === this.movementTarget.y) {
+            delete this.movementTarget;
         }
     } else {
         // hero.target = {
@@ -143,9 +160,9 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
     fillCircle(context, this);
     fillCircle(context, {...this, r: this.r - 2, color: 'black'});
 
-    if (this.target) {
+    if (this.movementTarget) {
         fillCircle(context, {
-            ...this.target,
+            ...this.movementTarget,
             r: 2,
             color: 'blue',
         });

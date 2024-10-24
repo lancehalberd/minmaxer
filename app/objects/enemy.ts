@@ -2,6 +2,7 @@ import {enemyDefinitions} from 'app/definitions/enemyDefinitions';
 import {framesPerSecond} from 'app/gameConstants';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {getDistance} from 'app/utils/geometry';
 
 export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point): Enemy {
     const definition = enemyDefinitions[enemyType]!;
@@ -12,20 +13,43 @@ export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point):
         color: definition.color,
         r: definition.r,
         aggroRadius: definition.aggroRadius,
-        update: updateEnemy,
-        render: renderEnemy,
         health: derivedStats.maxHealth,
         ...derivedStats,
         x,
         y,
+        update: updateEnemy,
+        render: renderEnemy,
+        onHit: onHitEnemy,
     };
     return enemy;
+}
+
+function onHitEnemy(this: Enemy, state: GameState, attacker: Hero) {
+    // Heroes will prioritize attacking a hero over other targets.
+    if (this.attackTarget?.objectType !== 'hero') {
+        this.attackTarget = attacker;
+    }
 }
 
 export function updateEnemy(this: Enemy, state: GameState) {
     // Remove the current attack target if it is becomes invalid (it dies, for example).
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
         delete this.attackTarget;
+    }
+    // Check to choose a new attack target.
+    if (!this.attackTarget) {
+        // Choose the closest valid target within the aggro radius as an attack target.
+        let closestDistance = this.aggroRadius;
+        for (const object of state.world.objects) {
+            if (object.objectType !== 'hero' && object.objectType !== 'nexus') {
+                continue;
+            }
+            const distance = getDistance(this, object);
+            if (distance < closestDistance) {
+                this.attackTarget = object;
+                closestDistance = distance;
+            }
+        }
     }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
@@ -38,11 +62,11 @@ export function updateEnemy(this: Enemy, state: GameState) {
             const attackCooldown = 1000 / this.attacksPerSecond;
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
                 damageTarget(state, this.attackTarget, this.damage);
+                this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
             }
             return;
         }
-
         if (mag < pixelsPerFrame) {
             this.x = this.attackTarget.x;
             this.y = this.attackTarget.y;
@@ -50,8 +74,27 @@ export function updateEnemy(this: Enemy, state: GameState) {
             this.x += pixelsPerFrame * dx / mag;
             this.y += pixelsPerFrame * dy / mag;
         }
-    } else {
-        this.attackTarget = state.nexus;
+        return;
+    }
+    // Currently enemies always move towards the nexus if they aren't attacking something.
+    this.movementTarget = state.nexus;
+    if (!this.attackTarget && this.movementTarget) {
+        // Move hero until it reaches the target.
+        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
+        const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        if (mag < pixelsPerFrame) {
+            this.x = this.movementTarget.x;
+            this.y = this.movementTarget.y;
+        } else {
+            this.x += pixelsPerFrame * dx / mag;
+            this.y += pixelsPerFrame * dy / mag;
+        }
+
+        // Remove the target once they reach their destination.
+        if (this.x === this.movementTarget.x && this.y === this.movementTarget.y) {
+            delete this.movementTarget;
+        }
     }
 }
 

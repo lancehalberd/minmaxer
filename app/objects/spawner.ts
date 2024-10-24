@@ -1,5 +1,6 @@
 import {createEnemy} from 'app/objects/enemy';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {isPointInCircle} from 'app/utils/geometry';
 
 class EnemySpawner implements Spawner {
     objectType = 'spawner' as const;
@@ -39,6 +40,16 @@ class EnemySpawner implements Spawner {
             this.spawnedEnemies.push(enemy);
             state.world.objects.push(enemy);
             this.lastSpawnTime = state.world.time;
+        }
+    }
+    onHit(state: GameState, attacker: Hero) {
+        // The spawner summons any nearby enemies to protect it.
+        for (const enemy of this.spawnedEnemies) {
+            if (isPointInCircle({x: this.x, y: this.y, r: 150}, enemy)) {
+                if (enemy.attackTarget?.objectType !== 'hero') {
+                    enemy.attackTarget = attacker;
+                }
+            }
         }
     }
 }
