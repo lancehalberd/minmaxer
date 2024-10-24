@@ -59,6 +59,10 @@ function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
             }
             loseEssence(state, this.definition.cost);
             state.heroSlots[firstEmptyIndex] = this;
+            // Unpause the game automatically if this is the first hero selected.
+            if (!state.selectedHero) {
+                state.isPaused = false;
+            }
             state.selectedHero = this;
             return true;
         }

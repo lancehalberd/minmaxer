@@ -25,6 +25,9 @@ class EnemySpawner implements Spawner {
     }
 
     render(context: CanvasRenderingContext2D, state: GameState) {
+        if (state.selectedHero?.attackTarget === this) {
+            fillCircle(context, {...this, r: this.r + 2, color: '#FFF'});
+        }
         fillCircle(context, this);
         renderLifeBar(context, this, this.health, this.maxHealth);
     }

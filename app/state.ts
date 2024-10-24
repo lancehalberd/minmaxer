@@ -6,6 +6,7 @@ export const state: GameState = {
     heroSlots: [null],
     lastTimeRendered: 0,
     time : 0,
+    isPaused: true,
     world: {
         time: 1000,
         camera: {

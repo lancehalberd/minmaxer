@@ -90,6 +90,7 @@ interface GameState {
     selectedHero?: Hero
     heroSlots: (Hero | null)[],
     world: World
+    isPaused: boolean
     lastTimeRendered: number
     time: number
     mouse: {

@@ -15,13 +15,10 @@ function update() {
             console.log(`Selected hero defeated ${state.selectedHero.enemyDefeatCount} enemies in total`);
             delete state.selectedHero;
         }
-    } else {
+    } else if (!state.isPaused){
         checkToAddNewSpawner(state);
-        // Don't update the world objects until a hero is selected.
-        if (state.selectedHero) {
-            for (const object of state.world.objects) {
-                object.update(state);
-            }
+        for (const object of state.world.objects) {
+            object.update(state);
         }
         state.world.time += 20;
     }

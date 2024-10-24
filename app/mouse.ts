@@ -1,4 +1,5 @@
 import {canvas, canvasScale} from 'app/gameConstants'
+import {getHUDButtons} from 'app/hud';
 import {convertToWorldPosition, isPointInCircle, isPointInRect} from 'app/utils/geometry';
 
 let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
@@ -25,7 +26,13 @@ export function registerMouseEventHandlers() {
 
 // Returns the highest priority mouse target under the given screen point.
 function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget|undefined {
-    // TODO: Check for HUD elements first.
+    // First, check for HUD elements.
+    for (const button of getHUDButtons(state)) {
+        if (isPointInRect(button, screenPoint)) {
+            return button;
+        }
+    }
+
     // Second, check for button elements in the field.
     const worldPoint = convertToWorldPosition(state, screenPoint);
     for (const object of [...state.world.objects].reverse()) {
