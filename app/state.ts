@@ -22,6 +22,13 @@ export const state: GameState = {
     mouse: {
         currentPosition: {x: 0, y: 0},
     },
+    keyboard: {
+        gameKeyValues: [],
+        gameKeysDown: new Set(),
+        gameKeysPressed: new Set(),
+        gameKeysReleased: new Set(),
+        mostRecentKeysPressed: new Set(),
+    },
 };
 
 window.state = state;

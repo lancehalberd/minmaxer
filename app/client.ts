@@ -1,4 +1,5 @@
 import {registerMouseEventHandlers} from 'app/mouse';
+import {registerKeyboardEventHandlers} from 'app/keyboard';
 import {startRendering} from 'app/render';
 import {startUpdating} from 'app/update';
 
@@ -10,3 +11,5 @@ startRendering();
 
 // Register event handlers for the mouse.
 registerMouseEventHandlers();
+// Register event handlers for the mouse.
+registerKeyboardEventHandlers();

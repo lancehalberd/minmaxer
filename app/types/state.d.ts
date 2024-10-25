@@ -98,6 +98,15 @@ interface GameState {
         mouseDownPosition?: Point
         mouseDownTarget?: MouseTarget
     },
+    keyboard: {
+        gameKeyValues: number[]
+        gameKeysDown: Set<number>
+        gameKeysPressed: Set<number>
+        // The set of most recent keys pressed, which is recalculated any time
+        // a new key is pressed to be those keys pressed in that same frame.
+        mostRecentKeysPressed: Set<number>
+        gameKeysReleased: Set<number>
+    },
 }
 
 interface Camera extends Point {
