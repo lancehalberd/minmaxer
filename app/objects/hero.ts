@@ -175,10 +175,7 @@ function updateHero(this: Hero, state: GameState) {
 }
 
 function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameState): void {
-    // Draw a circle for the hero centered at their location, with their radius and color.
-    fillCircle(context, this);
-    fillCircle(context, {...this, r: this.r - 2, color: 'black'});
-
+    // Draw a small dot indicating where the hero is currently moving towards.
     if (this.movementTarget) {
         fillCircle(context, {
             ...this.movementTarget,
@@ -186,6 +183,31 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
             color: 'blue',
         });
     }
+
+    // Draw a circle for the hero centered at their location, with their radius and color.
+    fillCircle(context, this);
+
+    // Render a pie chart that fills in as the player approaches their next level.
+    // This just looks like a light ring over their color since the middle is covered up by the black circle.
+    const totalExperienceForCurrentLevel = totalExperienceForLevel(this.level);
+    const totalExperienceForNextLevel = totalExperienceForLevel(this.level + 1);
+    const xpProgressForNextLevel = this.experience - totalExperienceForCurrentLevel;
+    const xpRequiredForNextLevel = totalExperienceForNextLevel - totalExperienceForCurrentLevel;
+    const p = xpProgressForNextLevel / xpRequiredForNextLevel;
+    context.save();
+        context.globalAlpha *= 0.6;
+        context.fillStyle = '#FFF';
+        const r = this.r;
+        const endTheta = p * 2 * Math.PI - Math.PI / 2;
+        context.beginPath();
+        context.moveTo(this.x, this.y);
+        context.arc(this.x, this.y, r, -Math.PI / 2, endTheta);
+        context.fill();
+    context.restore();
+
+    // Render the black circle
+    fillCircle(context, {...this, r: this.r - 2, color: 'black'});
+
     if (state.heroSlots.includes(this)) {
         renderLifeBar(context, this, this.health, this.maxHealth);
     }
@@ -197,10 +219,14 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
     context.fillText(`${this.level}`, this.x, this.y);
 }
 
+function totalExperienceForLevel(level: number) {
+    return 10 * (level - 1) * level * (2 * (level - 1) + 1) / 6;
+}
+
 function heroLevel(exp: number, currentLevel: number, levelCap: number): number {
     let level = currentLevel;
     // Find level using 10x sum of first n squares = 10*n*(n+1)*(2n+1)/6
-    while (level < levelCap && exp >= 10 * level * (level + 1) * (2 * level + 1) / 6) {
+    while (level < levelCap && exp >= totalExperienceForLevel(level + 1)) {
         level++;
     }
     return level;

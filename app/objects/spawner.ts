@@ -51,7 +51,6 @@ class EnemySpawner implements Spawner {
                 const startTheta = p * 2 * Math.PI - Math.PI / 2;
                 context.beginPath();
                 context.moveTo(this.x, this.y);
-                context.lineTo(this.x + r * Math.cos(startTheta), this.y + r * Math.sin(startTheta));
                 context.arc(this.x, this.y, r, startTheta, 3 * Math.PI / 2);
                 context.fill();
             context.restore();
