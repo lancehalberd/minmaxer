@@ -110,6 +110,8 @@ interface Camera extends Point {
 interface World {
     time: number
     camera: Camera
+    // The level of enemy that will be created by the next spawner.
+    nextSpawnerLevel: number
     objects: (Nexus | Hero | Enemy | Spawner)[]
 }
 
@@ -194,6 +196,9 @@ interface Spawner extends Circle {
     enemyType: EnemyType
     // How often the spawner can create an enemy in milliseconds.
     spawnCooldown: number
+    // How long before the spawner initially starts spawning in milliseconds.
+    // If the spawner is attacked it will immediately start spawning.
+    delay: number
     // Max number of enemies that can be spawned at the same time.
     lastSpawnTime?: number
     spawnLimit: number

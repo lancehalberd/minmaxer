@@ -79,7 +79,7 @@ export function updateEnemy(this: Enemy, state: GameState) {
     // Currently enemies always move towards the nexus if they aren't attacking something.
     this.movementTarget = state.nexus;
     if (!this.attackTarget && this.movementTarget) {
-        // Move hero until it reaches the target.
+        // Move enemy until it reaches the target.
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
         const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
         const mag = Math.sqrt(dx * dx + dy * dy);

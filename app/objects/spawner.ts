@@ -1,12 +1,15 @@
+import {frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
 import {isPointInCircle} from 'app/utils/geometry';
+import {millisecondsToTime} from 'app/utils/time';
 
 class EnemySpawner implements Spawner {
     objectType = 'spawner' as const;
     x = 0;
     y = 0;
     r = 20;
+    delay = 0;
     color = 'purple';
     spawnCooldown = 2000;
     spawnLimit = 3;
@@ -29,9 +32,38 @@ class EnemySpawner implements Spawner {
             fillCircle(context, {...this, r: this.r + 2, color: '#FFF'});
         }
         fillCircle(context, this);
+        if (this.delay) {
+            const time = millisecondsToTime(this.delay);
+            context.font = "16px san-serif";
+            context.textBaseline = 'middle';
+            context.textAlign = 'center';
+            context.fillStyle = '#000';
+            context.fillText(time, this.x, this.y);
+            context.fillStyle = '#FFF';
+            context.fillText(time, this.x, this.y);
+        }
+        if (this.lastSpawnTime) {
+            const p = (state.world.time - this.lastSpawnTime) / this.spawnCooldown;
+            context.save();
+                context.globalAlpha *= 0.3;
+                context.fillStyle = '#000';
+                const r = this.r - 4;
+                const startTheta = p * 2 * Math.PI - Math.PI / 2;
+                context.beginPath();
+                context.moveTo(this.x, this.y);
+                context.lineTo(this.x + r * Math.cos(startTheta), this.y + r * Math.sin(startTheta));
+                context.arc(this.x, this.y, r, startTheta, 3 * Math.PI / 2);
+                context.fill();
+            context.restore();
+        }
         renderLifeBar(context, this, this.health, this.maxHealth);
     }
     update(state: GameState) {
+        // The spawner does nothing during the initial delay.
+        if (this.delay > 0) {
+            this.delay -= frameLength;
+            return;
+        }
         // Remove any dead enemies from the array of spawned enemies this spawner is tracking.
         this.spawnedEnemies = this.spawnedEnemies.filter(enemy => enemy.health > 0);
         if (this.spawnedEnemies.length >= this.spawnLimit) {
@@ -46,6 +78,7 @@ class EnemySpawner implements Spawner {
         }
     }
     onHit(state: GameState, attacker: Hero) {
+        this.delay = 0;
         // The spawner summons any nearby enemies to protect it.
         for (const enemy of this.spawnedEnemies) {
             if (isPointInCircle({x: this.x, y: this.y, r: 150}, enemy)) {
@@ -57,30 +90,52 @@ class EnemySpawner implements Spawner {
     }
 }
 
-export const snakeSpawner: Spawner = new EnemySpawner('snake', 1, {x: 200, y: 200});
-export const koboldSpawner: Spawner = new EnemySpawner('kobold', 2, {x: -200, y: 200});
+
+
+const spawnInterval = 5 * 60 * 1000;
+const normalDelay =  60 * 1000;
+
+const snakeSpawner: Spawner = new EnemySpawner('snake', 1, {x: 200, y: 200, delay: 5000});
+const koboldSpawner: Spawner = new EnemySpawner('kobold', 2, {x: -200, y: 200, delay: normalDelay});
 
 
 const enemyTypes: EnemyType[] = ['snake', 'kobold'];
-
 export function checkToAddNewSpawner(state: GameState) {
-    if (state.world.time === 1000) {
+    // The first spawner is added immediately.
+    if (state.world.nextSpawnerLevel === 1) {
         state.world.objects.push(snakeSpawner);
+        state.world.nextSpawnerLevel++;
         return;
     }
-    if (state.world.time === 2 * 60 * 1000) {
-        state.world.objects.push(koboldSpawner);
+
+    // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
+    const numSpawners = state.world.objects.filter(o => o.objectType === 'spawner').length;
+
+    // The second spawner will become active at 2 minutes and is spawned with a standard delay before it becomes active.
+    // It will spawn earlier if the first spawner is destroyed, but will still become active at the 2 minute mark.
+    const koboldTargetTime = 2 * 60 * 1000;
+    if (state.world.nextSpawnerLevel === 2) {
+        if (state.world.time >= koboldTargetTime - normalDelay || numSpawners === 0) {
+            state.world.objects.push(koboldSpawner);
+            koboldSpawner.delay = koboldTargetTime - state.world.time;
+            state.world.nextSpawnerLevel++;
+        }
         return;
     }
-    const spawnInterval = 5 * 60 * 1000;
-    if (state.world.time % spawnInterval === 0) {
-        const level = 2 + state.world.time / spawnInterval;
+
+    // All future spawners become active every 5 minutes and are spawned with a standard delay before they become active.
+    // They will spawn earlier if the previous spawner are all destroyed, but will still become active at the target time.
+    const nextTargetTime = spawnInterval * (state.world.nextSpawnerLevel - 2);
+    if (state.world.time >= nextTargetTime - normalDelay || numSpawners === 0) {
+        const level = state.world.nextSpawnerLevel;
         const enemyType = enemyTypes[(Math.random() * enemyTypes.length) | 0];
         const theta = 2 * Math.PI * level / 8;
         const spawnRadius = 300 + 20 * level;
         state.world.objects.push(new EnemySpawner(enemyType, level, {
             x: state.nexus.x + spawnRadius * Math.cos(theta),
             y: state.nexus.y - spawnRadius * Math.sin(theta),
+            delay: nextTargetTime - state.world.time,
         }));
+        state.world.nextSpawnerLevel++;
     }
 }

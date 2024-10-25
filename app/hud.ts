@@ -12,7 +12,7 @@ const playButton = requireFrame('gfx/playButton.png', {x: 0, y: 0, w: 139, h: 13
 const pauseButton = requireFrame('gfx/pauseButton.png', {x: 0, y: 0, w: 139, h: 138});
 
 let scale = 1/3;
-const playPauseButton: CanvasButton = {
+export const playPauseButton: CanvasButton = {
     objectType: 'button',
     x: canvas.width - playButton.w * scale - padding,
     y: padding,

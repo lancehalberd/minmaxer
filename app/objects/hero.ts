@@ -2,6 +2,7 @@ import {framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/objects/fieldButton';
 import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
+import {getDistance} from 'app/utils/geometry';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 
@@ -94,6 +95,20 @@ function updateHero(this: Hero, state: GameState) {
     // if it is becomes invalid (it dies, for example).
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
         this.attackTarget = this.selectedAttackTarget
+    }
+    // The hero will automatically attack an enemy within its range if it is idle.
+    if (!this.attackTarget && !this.movementTarget) {
+        // Choose the closest valid target within the aggro radius as an attack target.
+        let closestDistance = this.attackRange;
+        for (const object of state.world.objects) {
+            if (object.objectType === 'enemy') {
+                const distance = getDistance(this, object);
+                if (distance < closestDistance) {
+                    this.attackTarget = object;
+                    closestDistance = distance;
+                }
+            }
+        }
     }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;

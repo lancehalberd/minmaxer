@@ -8,7 +8,7 @@ export const state: GameState = {
     time : 0,
     isPaused: true,
     world: {
-        time: 1000,
+        time: 20,
         camera: {
             scale: 2,
             x: 200,
@@ -16,6 +16,7 @@ export const state: GameState = {
             speed: 200,
             target: {x: 200, y: -100},
         },
+        nextSpawnerLevel: 1,
         objects: [nexus, ranger, warrior, wizard],
     },
     mouse: {

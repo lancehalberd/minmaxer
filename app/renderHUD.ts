@@ -1,11 +1,22 @@
-import {getHUDButtons} from 'app/hud';
+import {getHUDButtons, playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/objects/nexus';
 import {fillCircle, fillRect} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
+import {millisecondsToTime} from 'app/utils/time';
 
 
 export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
     renderEssenceBar(context, state, {x:10, y: 10, w: 500, h: 40});
+    const time = millisecondsToTime(state.world.time);
+
+    context.font = "30px san-serif";
+    context.textBaseline = 'middle';
+    context.textAlign = 'right';
+    context.fillStyle = '#000';
+    context.fillText(time, playPauseButton.x - 10 + 1, playPauseButton.y + playPauseButton.h / 2 + 1);
+    context.fillStyle = '#FFF';
+    context.fillText(time, playPauseButton.x - 10, playPauseButton.y + playPauseButton.h / 2);
+
     for (const button of getHUDButtons(state)) {
         button.render(context, state);
     }
