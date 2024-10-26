@@ -141,13 +141,18 @@ interface Hero extends Circle {
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
-    target?: Point
+    movementTarget?: Point
+    // The target of the last explicit command the hero was given, if any.
+    // Their actual attack target may be changed to an enemy that attacks them,
+    // but they will go back to this target once the enemy is defeated.
+    selectedAttackTarget?: EnemyTarget
     attackTarget?: EnemyTarget
     enemyDefeatCount: number
     // Methods
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit: (state: GameState, attacker: Enemy) => void
 }
 
 interface GameState {
@@ -155,6 +160,7 @@ interface GameState {
     selectedHero?: Hero
     heroSlots: (Hero | null)[],
     world: World
+    isPaused: boolean
     lastTimeRendered: number
     time: number
     mouse: {
@@ -162,15 +168,29 @@ interface GameState {
         mouseDownPosition?: Point
         mouseDownTarget?: MouseTarget
     },
+    keyboard: {
+        gameKeyValues: number[]
+        gameKeysDown: Set<number>
+        gameKeysPressed: Set<number>
+        // The set of most recent keys pressed, which is recalculated any time
+        // a new key is pressed to be those keys pressed in that same frame.
+        mostRecentKeysPressed: Set<number>
+        gameKeysReleased: Set<number>
+    },
 }
 
 interface Camera extends Point {
     scale: number
+    // Pixels per second.
+    speed: number
+    target: Point
 }
 
 interface World {
     time: number
     camera: Camera
+    // The level of enemy that will be created by the next spawner.
+    nextSpawnerLevel: number
     objects: (Nexus | Hero | Enemy | Spawner)[]
 }
 
@@ -195,6 +215,7 @@ interface Nexus extends Circle {
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit?: (state: GameState, attacker: Enemy) => void
 }
 
 type AllyTarget = Hero | Nexus;
@@ -206,15 +227,10 @@ type AttackTarget = AllyTarget | EnemyTarget;
 // This will eventually include clickable targets like buttons or interactive objects.
 type MouseTarget = CanvasButton | AttackTarget;
 
-type EnemyType = 'snake';
+type EnemyType = 'kobold'|'snake'|'mummy';
 
-interface EnemyDefinition extends Circle {
-    // Indicates the type of enemy
-    name: string
-    // How difficult the enemy is.
-    level: number
-    // Current and max life of the enemy.
-    health: number
+interface EnemyLevelDerivedStats {
+    // Max life of the enemy
     maxHealth: number
     // How much damage the enemy deals on attack
     damage: number
@@ -228,18 +244,30 @@ interface EnemyDefinition extends Circle {
     essenceWorth: number
     // This is in pixels per second.
     movementSpeed: number
-    movementTarget?: Point
-    attackTarget?: AllyTarget
+}
+interface EnemyDefinition {
+    // Indicates the type of enemy
+    name: string
+    r: number
+    color: string
+    getStatsForLevel: (level: number) => EnemyLevelDerivedStats
     aggroRadius: number
 }
 
-interface Enemy extends EnemyDefinition {
+interface Enemy extends Circle, EnemyLevelDerivedStats {
     objectType: 'enemy'
+    level: number
+    // Current life of the enemy
+    health: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit: (state: GameState, attacker: Hero) => void
+    aggroRadius: number
     // The last time the enemy attacked.
     lastAttackTime?: number
+    movementTarget?: Point
+    attackTarget?: AllyTarget
 }
 
 interface Spawner extends Circle {
@@ -247,6 +275,9 @@ interface Spawner extends Circle {
     enemyType: EnemyType
     // How often the spawner can create an enemy in milliseconds.
     spawnCooldown: number
+    // How long before the spawner initially starts spawning in milliseconds.
+    // If the spawner is attacked it will immediately start spawning.
+    delay: number
     // Max number of enemies that can be spawned at the same time.
     lastSpawnTime?: number
     spawnLimit: number
@@ -262,6 +293,7 @@ interface Spawner extends Circle {
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
+    onHit: (state: GameState, attacker: Hero) => void
 }
 
 

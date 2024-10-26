@@ -1,27 +1,68 @@
-import {enemyDefinitions} from 'app/definitions/enemyDefinitions';
-import {renderEnemy, updateEnemy} from 'app/objects/enemy';
+import {frameLength} from 'app/gameConstants';
+import {createEnemy} from 'app/objects/enemy';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {isPointInCircle} from 'app/utils/geometry';
+import {millisecondsToTime} from 'app/utils/time';
 
-export const snakeSpawner: Spawner = {
-    objectType: 'spawner',
-    x: 300,
-    y: 300,
-    r: 20,
-    color: 'purple',
-    enemyType: 'snake',
-    spawnCooldown: 2000,
-    spawnLimit: 3,
-    spawnedEnemies: [],
-    health: 50,
-    maxHealth: 50,
-    essenceWorth: enemyDefinitions.snake!.essenceWorth * 50,
-    experienceWorth: enemyDefinitions.snake!.experienceWorth * 50,
-    level: enemyDefinitions.snake!.level + 5,
-    render(this: Spawner, context: CanvasRenderingContext2D, state: GameState) {
+class EnemySpawner implements Spawner {
+    objectType = 'spawner' as const;
+    x = 0;
+    y = 0;
+    r = 20;
+    delay = 0;
+    color = 'purple';
+    spawnCooldown = 2000;
+    spawnLimit = 3;
+    spawnedEnemies: Enemy[] = [];
+    level = this.enemyLevel + 5;
+    sampleEnemy = createEnemy(this.enemyType, this.enemyLevel, {x:0, y:0});
+    maxHealth = this.sampleEnemy.maxHealth * 50
+    health = this.maxHealth;
+    essenceWorth = this.sampleEnemy.essenceWorth * 50;
+    experienceWorth = this.sampleEnemy.experienceWorth * 50;
+    lastSpawnTime: number;
+
+    constructor(public enemyType: EnemyType, public enemyLevel: number, props: Partial<Spawner> = {}) {
+        // Set any properties
+        Object.assign(this, props);
+    }
+
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        if (state.selectedHero?.attackTarget === this) {
+            fillCircle(context, {...this, r: this.r + 2, color: '#FFF'});
+        }
         fillCircle(context, this);
+        if (this.delay) {
+            const time = millisecondsToTime(this.delay);
+            context.font = "16px san-serif";
+            context.textBaseline = 'middle';
+            context.textAlign = 'center';
+            context.fillStyle = '#000';
+            context.fillText(time, this.x, this.y);
+            context.fillStyle = '#FFF';
+            context.fillText(time, this.x, this.y);
+        }
+        if (this.lastSpawnTime) {
+            const p = (state.world.time - this.lastSpawnTime) / this.spawnCooldown;
+            context.save();
+                context.globalAlpha *= 0.3;
+                context.fillStyle = '#000';
+                const r = this.r - 4;
+                const startTheta = p * 2 * Math.PI - Math.PI / 2;
+                context.beginPath();
+                context.moveTo(this.x, this.y);
+                context.arc(this.x, this.y, r, startTheta, 3 * Math.PI / 2);
+                context.fill();
+            context.restore();
+        }
         renderLifeBar(context, this, this.health, this.maxHealth);
-    },
-    update(this: Spawner, state: GameState) {
+    }
+    update(state: GameState) {
+        // The spawner does nothing during the initial delay.
+        if (this.delay > 0) {
+            this.delay -= frameLength;
+            return;
+        }
         // Remove any dead enemies from the array of spawned enemies this spawner is tracking.
         this.spawnedEnemies = this.spawnedEnemies.filter(enemy => enemy.health > 0);
         if (this.spawnedEnemies.length >= this.spawnLimit) {
@@ -29,17 +70,71 @@ export const snakeSpawner: Spawner = {
         }
         // If we have no spawn time or it has been longer than the spawn cooldown, spawn a new enemy.
         if (!this.lastSpawnTime || state.world.time - this.lastSpawnTime >= this.spawnCooldown) {
-            const enemy: Enemy = {
-                objectType: 'enemy',
-                ...enemyDefinitions[this.enemyType]!,
-                update: updateEnemy,
-                render: renderEnemy,
-                x: this.x,
-                y: this.y,
-            };
+            const enemy: Enemy = createEnemy(this.enemyType, this.enemyLevel, this);
             this.spawnedEnemies.push(enemy);
             state.world.objects.push(enemy);
             this.lastSpawnTime = state.world.time;
         }
-    },
-};
+    }
+    onHit(state: GameState, attacker: Hero) {
+        this.delay = 0;
+        // The spawner summons any nearby enemies to protect it.
+        for (const enemy of this.spawnedEnemies) {
+            if (isPointInCircle({x: this.x, y: this.y, r: 150}, enemy)) {
+                if (enemy.attackTarget?.objectType !== 'hero') {
+                    enemy.attackTarget = attacker;
+                }
+            }
+        }
+    }
+}
+
+
+
+const spawnInterval = 5 * 60 * 1000;
+const normalDelay =  60 * 1000;
+
+const snakeSpawner: Spawner = new EnemySpawner('snake', 1, {x: 200, y: 200, delay: 5000});
+const koboldSpawner: Spawner = new EnemySpawner('kobold', 2, {x: -200, y: 200, delay: normalDelay});
+
+
+const enemyTypes: EnemyType[] = ['snake', 'kobold'];
+export function checkToAddNewSpawner(state: GameState) {
+    // The first spawner is added immediately.
+    if (state.world.nextSpawnerLevel === 1) {
+        state.world.objects.push(snakeSpawner);
+        state.world.nextSpawnerLevel++;
+        return;
+    }
+
+    // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
+    const numSpawners = state.world.objects.filter(o => o.objectType === 'spawner').length;
+
+    // The second spawner will become active at 2 minutes and is spawned with a standard delay before it becomes active.
+    // It will spawn earlier if the first spawner is destroyed, but will still become active at the 2 minute mark.
+    const koboldTargetTime = 2 * 60 * 1000;
+    if (state.world.nextSpawnerLevel === 2) {
+        if (state.world.time >= koboldTargetTime - normalDelay || numSpawners === 0) {
+            state.world.objects.push(koboldSpawner);
+            koboldSpawner.delay = koboldTargetTime - state.world.time;
+            state.world.nextSpawnerLevel++;
+        }
+        return;
+    }
+
+    // All future spawners become active every 5 minutes and are spawned with a standard delay before they become active.
+    // They will spawn earlier if the previous spawner are all destroyed, but will still become active at the target time.
+    const nextTargetTime = spawnInterval * (state.world.nextSpawnerLevel - 2);
+    if (state.world.time >= nextTargetTime - normalDelay || numSpawners === 0) {
+        const level = state.world.nextSpawnerLevel;
+        const enemyType = enemyTypes[(Math.random() * enemyTypes.length) | 0];
+        const theta = 2 * Math.PI * level / 8;
+        const spawnRadius = 300 + 20 * level;
+        state.world.objects.push(new EnemySpawner(enemyType, level, {
+            x: state.nexus.x + spawnRadius * Math.cos(theta),
+            y: state.nexus.y - spawnRadius * Math.sin(theta),
+            delay: nextTargetTime - state.world.time,
+        }));
+        state.world.nextSpawnerLevel++;
+    }
+}

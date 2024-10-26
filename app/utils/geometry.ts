@@ -1,5 +1,10 @@
 import {canvas} from 'app/gameConstants';
 
+export function getDistance(p1: Point, p2: Point): number {
+    const dx = p1.x - p2.x, dy = p1.y - p2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
 export function pad({x, y, w, h}: Rect, amount: number): Rect {
     return {
         x: x - amount,

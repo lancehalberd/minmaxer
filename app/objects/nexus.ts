@@ -26,7 +26,7 @@ export const nexus: Nexus = {
         // If we are tracking gained essence, remove it linearly for 1 second following the last time
         // essence was gained.
        if (this.gainedEssence) {
-            const timeLeft = this.gainedEssenceTime + 1000 - state.time;
+            const timeLeft = this.gainedEssenceTime + 1000 - state.world.time;
             if (timeLeft > 0) {
                 // Reduce essence by one frame if there is time remaining.
                 this.gainedEssence = this.gainedEssence * (timeLeft - frameLength) / timeLeft;
@@ -37,7 +37,7 @@ export const nexus: Nexus = {
         }
         // If we are tracking lost essence, remove it linearly for 0.5 seconds after a second has passed.
         if (this.lostEssence) {
-            const timeLeft = this.lostEssenceTime + 600 - state.time;
+            const timeLeft = this.lostEssenceTime + 600 - state.world.time;
             // There is a short delay before depleting the lost essence section.
             if (timeLeft > 0 && timeLeft < 400) {
                 // Reduce essence by one frame if there is time remaining.
@@ -93,7 +93,7 @@ export function gainEssence(state: GameState, essence: number, showDelta = true)
     // Set gained essence to animate gaining the essence over time in the essence bar.
     if (showDelta) {
         state.nexus.gainedEssence += essence;
-        state.nexus.gainedEssenceTime = state.time;
+        state.nexus.gainedEssenceTime = state.world.time;
     }
     checkToLeveNexusUp(state);
 }
@@ -104,7 +104,7 @@ export function loseEssence(state: GameState, essence: number) {
     }
     state.nexus.essence = Math.max(0, state.nexus.essence - essence);
     state.nexus.lostEssence += essence;
-    state.nexus.lostEssenceTime = state.time;
+    state.nexus.lostEssenceTime = state.world.time;
 
 }
 

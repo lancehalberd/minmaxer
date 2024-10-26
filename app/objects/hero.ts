@@ -2,6 +2,7 @@ import {framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/objects/fieldButton';
 import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
+import {getDistance} from 'app/utils/geometry';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 
@@ -34,6 +35,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         update: updateHero,
         getFieldButtons: getHeroFieldButtons,
         effects: [],
+        onHit: onHitHero,
     };
 }
 
@@ -57,6 +59,17 @@ function getHeroAttacksPerSecond(this: Hero, state: GameState): number {
     return getModifiableStatValue(this.attacksPerSecond);
 }
 
+function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
+    // Hero will ignore being attacked if they are completing a movement command.
+    if (this.movementTarget) {
+        return;
+    }
+    // Heroes will prioritize attacking an enemy over an enemy spawner or other targets.
+    if (this.attackTarget?.objectType !== 'enemy') {
+        this.attackTarget = attacker;
+    }
+}
+
 function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
     const buttons: CanvasButton[] = [];
     const firstEmptyIndex = state.heroSlots.indexOf(null);
@@ -70,6 +83,10 @@ function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
             }
             loseEssence(state, this.definition.cost);
             state.heroSlots[firstEmptyIndex] = this;
+            // Unpause the game automatically if this is the first hero selected.
+            if (!state.selectedHero) {
+                state.isPaused = false;
+            }
             state.selectedHero = this;
             return true;
         }
@@ -93,10 +110,28 @@ function updateHero(this: Hero, state: GameState) {
         // Fully heal hero
         this.health = this.maxHealth;
     }
-
-    // Remove the current attack target if it is becomes invalid (it dies, for example).
+    // Remove the selected attack target if it is becomes invalid (it dies, for example).
+    if (this.selectedAttackTarget && !isTargetAvailable(state, this.selectedAttackTarget)) {
+        delete this.selectedAttackTarget;
+    }
+    // Replace the current attack target with the selected attack taret(if any)
+    // if it is becomes invalid (it dies, for example).
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
-        delete this.attackTarget;
+        this.attackTarget = this.selectedAttackTarget
+    }
+    // The hero will automatically attack an enemy within its range if it is idle.
+    if (!this.attackTarget && !this.movementTarget) {
+        // Choose the closest valid target within the aggro radius as an attack target.
+        let closestDistance = this.attackRange;
+        for (const object of state.world.objects) {
+            if (object.objectType === 'enemy') {
+                const distance = getDistance(this, object);
+                if (distance < closestDistance) {
+                    this.attackTarget = object;
+                    closestDistance = distance;
+                }
+            }
+        }
     }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
@@ -109,6 +144,7 @@ function updateHero(this: Hero, state: GameState) {
             const attackCooldown = 1000 / this.getAttacksPerSecond(state);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
                 damageTarget(state, this.attackTarget, this.damage);
+                this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
                 if (this.attackTarget.objectType === 'enemy') {
                     this.attackTarget.attackTarget = this;
@@ -136,22 +172,22 @@ function updateHero(this: Hero, state: GameState) {
         }
         return;
     }
-    if (this.target) {
+    if (this.movementTarget) {
         // Move hero until it reaches the target.
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        const dx = this.target.x - this.x, dy = this.target.y - this.y;
+        const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
         const mag = Math.sqrt(dx * dx + dy * dy);
         if (mag < pixelsPerFrame) {
-            this.x = this.target.x;
-            this.y = this.target.y;
+            this.x = this.movementTarget.x;
+            this.y = this.movementTarget.y;
         } else {
             this.x += pixelsPerFrame * dx / mag;
             this.y += pixelsPerFrame * dy / mag;
         }
 
         // Remove the target once they reach their destination.
-        if (this.x === this.target.x && this.y === this.target.y) {
-            delete this.target;
+        if (this.x === this.movementTarget.x && this.y === this.movementTarget.y) {
+            delete this.movementTarget;
         }
     } else {
         // hero.target = {
@@ -162,17 +198,39 @@ function updateHero(this: Hero, state: GameState) {
 }
 
 function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameState): void {
-    // Draw a circle for the hero centered at their location, with their radius and color.
-    fillCircle(context, this);
-    fillCircle(context, {...this, r: this.r - 2, color: 'black'});
-
-    if (this.target) {
+    // Draw a small dot indicating where the hero is currently moving towards.
+    if (this.movementTarget) {
         fillCircle(context, {
-            ...this.target,
+            ...this.movementTarget,
             r: 2,
             color: 'blue',
         });
     }
+
+    // Draw a circle for the hero centered at their location, with their radius and color.
+    fillCircle(context, this);
+
+    // Render a pie chart that fills in as the player approaches their next level.
+    // This just looks like a light ring over their color since the middle is covered up by the black circle.
+    const totalExperienceForCurrentLevel = totalExperienceForLevel(this.level);
+    const totalExperienceForNextLevel = totalExperienceForLevel(this.level + 1);
+    const xpProgressForNextLevel = this.experience - totalExperienceForCurrentLevel;
+    const xpRequiredForNextLevel = totalExperienceForNextLevel - totalExperienceForCurrentLevel;
+    const p = xpProgressForNextLevel / xpRequiredForNextLevel;
+    context.save();
+        context.globalAlpha *= 0.6;
+        context.fillStyle = '#FFF';
+        const r = this.r;
+        const endTheta = p * 2 * Math.PI - Math.PI / 2;
+        context.beginPath();
+        context.moveTo(this.x, this.y);
+        context.arc(this.x, this.y, r, -Math.PI / 2, endTheta);
+        context.fill();
+    context.restore();
+
+    // Render the black circle
+    fillCircle(context, {...this, r: this.r - 2, color: 'black'});
+
     if (state.heroSlots.includes(this)) {
         renderLifeBar(context, this, this.health, this.maxHealth);
     }
@@ -184,10 +242,14 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
     context.fillText(`${this.level}`, this.x, this.y);
 }
 
+function totalExperienceForLevel(level: number) {
+    return 10 * (level - 1) * level * (2 * (level - 1) + 1) / 6;
+}
+
 function heroLevel(exp: number, currentLevel: number, levelCap: number): number {
     let level = currentLevel;
     // Find level using 10x sum of first n squares = 10*n*(n+1)*(2n+1)/6
-    while (level < levelCap && exp >= 10 * level * (level + 1) * (2 * level + 1) / 6) {
+    while (level < levelCap && exp >= totalExperienceForLevel(level + 1)) {
         level++;
     }
     return level;

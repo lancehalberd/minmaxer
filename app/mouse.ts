@@ -1,4 +1,5 @@
 import {canvas, canvasScale} from 'app/gameConstants'
+import {getHUDButtons} from 'app/hud';
 import {convertToWorldPosition, isPointInCircle, isPointInRect} from 'app/utils/geometry';
 
 let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
@@ -25,7 +26,13 @@ export function registerMouseEventHandlers() {
 
 // Returns the highest priority mouse target under the given screen point.
 function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget|undefined {
-    // TODO: Check for HUD elements first.
+    // First, check for HUD elements.
+    for (const button of getHUDButtons(state)) {
+        if (isPointInRect(button, screenPoint)) {
+            return button;
+        }
+    }
+
     // Second, check for button elements in the field.
     const worldPoint = convertToWorldPosition(state, screenPoint);
     for (const object of [...state.world.objects].reverse()) {
@@ -86,7 +93,8 @@ export function updateMouseActions(state: GameState) {
             } else if (state.selectedHero && (target?.objectType === 'enemy' || target?.objectType === 'spawner')) {
                 // Make the selected hero attack an enemy target.
                 state.selectedHero.attackTarget = target;
-                delete state.selectedHero.target;
+                state.selectedHero.selectedAttackTarget = target;
+                delete state.selectedHero.movementTarget;
             }
         }
     } else {
@@ -140,7 +148,8 @@ function setMovementTarget(state: GameState, mousePosition: Point) {
     const worldTarget = convertToWorldPosition(state, mousePosition);
     if (state.selectedHero) {
         delete state.selectedHero.attackTarget;
-        state.selectedHero.target = worldTarget;
+        delete state.selectedHero.selectedAttackTarget
+        state.selectedHero.movementTarget = worldTarget;
     }
 }
 

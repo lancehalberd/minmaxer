@@ -2,7 +2,7 @@ import {frameLength} from 'app/gameConstants';
 import {drawCanvas} from 'app/utils/canvas';
 import {requireImage} from 'app/utils/images';
 
-function requireFrame(source: string, r?: FrameRectangle): Frame {
+export function requireFrame(source: string, r?: FrameRectangle): Frame {
     const frame = {
         image: requireImage(source, () => {
             // Use the image dimensions if dimensions were not provided for this frame.
