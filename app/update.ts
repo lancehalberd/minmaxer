@@ -1,16 +1,23 @@
 import {frameLength} from 'app/gameConstants'
 import {checkToAddNewSpawner} from 'app/objects/spawner';
 import {state} from 'app/state';
+import {updateHudButtons} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
 
 function update() {
+    // Reset the essence preview every frame so it doesn't get stale.
+    // This needs to run before updateMouseActions since it is often set when hovering over elements.
+    state.nexus.previewEssenceChange = 0;
+    delete state.hoveredAbility;
+
     updateMouseActions(state);
     updateKeyboardState(state);
 
     if (wasGameKeyPressed(state, gameKeys.pause)) {
         state.isPaused = !state.isPaused;
     }
+
 
     // If the nexus is destroyed, stop update function
     // Pan world.camera to nexus, change background color (gray) and return.
@@ -22,8 +29,6 @@ function update() {
     } else if (!state.isPaused){
         const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? 10 : 1;
         for (let i = 0; i < frameCount; i++) {
-            // Reset the essence preview every frame so it doesn't get stale.
-            state.nexus.previewEssenceChange = 0;
             checkToAddNewSpawner(state);
             for (const object of state.world.objects) {
                 object.update(state);
@@ -34,6 +39,7 @@ function update() {
 
 
     updateCamera(state);
+    updateHudButtons(state);
 
     // Advance state time, game won't render anything new if this timer isn't updated.
     state.time += 20;

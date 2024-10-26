@@ -1,4 +1,4 @@
-import {framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
+import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/objects/fieldButton';
 import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
@@ -36,6 +36,16 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         getFieldButtons: getHeroFieldButtons,
         effects: [],
         onHit: onHitHero,
+        abilities: definition.abilities.map(abilityDefinition => {
+            return {
+                definition: abilityDefinition,
+                level: 0,
+                cooldown: 0,
+                autocast: true,
+            }
+        }),
+        totalSkillPoints: 1,
+        spentSkillPoints: 0,
     };
 }
 
@@ -52,6 +62,7 @@ function getModifiableStatValue(stat: ModifiableStat): number {
     for (const multiplier of stat.multipliers) {
         stat.finalValue *= multiplier;
     }
+    // console.log(stat, stat.finalValue);
     return stat.finalValue;
 }
 
@@ -99,6 +110,25 @@ function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
     return buttons;
 }
 
+function moveHeroTowardsTarget(state: GameState, hero: Hero, target: AbilityTarget, distance = 0): boolean {
+    const pixelsPerFrame = hero.movementSpeed / framesPerSecond;
+    // Move this until it reaches the target.
+    const dx = target.x - hero.x, dy = target.y - hero.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    // Attack the target when it is in range.
+    if (mag <= distance) {
+        return true;
+    }
+    if (mag < pixelsPerFrame) {
+        hero.x = target.x;
+        hero.y = target.y;
+    } else {
+        hero.x += pixelsPerFrame * dx / mag;
+        hero.y += pixelsPerFrame * dy / mag;
+    }
+    return false;
+}
+
 function updateHero(this: Hero, state: GameState) {
     // Calculate Hero level increase
     const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
@@ -110,6 +140,40 @@ function updateHero(this: Hero, state: GameState) {
         // Fully heal hero
         this.health = this.maxHealth;
     }
+
+    // Update ability cooldown and autocast any abilities that make sense.
+    for (const ability of this.abilities) {
+        if (ability.cooldown > 0) {
+            ability.cooldown -= frameLength;
+        } else if (ability.autocast) {
+            // TODO: Automatically use ability if there is a target in range.
+        }
+    }
+
+    // Update any effects being applied to this hero and remove them if their duration elapses.
+    for (let i = 0; i < this.effects.length; i++) {
+        const effect = this.effects[i];
+        if (effect.duration) {
+            effect.duration -= frameLength / 1000;
+            if (effect.duration <= 0) {
+                this.effects.splice(i--, 1);
+                effect.remove(state, this);
+            }
+        }
+    }
+
+    // TODO: Handle moving to use an ability on a selected target.
+    if (this.selectedAbility) {
+        if (this.abilityTarget && !isTargetAvailable(state, this.abilityTarget)) {
+            delete this.abilityTarget;
+        }
+        if (!this.abilityTarget) {
+            delete this.selectedAbility;
+        } else {
+
+        }
+    }
+
     // Remove the selected attack target if it is becomes invalid (it dies, for example).
     if (this.selectedAttackTarget && !isTargetAvailable(state, this.selectedAttackTarget)) {
         delete this.selectedAttackTarget;
@@ -134,12 +198,8 @@ function updateHero(this: Hero, state: GameState) {
         }
     }
     if (this.attackTarget) {
-        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        // Move this until it reaches the target.
-        const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
         // Attack the target when it is in range.
-        if (mag <= this.r + this.attackTarget.r + this.attackRange) {
+        if (moveHeroTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.attackRange)) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.getAttacksPerSecond(state);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
@@ -149,6 +209,7 @@ function updateHero(this: Hero, state: GameState) {
                 if (this.attackTarget.objectType === 'enemy') {
                     this.attackTarget.attackTarget = this;
                 }
+                checkForOnHitTargetAbilities(state, this, this.attackTarget);
             }
 
             // Remove the attack target when it is dead.
@@ -160,33 +221,11 @@ function updateHero(this: Hero, state: GameState) {
                 this.enemyDefeatCount += 1;
                 gainEssence(state, this.attackTarget.essenceWorth);
             }
-            return;
-        }
-
-        if (mag < pixelsPerFrame) {
-            this.x = this.attackTarget.x;
-            this.y = this.attackTarget.y;
-        } else {
-            this.x += pixelsPerFrame * dx / mag;
-            this.y += pixelsPerFrame * dy / mag;
         }
         return;
     }
     if (this.movementTarget) {
-        // Move hero until it reaches the target.
-        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
-        if (mag < pixelsPerFrame) {
-            this.x = this.movementTarget.x;
-            this.y = this.movementTarget.y;
-        } else {
-            this.x += pixelsPerFrame * dx / mag;
-            this.y += pixelsPerFrame * dy / mag;
-        }
-
-        // Remove the target once they reach their destination.
-        if (this.x === this.movementTarget.x && this.y === this.movementTarget.y) {
+        if (moveHeroTowardsTarget(state, this, this.movementTarget, 0)) {
             delete this.movementTarget;
         }
     } else {
@@ -194,6 +233,14 @@ function updateHero(this: Hero, state: GameState) {
         //     x: hero.r + Math.floor(Math.random() * (canvas.width - 2 * hero.r)),
         //     y: hero.r + Math.floor(Math.random() * (canvas.height - 2 * hero.r)),
         // };
+    }
+}
+
+function checkForOnHitTargetAbilities(state: GameState, hero: Hero, target: AttackTarget) {
+    for (const ability of hero.abilities) {
+        if (ability.level > 0 && ability.definition.abilityType === 'passiveAbility') {
+            ability.definition.onHitTarget?.(state, hero, target, ability);
+        }
     }
 }
 
@@ -260,4 +307,5 @@ function updateHeroStats(hero: Hero) {
     hero.maxHealth = maxHealth;
     hero.damage = damage;
     hero.movementSpeed = movementSpeed;
+    hero.totalSkillPoints = Math.min(7, hero.level);
 }

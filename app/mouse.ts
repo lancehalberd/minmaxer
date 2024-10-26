@@ -1,5 +1,5 @@
 import {canvas, canvasScale} from 'app/gameConstants'
-import {getHUDButtons} from 'app/hud';
+import {isAbilityTargetValid} from 'app/utils/combat';
 import {convertToWorldPosition, isPointInCircle, isPointInRect} from 'app/utils/geometry';
 
 let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
@@ -24,23 +24,32 @@ export function registerMouseEventHandlers() {
     });
 }
 
+function convertToWorldTarget(state: GameState, canvasPoint: Point): LocationTarget {
+    return {
+        objectType: 'point',
+        ...convertToWorldPosition(state, canvasPoint),
+        r: 0,
+    }
+}
+
+
 // Returns the highest priority mouse target under the given screen point.
-function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget|undefined {
+function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget {
     // First, check for HUD elements.
-    for (const button of getHUDButtons(state)) {
+    for (const button of [...state.hudButtons].reverse()) {
         if (isPointInRect(button, screenPoint)) {
             return button;
         }
     }
 
     // Second, check for button elements in the field.
-    const worldPoint = convertToWorldPosition(state, screenPoint);
+    const locationTarget = convertToWorldTarget(state, screenPoint);
     for (const object of [...state.world.objects].reverse()) {
         if (!object.getFieldButtons) {
             continue;
         }
         for (const button of [...object.getFieldButtons(state)].reverse()) {
-            if (isPointInRect(button, worldPoint)) {
+            if (isPointInRect(button, locationTarget)) {
                 return button;
             }
         }
@@ -48,17 +57,36 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
 
     // Last, check for clickable targets in the field.
     for (const object of [...state.world.objects].reverse()) {
-        if (isPointInCircle(object, worldPoint)) {
+        if (isPointInCircle(object, locationTarget)) {
             return object;
         }
     }
+
+    return locationTarget;
 }
 function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
     const worldPoint = convertToWorldPosition(state, screenPoint);
     if (target.objectType === 'button') {
-        return  isPointInRect(target, worldPoint);
+        return isPointInRect(target, worldPoint);
+    }
+    if (target.objectType === 'point') {
+        return false;
     }
     return isPointInCircle(target, worldPoint);
+}
+
+export function isMouseOverTarget(state: GameState, target: MouseTarget): boolean {
+    const hoverTarget = state.mouse.mouseHoverTarget;
+    if (!hoverTarget) {
+        return false;
+    }
+    if (hoverTarget === target) {
+        return true;
+    }
+    if (target.objectType === 'button' && hoverTarget.objectType === 'button') {
+        return hoverTarget.uniqueId === target.uniqueId;
+    }
+    return false;
 }
 
 export function updateMouseActions(state: GameState) {
@@ -90,11 +118,25 @@ export function updateMouseActions(state: GameState) {
             // Trigger the effect of a button.
             if (target?.objectType === 'button') {
                 target.onPress?.(state);
-            } else if (state.selectedHero && (target?.objectType === 'enemy' || target?.objectType === 'spawner')) {
-                // Make the selected hero attack an enemy target.
-                state.selectedHero.attackTarget = target;
-                state.selectedHero.selectedAttackTarget = target;
-                delete state.selectedHero.movementTarget;
+            } else if (state.selectedHero) {
+                if (state.selectedAbility) {
+                    const definition = state.selectedAbility.definition;
+                    if (definition.abilityType === 'activeAbility') {
+                        const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
+                        if (isAbilityTargetValid(state, targetingInfo)) {
+                            state.selectedHero.abilityTarget = target
+                            state.selectedHero.selectedAbility = state.selectedAbility;
+                            delete state.selectedAbility;
+                            state.mouse.pressHandled = true;
+                        }
+                    }
+                } else if (target?.objectType === 'enemy' || target?.objectType === 'spawner') {
+                    // Default action is to make the enemy an attack target.
+                    // Make the selected hero attack an enemy target.
+                    state.selectedHero.attackTarget = target;
+                    state.selectedHero.selectedAttackTarget = target;
+                    delete state.selectedHero.movementTarget;
+                }
             }
         }
     } else {
@@ -107,11 +149,13 @@ export function updateMouseActions(state: GameState) {
 
     // If the user clicks anywhere on the world that has no mouse target and holds,
     // they will set the movement target to the current mouse position every frame.
-    if (state.mouse.mouseDownPosition && !state.mouse.mouseDownTarget) {
+    if (state.mouse.mouseDownTarget?.objectType === 'point' && !state.mouse.pressHandled) {
         setMovementTarget(state, state.mouse.currentPosition);
     }
+    delete state.mouse.mouseHoverTarget;
     if (!state.mouse.mouseDownPosition) {
         const target = getTargetAtScreenPoint(state, state.mouse.currentPosition);
+        state.mouse.mouseHoverTarget = target;
         if (target?.objectType === 'button') {
             target.onHover?.(state);
         }
@@ -144,12 +188,12 @@ function handleMouseClick(state: GameState, down: Point, up: Point) {
     }*/
 }
 
-function setMovementTarget(state: GameState, mousePosition: Point) {
-    const worldTarget = convertToWorldPosition(state, mousePosition);
+function setMovementTarget(state: GameState, canvasPoint: Point) {
+    const locationTarget = convertToWorldTarget(state, canvasPoint);
     if (state.selectedHero) {
         delete state.selectedHero.attackTarget;
         delete state.selectedHero.selectedAttackTarget
-        state.selectedHero.movementTarget = worldTarget;
+        state.selectedHero.movementTarget = locationTarget;
     }
 }
 

@@ -19,6 +19,7 @@ export const state: GameState = {
         nextSpawnerLevel: 1,
         objects: [nexus, ranger, warrior, wizard],
     },
+    hudButtons: [],
     mouse: {
         currentPosition: {x: 0, y: 0},
     },

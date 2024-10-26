@@ -31,18 +31,17 @@ function getEnemyTargets(state: GameState) {
 }
 
 export const spinStrike: ActiveAbilityDefinition = {
-    type: 'activeAbility',
+    abilityType: 'activeAbility',
     name: 'Spin Strike',
     getTargetingInfo(state: GameState, hero: Hero, ability: Ability) {
+        // This skill is used immediately where the hero is standing when activated.
         return {
-            canTargetEnemy: true,
-            canTargetLocation: true,
             // The attack radius is 1.1/1.2/1.3/1.4/1.5x of the base radius.
-            hitRadius: [1.1, 1.2, 1.3, 1.4, 1.5][ability.level - 1] * hero.attackRange,
+            hitRadius: hero.r + [1.1, 1.2, 1.3, 1.4, 1.5][ability.level - 1] * hero.attackRange,
         };
     },
     getCooldown(state: GameState, hero: Hero, ability: Ability) {
-        return 5;
+        return 5000;
     },
     onActivate(state: GameState, hero: Hero, ability: Ability) {
         const targetingInfo = this.getTargetingInfo(state, hero, ability);
@@ -69,7 +68,7 @@ function removeBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, he
     hero.attacksPerSecond.isDirty = true;
 }
 export const battleRager: PassiveAbilityDefinition = {
-    type: 'passiveAbility',
+    abilityType: 'passiveAbility',
     name: 'Battle Rager',
     onHitTarget(state: GameState, hero: Hero, target: AttackTarget, ability: Ability) {
         let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);

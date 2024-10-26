@@ -23,6 +23,10 @@ interface HeroLevelDerivedStats {
 
 interface CanvasButton extends Rect {
     objectType: 'button'
+    // Unique id for this button that can be used to check if different instances of a button
+    // are for the same button. For example, we recreate an instance of many buttons each frame,
+    // but they are effectively the same button.
+    uniqueId?: string
     disabled?: boolean
     text?: string
     render: (context: CanvasRenderingContext2D, state: GameState) => void
@@ -51,6 +55,8 @@ interface HeroDefinition {
     // Fields needed to render the hero.
     color: string
     radius: number
+
+    abilities: AbilityDefinition[]
 }
 
 interface AbilityTargetingInfo {
@@ -67,17 +73,17 @@ interface AbilityTargetingInfo {
 }
 
 interface ActiveAbilityDefinition {
-    type: 'activeAbility'
+    abilityType: 'activeAbility'
     name: string
     getTargetingInfo: (state: GameState, hero: Hero, ability: Ability) => AbilityTargetingInfo
     canActivate?: (state: GameState, hero: Hero, ability: Ability) => boolean
     onActivate: (state: GameState, hero: Hero, ability: Ability) => void
-    // Returns the cooldown for this ability in seconds.
+    // Returns the cooldown for this ability in milliseconds.
     getCooldown: (state: GameState, hero: Hero, ability: Ability) => number
 }
 
 interface PassiveAbilityDefinition {
-    type: 'passiveAbility'
+    abilityType: 'passiveAbility'
     name: string
     // Called when the ability user hits any target.
     onHitTarget?: (state: GameState, hero: Hero, target: AttackTarget, ability: Ability) => void
@@ -88,7 +94,10 @@ type AbilityDefinition = ActiveAbilityDefinition | PassiveAbilityDefinition;
 interface Ability {
     definition: AbilityDefinition
     level: number
-    cooldown?: number
+    // Cooldown in milliseconds.
+    cooldown: number
+    // Whether the hero should automatically use this ability if it is an active ability.
+    autocast: boolean
 }
 
 
@@ -141,7 +150,7 @@ interface Hero extends Circle {
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
-    movementTarget?: Point
+    movementTarget?: FieldTarget
     // The target of the last explicit command the hero was given, if any.
     // Their actual attack target may be changed to an enemy that attacks them,
     // but they will go back to this target once the enemy is defeated.
@@ -153,12 +162,22 @@ interface Hero extends Circle {
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]
     onHit: (state: GameState, attacker: Enemy) => void
+
+    abilities: Ability[]
+    totalSkillPoints: number
+    spentSkillPoints: number
+    // Ability the hero is currently trying to use.
+    selectedAbility?: Ability
+    abilityTarget?: AbilityTarget
 }
 
 interface GameState {
     nexus: Nexus
     selectedHero?: Hero
-    heroSlots: (Hero | null)[],
+    hoveredAbility?: Ability
+    selectedAbility?: Ability
+    heroSlots: (Hero | null)[]
+    hudButtons: CanvasButton[]
     world: World
     isPaused: boolean
     lastTimeRendered: number
@@ -167,6 +186,10 @@ interface GameState {
         currentPosition: Point
         mouseDownPosition?: Point
         mouseDownTarget?: MouseTarget
+        mouseHoverTarget?: MouseTarget
+        // This can be set to indicate the current mouse press has been handled and should not trigger
+        // any further actions, such as drag to move.
+        pressHandled?: boolean
     },
     keyboard: {
         gameKeyValues: number[]
@@ -218,14 +241,25 @@ interface Nexus extends Circle {
     onHit?: (state: GameState, attacker: Enemy) => void
 }
 
+interface LocationTarget extends Point {
+    objectType: 'point'
+    r: 0
+}
+
 type AllyTarget = Hero | Nexus;
 type EnemyTarget = Enemy | Spawner;
 
+// Any target on the field.
+type FieldTarget = LocationTarget | Hero | Enemy | Spawner | Nexus;
 
+// Any target that an ability could theoretically target.
+type AbilityTarget = FieldTarget;
+
+// A target that can be attacked.
 type AttackTarget = AllyTarget | EnemyTarget;
 
 // This will eventually include clickable targets like buttons or interactive objects.
-type MouseTarget = CanvasButton | AttackTarget;
+type MouseTarget = CanvasButton | FieldTarget;
 
 type EnemyType = 'kobold'|'snake'|'mummy';
 
@@ -278,9 +312,12 @@ interface Spawner extends Circle {
     // How long before the spawner initially starts spawning in milliseconds.
     // If the spawner is attacked it will immediately start spawning.
     delay: number
-    // Max number of enemies that can be spawned at the same time.
+    // The last world time this spawner spawned an enemy.
     lastSpawnTime?: number
+    // Max number of enemies that can be spawned at the same time.
     spawnLimit: number
+    // How many enemies the spawner can spawn at once.
+    spawnCount: number
     spawnedEnemies: Enemy[]
     // Current and max life of the spawner.
     health: number

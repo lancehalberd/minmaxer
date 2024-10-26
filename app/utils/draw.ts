@@ -16,6 +16,16 @@ export function fillRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, 
     context.fillRect(x, y, w, h);
 }
 
+export function strokeX(context: CanvasRenderingContext2D, {x, y}: Point, size: number, color: CanvasFill) {
+    context.strokeStyle = color;
+    context.beginPath();
+    context.moveTo(x - size / 2, y - size / 2);
+    context.lineTo(x + size / 2, y + size / 2);
+    context.moveTo(x + size / 2, y - size / 2);
+    context.lineTo(x - size / 2, y + size / 2);
+    context.stroke();
+}
+
 export function renderLifeBar(context: CanvasRenderingContext2D, circle: Circle, health: number, maxHealth: number) {
     const barHeight = 5;
     const padding = 5;
@@ -40,4 +50,13 @@ export function renderGameStatus(context: CanvasRenderingContext2D, message: str
     context.font = "20px serif";
     context.fillStyle = '#8B0000';
     context.fillText(message, -25, -50);
+}
+
+export function renderCooldownCircle(context: CanvasRenderingContext2D, {x, y, r}: Circle, p: number, fill: CanvasFill) {
+    context.fillStyle = fill;
+    const startTheta = p * 2 * Math.PI - Math.PI / 2;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.arc(x, y, r, startTheta, 3 * Math.PI / 2);
+    context.fill();
 }

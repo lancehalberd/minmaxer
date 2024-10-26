@@ -1,3 +1,5 @@
+import {battleRager, spinStrike} from 'app/definitions/heroAbilities';
+
 export const heroDefinitions: {[key in HeroType]?: HeroDefinition} = {};
 
 heroDefinitions.warrior = {
@@ -15,6 +17,7 @@ heroDefinitions.warrior = {
     color: 'red',
     radius: 10,
     cost: 50,
+    abilities: [spinStrike, battleRager],
 };
 
 heroDefinitions.ranger = {
@@ -32,6 +35,7 @@ heroDefinitions.ranger = {
     color: 'green',
     radius: 10,
     cost: 50,
+    abilities: [],
 };
 
 heroDefinitions.wizard = {
@@ -49,4 +53,5 @@ heroDefinitions.wizard = {
     color: 'blue',
     radius: 10,
     cost: 50,
+    abilities: [],
 };

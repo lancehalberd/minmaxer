@@ -20,8 +20,11 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
 }
 
 // Returns whether a target is still available to attack.
-export function isTargetAvailable(state: GameState, target: AttackTarget): boolean {
+export function isTargetAvailable(state: GameState, target: AbilityTarget): boolean {
     if (target.objectType === 'nexus') {
+        return true;
+    }
+    if (target.objectType === 'point') {
         return true;
     }
     return target.health > 0;
@@ -53,4 +56,21 @@ export function removeEffectFromHero(state: GameState, effect: Effect<Hero>, her
     }
     hero.effects.splice(index, 1);
     effect.remove(state, hero);
+}
+
+export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo): boolean {
+    const mouseTarget = state.mouse.mouseHoverTarget;
+    if (!mouseTarget) {
+        return false;
+    }
+    if (mouseTarget.objectType === 'point') {
+        return !!targetingInfo.canTargetLocation;
+    }
+    if (mouseTarget.objectType === 'enemy' || mouseTarget.objectType === 'spawner') {
+        return !!targetingInfo.canTargetEnemy;
+    }
+    if (mouseTarget.objectType === 'hero') {
+        return !!targetingInfo.canTargetAlly;
+    }
+    return false;
 }
