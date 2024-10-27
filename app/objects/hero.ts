@@ -63,7 +63,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
 function getDamageForTarget(this: Hero, state: GameState, target: AbilityTarget): number {
     let damage = this.damage;
     for (const ability of this.abilities) {
-        if (ability.abilityType === 'passiveAbility') {
+        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
             if (ability.definition.modifyDamage) {
                 damage = ability.definition.modifyDamage(state, this, target, ability, damage);
             }
