@@ -1,4 +1,4 @@
-import {framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
+import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/objects/fieldButton';
 import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
@@ -21,20 +21,77 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         color: definition.color,
         experience: 0,
         health: derivedStats.maxHealth,
-        attacksPerSecond: definition.attacksPerSecond,
+        attacksPerSecond: {
+            baseValue: definition.attacksPerSecond,
+            addedBonus: 0,
+            percentBonus: 0,
+            multipliers: [],
+            finalValue: definition.attacksPerSecond,
+        },
+        getAttacksPerSecond: getHeroAttacksPerSecond,
+        getDamageForTarget: getDamageForTarget,
         attackRange: definition.attackRange,
         enemyDefeatCount: 0,
         render: renderHero,
         update: updateHero,
         getFieldButtons: getHeroFieldButtons,
+        effects: [],
         onHit: onHitHero,
+        abilities: definition.abilities.map(abilityDefinition => {
+            if (abilityDefinition.abilityType === 'activeAbility') {
+                return {
+                    abilityType: 'activeAbility',
+                    definition: abilityDefinition,
+                    level: 0,
+                    cooldown: 0,
+                    autocast: true,
+                }
+            }
+            return {
+                abilityType: 'passiveAbility',
+                definition: abilityDefinition,
+                level: 0,
+                cooldown: 0,
+                autocast: true,
+            }
+        }),
+        totalSkillPoints: 1,
+        spentSkillPoints: 0,
     };
+}
+
+function getDamageForTarget(this: Hero, state: GameState, target: AbilityTarget): number {
+    let damage = this.damage;
+    for (const ability of this.abilities) {
+        if (ability.abilityType === 'passiveAbility') {
+            if (ability.definition.modifyDamage) {
+                damage = ability.definition.modifyDamage(state, this, target, ability, damage);
+            }
+        }
+    }
+    return damage;
 }
 
 export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
 export const ranger: Hero = createHero('ranger', {x: 40, y: 30});
 export const wizard: Hero = createHero('wizard', {x: 0, y: -50});
 
+function getModifiableStatValue(stat: ModifiableStat): number {
+    if (!stat.isDirty) {
+        return stat.finalValue;
+    }
+    delete stat.isDirty;
+    stat.finalValue = (stat.baseValue + stat.addedBonus) * (1 + stat.percentBonus / 100);
+    for (const multiplier of stat.multipliers) {
+        stat.finalValue *= multiplier;
+    }
+    // console.log(stat, stat.finalValue);
+    return stat.finalValue;
+}
+
+function getHeroAttacksPerSecond(this: Hero, state: GameState): number {
+    return getModifiableStatValue(this.attacksPerSecond);
+}
 
 function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
     // Hero will ignore being attacked if they are completing a movement command.
@@ -76,6 +133,25 @@ function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
     return buttons;
 }
 
+function moveHeroTowardsTarget(state: GameState, hero: Hero, target: AbilityTarget, distance = 0): boolean {
+    const pixelsPerFrame = hero.movementSpeed / framesPerSecond;
+    // Move this until it reaches the target.
+    const dx = target.x - hero.x, dy = target.y - hero.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    // Attack the target when it is in range.
+    if (mag <= distance) {
+        return true;
+    }
+    if (mag < pixelsPerFrame) {
+        hero.x = target.x;
+        hero.y = target.y;
+    } else {
+        hero.x += pixelsPerFrame * dx / mag;
+        hero.y += pixelsPerFrame * dy / mag;
+    }
+    return false;
+}
+
 function updateHero(this: Hero, state: GameState) {
     // Calculate Hero level increase
     const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
@@ -87,6 +163,50 @@ function updateHero(this: Hero, state: GameState) {
         // Fully heal hero
         this.health = this.maxHealth;
     }
+
+    // Update ability cooldown and autocast any abilities that make sense.
+    for (const ability of this.abilities) {
+        if (ability.abilityType === 'activeAbility') {
+            if (ability.cooldown > 0) {
+                ability.cooldown -= frameLength;
+            } else if (ability.autocast) {
+                // TODO: Automatically use ability if there is a target in range.
+            }
+        }
+    }
+
+    // Update any effects being applied to this hero and remove them if their duration elapses.
+    for (let i = 0; i < this.effects.length; i++) {
+        const effect = this.effects[i];
+        if (effect.duration) {
+            effect.duration -= frameLength / 1000;
+            if (effect.duration <= 0) {
+                this.effects.splice(i--, 1);
+                effect.remove(state, this);
+            }
+        }
+    }
+
+    // TODO: Handle moving to use an ability on a selected target.
+    if (this.selectedAbility) {
+        if (this.abilityTarget && !isTargetAvailable(state, this.abilityTarget)) {
+            delete this.abilityTarget;
+        }
+        if (!this.abilityTarget) {
+            delete this.selectedAbility;
+        } else {
+            const targetingInfo = this.selectedAbility.definition.getTargetingInfo(state, this, this.selectedAbility);
+            if (moveHeroTowardsTarget(state, this, this.abilityTarget, this.r + this.abilityTarget.r + targetingInfo.range)) {
+                const definition = this.selectedAbility.definition;
+                definition.onActivate(state, this, this.selectedAbility, this.abilityTarget);
+                this.selectedAbility.cooldown = definition.getCooldown(state, this, this.selectedAbility);
+                delete this.selectedAbility;
+                delete this.abilityTarget;
+            }
+            return;
+        }
+    }
+
     // Remove the selected attack target if it is becomes invalid (it dies, for example).
     if (this.selectedAttackTarget && !isTargetAvailable(state, this.selectedAttackTarget)) {
         delete this.selectedAttackTarget;
@@ -111,21 +231,19 @@ function updateHero(this: Hero, state: GameState) {
         }
     }
     if (this.attackTarget) {
-        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        // Move this until it reaches the target.
-        const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
         // Attack the target when it is in range.
-        if (mag <= this.r + this.attackTarget.r + this.attackRange) {
+        if (moveHeroTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.attackRange)) {
             // Attack the target if the enemy's attack is not on cooldown.
-            const attackCooldown = 1000 / this.attacksPerSecond;
+            const attackCooldown = 1000 / this.getAttacksPerSecond(state);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
-                damageTarget(state, this.attackTarget, this.damage);
+                const damage = this.getDamageForTarget(state, this.attackTarget);
+                damageTarget(state, this.attackTarget, damage);
                 this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
                 if (this.attackTarget.objectType === 'enemy') {
                     this.attackTarget.attackTarget = this;
                 }
+                checkForOnHitTargetAbilities(state, this, this.attackTarget);
             }
 
             // Remove the attack target when it is dead.
@@ -137,33 +255,11 @@ function updateHero(this: Hero, state: GameState) {
                 this.enemyDefeatCount += 1;
                 gainEssence(state, this.attackTarget.essenceWorth);
             }
-            return;
-        }
-
-        if (mag < pixelsPerFrame) {
-            this.x = this.attackTarget.x;
-            this.y = this.attackTarget.y;
-        } else {
-            this.x += pixelsPerFrame * dx / mag;
-            this.y += pixelsPerFrame * dy / mag;
         }
         return;
     }
     if (this.movementTarget) {
-        // Move hero until it reaches the target.
-        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
-        if (mag < pixelsPerFrame) {
-            this.x = this.movementTarget.x;
-            this.y = this.movementTarget.y;
-        } else {
-            this.x += pixelsPerFrame * dx / mag;
-            this.y += pixelsPerFrame * dy / mag;
-        }
-
-        // Remove the target once they reach their destination.
-        if (this.x === this.movementTarget.x && this.y === this.movementTarget.y) {
+        if (moveHeroTowardsTarget(state, this, this.movementTarget, 0)) {
             delete this.movementTarget;
         }
     } else {
@@ -171,6 +267,14 @@ function updateHero(this: Hero, state: GameState) {
         //     x: hero.r + Math.floor(Math.random() * (canvas.width - 2 * hero.r)),
         //     y: hero.r + Math.floor(Math.random() * (canvas.height - 2 * hero.r)),
         // };
+    }
+}
+
+function checkForOnHitTargetAbilities(state: GameState, hero: Hero, target: AttackTarget) {
+    for (const ability of hero.abilities) {
+        if (ability.level > 0 && ability.definition.abilityType === 'passiveAbility') {
+            ability.definition.onHitTarget?.(state, hero, target, ability);
+        }
     }
 }
 
@@ -237,4 +341,5 @@ function updateHeroStats(hero: Hero) {
     hero.maxHealth = maxHealth;
     hero.damage = damage;
     hero.movementSpeed = movementSpeed;
+    hero.totalSkillPoints = Math.min(7, hero.level);
 }

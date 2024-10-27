@@ -20,6 +20,12 @@ export function isPointInCircle(circle: Circle, {x, y}: Point) {
     return distanceToCenter <= circle.r;
 }
 
+export function doCirclesIntersect(c1: Circle, c2: Circle) {
+    const dx = c1.x - c2.x, dy = c1.y - c2.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < c1.r + c2.r;
+}
+
 export function isPointInRect(rect: Rect, {x, y}: Point) {
     return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
 }

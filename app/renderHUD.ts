@@ -1,4 +1,4 @@
-import {getHUDButtons, playPauseButton} from 'app/hud';
+import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/objects/nexus';
 import {fillCircle, fillRect} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
@@ -17,7 +17,7 @@ export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
     context.fillStyle = '#FFF';
     context.fillText(time, playPauseButton.x - 10, playPauseButton.y + playPauseButton.h / 2);
 
-    for (const button of getHUDButtons(state)) {
+    for (const button of state.hudButtons) {
         button.render(context, state);
     }
 }

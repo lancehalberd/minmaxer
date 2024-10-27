@@ -17,8 +17,10 @@ export const state: GameState = {
             target: {x: 200, y: -100},
         },
         nextSpawnerLevel: 1,
+        effects: [],
         objects: [nexus, ranger, warrior, wizard],
     },
+    hudButtons: [],
     mouse: {
         currentPosition: {x: 0, y: 0},
     },

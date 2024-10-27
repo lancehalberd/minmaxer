@@ -1,6 +1,6 @@
 import {frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
-import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {fillCircle, renderCooldownCircle, renderLifeBar} from 'app/utils/draw';
 import {isPointInCircle} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';
 
@@ -13,6 +13,7 @@ class EnemySpawner implements Spawner {
     color = 'purple';
     spawnCooldown = 2000;
     spawnLimit = 3;
+    spawnCount = 1;
     spawnedEnemies: Enemy[] = [];
     level = this.enemyLevel + 5;
     sampleEnemy = createEnemy(this.enemyType, this.enemyLevel, {x:0, y:0});
@@ -23,7 +24,7 @@ class EnemySpawner implements Spawner {
     lastSpawnTime: number;
 
     constructor(public enemyType: EnemyType, public enemyLevel: number, props: Partial<Spawner> = {}) {
-        // Set any properties
+        // Set any properties from props onto this instance.
         Object.assign(this, props);
     }
 
@@ -42,18 +43,10 @@ class EnemySpawner implements Spawner {
             context.fillStyle = '#FFF';
             context.fillText(time, this.x, this.y);
         }
-        if (this.lastSpawnTime) {
+        // Render a cooldown circle over the spawner while it is on cooldown.
+        if (this.lastSpawnTime && state.world.time - this.lastSpawnTime < this.spawnCooldown) {
             const p = (state.world.time - this.lastSpawnTime) / this.spawnCooldown;
-            context.save();
-                context.globalAlpha *= 0.3;
-                context.fillStyle = '#000';
-                const r = this.r - 4;
-                const startTheta = p * 2 * Math.PI - Math.PI / 2;
-                context.beginPath();
-                context.moveTo(this.x, this.y);
-                context.arc(this.x, this.y, r, startTheta, 3 * Math.PI / 2);
-                context.fill();
-            context.restore();
+            renderCooldownCircle(context, {x: this.x, y: this.y, r: this.r - 4}, p, 'rgba(0, 0, 0, 0.3)');
         }
         renderLifeBar(context, this, this.health, this.maxHealth);
     }
@@ -70,10 +63,16 @@ class EnemySpawner implements Spawner {
         }
         // If we have no spawn time or it has been longer than the spawn cooldown, spawn a new enemy.
         if (!this.lastSpawnTime || state.world.time - this.lastSpawnTime >= this.spawnCooldown) {
-            const enemy: Enemy = createEnemy(this.enemyType, this.enemyLevel, this);
-            this.spawnedEnemies.push(enemy);
-            state.world.objects.push(enemy);
-            this.lastSpawnTime = state.world.time;
+            let theta = Math.atan2(-this.y, -this.x);
+            for (let i = 0; i < this.spawnCount && this.spawnedEnemies.length < this.spawnLimit; i++) {
+                const enemy: Enemy = createEnemy(this.enemyType, this.enemyLevel, this);
+                enemy.x = this.x + this.r * Math.cos(theta);
+                enemy.y = this.y + this.r * Math.sin(theta);
+                this.spawnedEnemies.push(enemy);
+                state.world.objects.push(enemy);
+                this.lastSpawnTime = state.world.time;
+                theta += Math.PI / 6;
+            }
         }
     }
     onHit(state: GameState, attacker: Hero) {
@@ -94,7 +93,7 @@ class EnemySpawner implements Spawner {
 const spawnInterval = 5 * 60 * 1000;
 const normalDelay =  60 * 1000;
 
-const snakeSpawner: Spawner = new EnemySpawner('snake', 1, {x: 200, y: 200, delay: 5000});
+const snakeSpawner: Spawner = new EnemySpawner('snake', 1, {x: 200, y: 200, delay: 5000, spawnCount: 2});
 const koboldSpawner: Spawner = new EnemySpawner('kobold', 2, {x: -200, y: 200, delay: normalDelay});
 
 
@@ -134,6 +133,7 @@ export function checkToAddNewSpawner(state: GameState) {
             x: state.nexus.x + spawnRadius * Math.cos(theta),
             y: state.nexus.y - spawnRadius * Math.sin(theta),
             delay: nextTargetTime - state.world.time,
+            spawnCount: enemyType === 'snake' ? 2 : 1,
         }));
         state.world.nextSpawnerLevel++;
     }

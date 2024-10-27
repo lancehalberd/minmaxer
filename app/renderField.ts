@@ -1,6 +1,7 @@
 import {canvas} from 'app/gameConstants';
-//import {fillCircle} from 'app/utils/draw';
-//import {convertToWorldPosition} from 'app/utils/geometry';
+import {isAbilityTargetValid} from 'app/utils/combat';
+import {fillCircle, strokeX} from 'app/utils/draw';
+import {convertToWorldPosition} from 'app/utils/geometry';
 
 export function renderField(context: CanvasRenderingContext2D, state: GameState) {
     context.fillStyle = '#CC4';
@@ -19,6 +20,9 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
         for (const object of state.world.objects) {
             object.render(context, state);
         }
+        for (const effect of state.world.effects) {
+            effect.render(context, state);
+        }
         // If any objects have buttons associated with them, draw those on top next.
         for (const object of state.world.objects) {
             if (!object.getFieldButtons) {
@@ -26,6 +30,43 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
             }
             for (const button of object.getFieldButtons(state)) {
                 button.render(context, state);
+            }
+        }
+        // Render targeting graphics for abilities.
+        if (state.selectedHero && state.selectedAbility) {
+            const definition = state.selectedAbility.definition;
+            if (definition.abilityType === 'activeAbility') {
+                const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
+                const isTargetValid = isAbilityTargetValid(state, targetingInfo);
+                const target: Point = state.mouse.mouseHoverTarget || convertToWorldPosition(state, state.mouse.currentPosition);;
+                if (isTargetValid) {
+                    if (targetingInfo.hitRadius) {
+                        fillCircle(context, {...target, r: targetingInfo.hitRadius || 5, color: 'rgba(0, 0, 255, 0.5)'});
+                    }
+                    if (targetingInfo.projectileRadius) {
+                        context.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+                        context.lineWidth = 2 * targetingInfo.projectileRadius;
+                        const dx = target.x - state.selectedHero.x, dy = target.y - state.selectedHero.y;
+                        const mag = Math.sqrt(dx*dx + dy*dy);
+                        context.beginPath();
+                        context.moveTo(state.selectedHero.x, state.selectedHero.y);
+                        context.lineTo(
+                            state.selectedHero.x + targetingInfo.range * dx / mag,
+                            state.selectedHero.y + targetingInfo.range * dy / mag
+                        );
+                        context.stroke();
+                    }
+                } else {
+                    strokeX(context, target, 10, '#F00');
+                }
+            }
+        } else if (state.selectedHero && state.hoveredAbility) {
+            const definition = state.hoveredAbility.definition;
+            if (definition.abilityType === 'activeAbility') {
+                const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.hoveredAbility);
+                if (targetingInfo.hitRadius) {
+                    fillCircle(context, {...state.selectedHero, r: targetingInfo.hitRadius || 5, color: 'rgba(0, 0, 255, 0.5)'});
+                }
             }
         }
         // Render mouse target
