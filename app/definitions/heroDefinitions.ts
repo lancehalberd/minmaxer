@@ -1,4 +1,4 @@
-import {battleRager, spinStrike} from 'app/definitions/heroAbilities';
+import {battleRager, criticalShot, spinStrike, piercingShot} from 'app/definitions/heroAbilities';
 
 export const heroDefinitions: {[key in HeroType]?: HeroDefinition} = {};
 
@@ -35,7 +35,7 @@ heroDefinitions.ranger = {
     color: 'green',
     radius: 10,
     cost: 50,
-    abilities: [],
+    abilities: [piercingShot, criticalShot],
 };
 
 heroDefinitions.wizard = {

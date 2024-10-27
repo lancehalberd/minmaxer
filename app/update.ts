@@ -30,6 +30,11 @@ function update() {
         const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? 10 : 1;
         for (let i = 0; i < frameCount; i++) {
             checkToAddNewSpawner(state);
+            // Currently we update effects before objects so that new effects created by objects
+            // do not update the frame they are created.
+            for (const effect of [...state.world.effects]) {
+                effect.update(state);
+            }
             for (const object of state.world.objects) {
                 object.update(state);
             }

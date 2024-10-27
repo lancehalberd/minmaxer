@@ -124,8 +124,17 @@ export function updateMouseActions(state: GameState) {
                     if (definition.abilityType === 'activeAbility') {
                         const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
                         if (isAbilityTargetValid(state, targetingInfo)) {
-                            state.selectedHero.abilityTarget = target
-                            state.selectedHero.selectedAbility = state.selectedAbility;
+                            if (targetingInfo.moveToTarget) {
+                                // Assign the ability action to the hero if they should move until the
+                                // target is in range.
+                                state.selectedHero.abilityTarget = target
+                                state.selectedHero.selectedAbility = state.selectedAbility;
+                            } else {
+                                // Activate the ability immediately if the hero should just use it where they are
+                                // standing.
+                                definition.onActivate(state, state.selectedHero, state.selectedAbility, target);
+                                state.selectedAbility.cooldown = definition.getCooldown(state, state.selectedHero, state.selectedAbility);
+                            }
                             delete state.selectedAbility;
                             state.mouse.pressHandled = true;
                         }
@@ -142,6 +151,7 @@ export function updateMouseActions(state: GameState) {
     } else {
         delete state.mouse.mouseDownPosition;
         delete state.mouse.mouseDownTarget;
+        delete state.mouse.pressHandled;
     }
     // Delete these values to track that they have been processed.
     lastMouseUpPosition = undefined;

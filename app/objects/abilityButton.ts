@@ -36,20 +36,23 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): CanvasButto
                 if (state.selectedAbility === ability) {
                     fillRect(context, this, 'rgba(0,0,255,0.5)');
                 }
-                if (ability.definition.abilityType === 'activeAbility'
+                if (ability.abilityType === 'activeAbility'
                     && ability.level > 0
                     && ability.cooldown <= 0
                     && isMouseOverTarget(state, this)
                 ) {
                     fillRect(context, this, 'rgba(255,255,255,0.5)');
                 }
-                if (ability.definition.abilityType === 'activeAbility' && ability.cooldown > 0) {
+                if (ability.abilityType === 'activeAbility' && ability.cooldown > 0) {
                     const p = 1 - ability.cooldown / ability.definition.getCooldown(state, hero, ability);
                     const circle = {x: this.x + this.w / 2 + 3, y : this.y + this.h / 2, r: this.w / 2 - 6}
                     renderCooldownCircle(context, circle, p, 'rgba(255, 0, 0, 0.6)');
                 }
             },
             onPress(state: GameState) {
+                if (ability.abilityType !== 'activeAbility') {
+                    return true;;
+                }
                 if (ability.level <= 0 || ability.cooldown > 0) {
                     return true;
                 }
@@ -75,6 +78,9 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): CanvasButto
                 return true;
             },
             onHover(state: GameState) {
+                if (ability.abilityType !== 'activeAbility') {
+                    return true;;
+                }
                 if (ability.level > 0 && ability.cooldown <= 0) {
                     state.hoveredAbility = ability;
                 }

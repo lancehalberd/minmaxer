@@ -29,6 +29,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
             finalValue: definition.attacksPerSecond,
         },
         getAttacksPerSecond: getHeroAttacksPerSecond,
+        getDamageForTarget: getDamageForTarget,
         attackRange: definition.attackRange,
         enemyDefeatCount: 0,
         render: renderHero,
@@ -37,7 +38,17 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         effects: [],
         onHit: onHitHero,
         abilities: definition.abilities.map(abilityDefinition => {
+            if (abilityDefinition.abilityType === 'activeAbility') {
+                return {
+                    abilityType: 'activeAbility',
+                    definition: abilityDefinition,
+                    level: 0,
+                    cooldown: 0,
+                    autocast: true,
+                }
+            }
             return {
+                abilityType: 'passiveAbility',
                 definition: abilityDefinition,
                 level: 0,
                 cooldown: 0,
@@ -47,6 +58,18 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         totalSkillPoints: 1,
         spentSkillPoints: 0,
     };
+}
+
+function getDamageForTarget(this: Hero, state: GameState, target: AbilityTarget): number {
+    let damage = this.damage;
+    for (const ability of this.abilities) {
+        if (ability.abilityType === 'passiveAbility') {
+            if (ability.definition.modifyDamage) {
+                damage = ability.definition.modifyDamage(state, this, target, ability, damage);
+            }
+        }
+    }
+    return damage;
 }
 
 export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
@@ -143,10 +166,12 @@ function updateHero(this: Hero, state: GameState) {
 
     // Update ability cooldown and autocast any abilities that make sense.
     for (const ability of this.abilities) {
-        if (ability.cooldown > 0) {
-            ability.cooldown -= frameLength;
-        } else if (ability.autocast) {
-            // TODO: Automatically use ability if there is a target in range.
+        if (ability.abilityType === 'activeAbility') {
+            if (ability.cooldown > 0) {
+                ability.cooldown -= frameLength;
+            } else if (ability.autocast) {
+                // TODO: Automatically use ability if there is a target in range.
+            }
         }
     }
 
@@ -170,7 +195,15 @@ function updateHero(this: Hero, state: GameState) {
         if (!this.abilityTarget) {
             delete this.selectedAbility;
         } else {
-
+            const targetingInfo = this.selectedAbility.definition.getTargetingInfo(state, this, this.selectedAbility);
+            if (moveHeroTowardsTarget(state, this, this.abilityTarget, this.r + this.abilityTarget.r + targetingInfo.range)) {
+                const definition = this.selectedAbility.definition;
+                definition.onActivate(state, this, this.selectedAbility, this.abilityTarget);
+                this.selectedAbility.cooldown = definition.getCooldown(state, this, this.selectedAbility);
+                delete this.selectedAbility;
+                delete this.abilityTarget;
+            }
+            return;
         }
     }
 
@@ -203,7 +236,8 @@ function updateHero(this: Hero, state: GameState) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.getAttacksPerSecond(state);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
-                damageTarget(state, this.attackTarget, this.damage);
+                const damage = this.getDamageForTarget(state, this.attackTarget);
+                damageTarget(state, this.attackTarget, damage);
                 this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
                 if (this.attackTarget.objectType === 'enemy') {

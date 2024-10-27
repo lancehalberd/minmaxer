@@ -66,10 +66,14 @@ interface AbilityTargetingInfo {
     canTargetAlly?: boolean
     // Ability can target an arbitrary location.
     canTargetLocation?: boolean
+    // Set if this ability creates a projectile skill shot with a radius.
+    projectileRadius?: number
     // Set if this ability has a circular AoE
     hitRadius?: number
-    // Set if this ability has its own range. Otherwise the units attack range is used.
-    range?: number
+    // Range of the ability. Should default to the hero's range.
+    range: number
+    // Whether the hero should move to put the target into range before activating this skill.
+    moveToTarget?: boolean
 }
 
 interface ActiveAbilityDefinition {
@@ -77,7 +81,7 @@ interface ActiveAbilityDefinition {
     name: string
     getTargetingInfo: (state: GameState, hero: Hero, ability: Ability) => AbilityTargetingInfo
     canActivate?: (state: GameState, hero: Hero, ability: Ability) => boolean
-    onActivate: (state: GameState, hero: Hero, ability: Ability) => void
+    onActivate: (state: GameState, hero: Hero, ability: Ability, target?: AbilityTarget) => void
     // Returns the cooldown for this ability in milliseconds.
     getCooldown: (state: GameState, hero: Hero, ability: Ability) => number
 }
@@ -87,18 +91,27 @@ interface PassiveAbilityDefinition {
     name: string
     // Called when the ability user hits any target.
     onHitTarget?: (state: GameState, hero: Hero, target: AttackTarget, ability: Ability) => void
+    modifyDamage?: (state: GameState, hero: Hero, target: AbilityTarget|undefined, ability: Ability, damage: number) => number
 }
 
 type AbilityDefinition = ActiveAbilityDefinition | PassiveAbilityDefinition;
 
-interface Ability {
-    definition: AbilityDefinition
+interface PassiveAbility {
+    abilityType: 'passiveAbility'
+    definition: PassiveAbilityDefinition
+    level: number
+}
+interface ActiveAbility {
+    abilityType: 'activeAbility'
+    definition: ActiveAbilityDefinition
     level: number
     // Cooldown in milliseconds.
     cooldown: number
     // Whether the hero should automatically use this ability if it is an active ability.
     autocast: boolean
 }
+
+type Ability = PassiveAbility | ActiveAbility;
 
 
 interface ModifiableStat {
@@ -126,7 +139,7 @@ interface AbilityEffect<T> extends BaseEffect<T> {
     // How many stacks the effect has, if the effect stacks.
     stacks: number
 }
-type Effect<T> = AbilityEffect<T>;
+type ObjectEffect<T> = AbilityEffect<T>;
 
 
 interface Hero extends Circle {
@@ -143,10 +156,11 @@ interface Hero extends Circle {
     // How fast the enemy attacks in Hertz
     attacksPerSecond: ModifiableStat
     getAttacksPerSecond: (state: GameState) => number
+    getDamageForTarget: (state: GameState, target?: AbilityTarget) => number
     // How far away the hero can hit targets from in pixels.
     attackRange: number
 
-    effects: Effect<Hero>[]
+    effects: ObjectEffect<Hero>[]
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
@@ -167,15 +181,33 @@ interface Hero extends Circle {
     totalSkillPoints: number
     spentSkillPoints: number
     // Ability the hero is currently trying to use.
-    selectedAbility?: Ability
+    selectedAbility?: ActiveAbility
     abilityTarget?: AbilityTarget
 }
+
+interface Projectile extends Circle {
+    objectType: 'projectile'
+    vx: number
+    vy: number
+    duration: number
+    piercing?: boolean
+    damage: number
+    hitsEnemies?: boolean
+    hitsAllies?: boolean
+    target?: AbilityTarget
+    hitTargets: Set<AbilityTarget>
+    update: (this: Projectile, state: GameState) => void
+    render: (this: Projectile, context: CanvasRenderingContext2D, state: GameState) => void
+}
+
+type FieldEffect = Projectile;
+type FieldObject = Hero | Nexus | Enemy | Spawner;
 
 interface GameState {
     nexus: Nexus
     selectedHero?: Hero
     hoveredAbility?: Ability
-    selectedAbility?: Ability
+    selectedAbility?: ActiveAbility
     heroSlots: (Hero | null)[]
     hudButtons: CanvasButton[]
     world: World
@@ -214,7 +246,8 @@ interface World {
     camera: Camera
     // The level of enemy that will be created by the next spawner.
     nextSpawnerLevel: number
-    objects: (Nexus | Hero | Enemy | Spawner)[]
+    effects: FieldEffect[]
+    objects: FieldObject[]
 }
 
 interface Nexus extends Circle {

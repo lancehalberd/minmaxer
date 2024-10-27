@@ -44,12 +44,12 @@ export function getTargetsInCircle<T extends AttackTarget>(state: GameState, pos
 }
 
 
-export function applyEffectToHero(state: GameState, effect: Effect<Hero>, hero: Hero) {
+export function applyEffectToHero(state: GameState, effect: ObjectEffect<Hero>, hero: Hero) {
     hero.effects.push(effect);
     effect.apply(state, hero);
 }
 
-export function removeEffectFromHero(state: GameState, effect: Effect<Hero>, hero: Hero) {
+export function removeEffectFromHero(state: GameState, effect: ObjectEffect<Hero>, hero: Hero) {
     const index = hero.effects.indexOf(effect);
     if (index < 0) {
         return;
@@ -73,4 +73,14 @@ export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTar
         return !!targetingInfo.canTargetAlly;
     }
     return false;
+}
+
+export function getEnemyTargets(state: GameState) {
+    const enemies: EnemyTarget[] = [];
+    for (const object of state.world.objects) {
+        if (object.objectType === 'enemy' || object.objectType === 'spawner') {
+            enemies.push(object);
+        }
+    }
+    return enemies;
 }
