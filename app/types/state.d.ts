@@ -183,6 +183,15 @@ interface Hero extends Circle {
     // Ability the hero is currently trying to use.
     selectedAbility?: ActiveAbility
     abilityTarget?: AbilityTarget
+
+    reviveCooldown?: Cooldown
+}
+
+interface Cooldown {
+    // Length of the entire cooldown in seconds
+    total: number
+    // Length of the remaining cooldown in seconds
+    remaining: number
 }
 
 interface Projectile extends Circle {
@@ -268,6 +277,8 @@ interface Nexus extends Circle {
     // or a green section on the end of the essence bar to preview gaining essence.
     previewEssenceChange: number
     level: number
+    // The number of times heroes have died. Each death increases the cooldown for subsequence hero revivals.
+    deathCount: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getFieldButtons?: (state: GameState) => CanvasButton[]

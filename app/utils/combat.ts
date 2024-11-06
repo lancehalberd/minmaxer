@@ -16,6 +16,13 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
         if (objectIndex >= 0) {
             state.world.objects.splice(objectIndex, 1);
         }
+        if (target.objectType === 'hero') {
+            const reviveTime = Math.floor(target.level * 5 * (1 + state.nexus.deathCount * 0.2));
+            target.reviveCooldown = {
+                total: reviveTime,
+                remaining: reviveTime,
+            };
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 import {canvas} from 'app/gameConstants';
 import {getHeroAbilityButtons} from 'app/objects/abilityButton';
+import {getHeroButtons} from 'app/objects/heroButton';
 import {requireFrame, drawFrame} from 'app/utils/animations';
 
 
@@ -9,6 +10,7 @@ export function updateHudButtons(state: GameState) {
     if (state.selectedHero) {
         state.hudButtons = [...state.hudButtons, ...getHeroAbilityButtons(state, state.selectedHero)];
     }
+    state.hudButtons = [...state.hudButtons, ...getHeroButtons(state)];
     state.hudButtons.push(playPauseButton);
 }
 

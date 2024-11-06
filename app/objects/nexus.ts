@@ -8,6 +8,7 @@ export const nexus: Nexus = {
     r: 20,
     color: '#0FF',
     level: 1,
+    deathCount: 0,
     essence: 100,
     essenceGrowth: 1,
     lostEssence: 0,
@@ -105,7 +106,14 @@ export function loseEssence(state: GameState, essence: number) {
     state.nexus.essence = Math.max(0, state.nexus.essence - essence);
     state.nexus.lostEssence += essence;
     state.nexus.lostEssenceTime = state.world.time;
+}
 
+export function spendEssence(state: GameState, essence: number): boolean {
+    if (essence >= state.nexus.essence) {
+        return false;
+    }
+    loseEssence(state, essence);
+    return true;
 }
 
 export function getNextEssenceGoal(state: GameState): number|undefined {

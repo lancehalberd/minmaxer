@@ -9,6 +9,16 @@ export function fillCircle(context: CanvasRenderingContext2D, circle: Circle) {
     }
 }
 
+export function fillArc(context: CanvasRenderingContext2D, circle: Circle, startTheta: number, endTheta: number) {
+    context.beginPath();
+    context.moveTo(circle.x, circle.y);
+    context.arc(circle.x, circle.y, circle.r, startTheta, endTheta);
+    if (circle.color) {
+        context.fillStyle = circle.color;
+        context.fill();
+    }
+}
+
 export function fillRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, color?: CanvasFill) {
     if (color) {
         context.fillStyle = color;

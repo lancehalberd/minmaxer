@@ -1,4 +1,5 @@
 import {frameLength} from 'app/gameConstants'
+import {reviveHero} from 'app/objects/hero';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
 import {state} from 'app/state';
 import {updateHudButtons} from 'app/hud';
@@ -32,6 +33,14 @@ function update() {
             checkToAddNewSpawner(state);
             // Currently we update effects before objects so that new effects created by objects
             // do not update the frame they are created.
+            for (const hero of state.heroSlots) {
+                if (hero?.reviveCooldown) {
+                    hero.reviveCooldown.remaining -= frameLength / 1000;
+                    if (hero.reviveCooldown.remaining <= 0) {
+                        reviveHero(state, hero);
+                    }
+                }
+            }
             for (const effect of [...state.world.effects]) {
                 effect.update(state);
             }

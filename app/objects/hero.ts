@@ -343,3 +343,31 @@ function updateHeroStats(hero: Hero) {
     hero.movementSpeed = movementSpeed;
     hero.totalSkillPoints = Math.min(7, hero.level);
 }
+
+export function getReviveCost(state: GameState, hero: Hero): number {
+    if (!hero.reviveCooldown) {
+        return 0;
+    }
+    return Math.ceil(hero.reviveCooldown.remaining) * hero.level * 5;
+}
+
+export function reviveHero(state: GameState, hero: Hero) {
+    hero.health = hero.maxHealth;
+    hero.x = state.nexus.x;
+    hero.y = state.nexus.y;
+    delete hero.reviveCooldown;
+    delete hero.attackTarget;
+    delete hero.abilityTarget;
+    delete hero.selectedAttackTarget;
+    delete hero.selectedAbility;
+    delete hero.movementTarget;
+    for (let i = 0; i < hero.effects.length; i++) {
+        const effect = hero.effects[i];
+        hero.effects.splice(i--, 1);
+        effect.remove(state, hero);
+    }
+    if (!state.selectedHero) {
+        state.selectedHero = hero;
+    }
+    state.world.objects.push(hero);
+}
