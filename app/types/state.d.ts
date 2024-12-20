@@ -59,6 +59,16 @@ interface HeroDefinition {
     abilities: AbilityDefinition[]
 }
 
+type LootType = 'potion';
+
+interface LootDefinition {
+    name: string
+    color: CanvasFill
+    r: number
+    onPickup: (state: GameState, hero: Hero) => void
+}
+
+
 interface AbilityTargetingInfo {
     // Ability can target an enemy unit.
     canTargetEnemy?: boolean
@@ -142,6 +152,14 @@ interface AbilityEffect<T> extends BaseEffect<T> {
 type ObjectEffect<T> = AbilityEffect<T>;
 
 
+interface Loot extends Circle {
+    objectType: 'loot'
+    getFieldButtons?: (state: GameState) => CanvasButton[]
+    update: (state: GameState) => void
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
+    onPickup: (state: GameState, hero: Hero) => void
+}
+
 interface Hero extends Circle {
     objectType: 'hero'
     definition: HeroDefinition
@@ -210,7 +228,7 @@ interface Projectile extends Circle {
 }
 
 type FieldEffect = Projectile;
-type FieldObject = Hero | Nexus | Enemy | Spawner;
+type FieldObject = Hero | Nexus | Enemy | Spawner | Loot;
 
 interface GameState {
     nexus: Nexus
@@ -228,6 +246,7 @@ interface GameState {
         mouseDownPosition?: Point
         mouseDownTarget?: MouseTarget
         mouseHoverTarget?: MouseTarget
+        isOverCanvas?: boolean
         // This can be set to indicate the current mouse press has been handled and should not trigger
         // any further actions, such as drag to move.
         pressHandled?: boolean
@@ -294,7 +313,7 @@ type AllyTarget = Hero | Nexus;
 type EnemyTarget = Enemy | Spawner;
 
 // Any target on the field.
-type FieldTarget = LocationTarget | Hero | Enemy | Spawner | Nexus;
+type FieldTarget = LocationTarget | Hero | Enemy | Spawner | Nexus | Loot;
 
 // Any target that an ability could theoretically target.
 type AbilityTarget = FieldTarget;

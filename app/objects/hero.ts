@@ -1,5 +1,6 @@
 import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/objects/fieldButton';
+import {createLoot, pickupLoot} from 'app/objects/loot';
 import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
@@ -254,12 +255,19 @@ function updateHero(this: Hero, state: GameState) {
                 this.experience += Math.max(this.attackTarget.experienceWorth * experiencePenalty, 0);
                 this.enemyDefeatCount += 1;
                 gainEssence(state, this.attackTarget.essenceWorth);
+                // Possibly add a drop from the defeated enemy.
+                if (Math.random() < 0.1) {
+                    state.world.objects.push(createLoot('potion', this.attackTarget));
+                }
             }
         }
         return;
     }
     if (this.movementTarget) {
         if (moveHeroTowardsTarget(state, this, this.movementTarget, 0)) {
+            if (this.movementTarget.objectType === 'loot') {
+                pickupLoot(state, this, this.movementTarget);
+            }
             delete this.movementTarget;
         }
     } else {

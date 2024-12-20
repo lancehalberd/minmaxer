@@ -42,12 +42,20 @@ export const KEY = {
 export const gameKeys = {
     pause: 0,
     fastForward: 1,
-}
+    up: 2,
+    down: 3,
+    left: 4,
+    right: 5,
+};
 
 const KEYBOARD_MAPPINGS = {
     [gameKeys.pause]: [KEY.P, KEY.ENTER, KEY.SPACE],
     [gameKeys.fastForward]: [KEY.F],
-}
+    [gameKeys.up]: [KEY.W, KEY.UP],
+    [gameKeys.down]: [KEY.S, KEY.DOWN],
+    [gameKeys.left]: [KEY.A, KEY.LEFT],
+    [gameKeys.right]: [KEY.D, KEY.RIGHT],
+};
 
 
 const keysDown: boolean[] = [];

@@ -48,7 +48,7 @@ export function getHeroButtons(state: GameState): CanvasButton[] {
                     context.textBaseline = 'middle';
                     context.textAlign = 'center';
                     context.fillStyle = '#FFF';
-                    context.fillText(`${hero.level}`, levelCircle.x, levelCircle.y);
+                    context.fillText(`${hero.level}`, levelCircle.x, levelCircle.y + 1);
 
                 } else {
                     // Draw a '+' in an empty circle for an unused hero slot.
@@ -69,9 +69,13 @@ export function getHeroButtons(state: GameState): CanvasButton[] {
                 }
                 if (hero) {
                     state.selectedHero = hero;
+                    state.world.camera.target.x = state.selectedHero.x;
+                    state.world.camera.target.y = state.selectedHero.y;
+                    state.world.camera.speed = 800;
                 } else {
                     state.world.camera.target.x = state.nexus.x;
                     state.world.camera.target.y = state.nexus.y;
+                    state.world.camera.speed = 800;
                 }
                 return true;
             },

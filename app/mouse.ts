@@ -3,7 +3,7 @@ import {isAbilityTargetValid} from 'app/utils/combat';
 import {convertToWorldPosition, isPointInCircle, isPointInRect} from 'app/utils/geometry';
 
 let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
-let lastMousePosition: Point = {x: 0, y: 0};
+let lastMousePosition: Point = {x: 300, y: 300}, isMouseOverCanvas = false;
 
 export function registerMouseEventHandlers() {
     // This event is fired as soon as the mouse button is pressed over the canvas.
@@ -21,6 +21,10 @@ export function registerMouseEventHandlers() {
 
     canvas.addEventListener('mousemove', (event: MouseEvent) => {
         lastMousePosition = getMousePosition(event, canvas, canvasScale);
+        isMouseOverCanvas = true;
+    });
+    canvas.addEventListener('mouseout', (event: MouseEvent) => {
+        isMouseOverCanvas = false;
     });
 }
 
@@ -91,6 +95,7 @@ export function isMouseOverTarget(state: GameState, target: MouseTarget): boolea
 
 export function updateMouseActions(state: GameState) {
     state.mouse.currentPosition = lastMousePosition;
+    state.mouse.isOverCanvas = isMouseOverCanvas;
     // Trigger a click any time lastMouseUpPosition has been set since the last time we updated.
     if (lastMouseUpPosition) {
         // If state.mouse.mouseDownPosition was set assume the click started at this position.
@@ -145,6 +150,10 @@ export function updateMouseActions(state: GameState) {
                     state.selectedHero.attackTarget = target;
                     state.selectedHero.selectedAttackTarget = target;
                     delete state.selectedHero.movementTarget;
+                } else if (target?.objectType === 'loot') {
+                    delete state.selectedHero.attackTarget;
+                    delete state.selectedHero.selectedAttackTarget;
+                    state.selectedHero.movementTarget = target;
                 }
             }
         }

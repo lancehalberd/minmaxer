@@ -34,6 +34,9 @@ export function isTargetAvailable(state: GameState, target: AbilityTarget): bool
     if (target.objectType === 'point') {
         return true;
     }
+    if (target.objectType === 'loot') {
+        return true;
+    }
     return target.health > 0;
 }
 

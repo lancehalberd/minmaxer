@@ -11,10 +11,10 @@ export const state: GameState = {
         time: 20,
         camera: {
             scale: 2,
-            x: 200,
-            y: -100,
+            x: nexus.x,
+            y: nexus.y,
             speed: 200,
-            target: {x: 200, y: -100},
+            target: {x: nexus.x, y: nexus.y},
         },
         nextSpawnerLevel: 1,
         effects: [],
@@ -22,7 +22,7 @@ export const state: GameState = {
     },
     hudButtons: [],
     mouse: {
-        currentPosition: {x: 0, y: 0},
+        currentPosition: {x: 300, y: 300},
     },
     keyboard: {
         gameKeyValues: [],
