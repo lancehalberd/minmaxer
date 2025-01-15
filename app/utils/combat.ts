@@ -1,5 +1,6 @@
 import {loseEssence} from 'app/objects/nexus';
 import {doCirclesIntersect} from 'app/utils/geometry'
+import {getModifiableStatValue} from 'app/utils/modifiableStat';
 
 export function damageTarget(state: GameState, target: AttackTarget, damage: number) {
     if (damage < 0) {
@@ -8,6 +9,9 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
     if (target.objectType === 'nexus') {
         loseEssence(state, damage);
         return;
+    }
+    if (target.objectType === 'hero') {
+        damage *= getModifiableStatValue(target.incomingDamageMultiplier);
     }
     target.health = Math.max(0, target.health - damage);
     if (target.health <= 0) {

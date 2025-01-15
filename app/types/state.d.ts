@@ -59,7 +59,7 @@ interface HeroDefinition {
     abilities: AbilityDefinition[]
 }
 
-type LootType = 'potion';
+type LootType = 'potion' | 'invincibilityPotion';
 
 interface LootDefinition {
     name: string
@@ -149,7 +149,10 @@ interface AbilityEffect<T> extends BaseEffect<T> {
     // How many stacks the effect has, if the effect stacks.
     stacks: number
 }
-type ObjectEffect<T> = AbilityEffect<T>;
+interface SimpleEffect<T> extends BaseEffect<T> {
+    effectType: 'simpleEffect'
+}
+type ObjectEffect<T> = AbilityEffect<T> | SimpleEffect<T>;
 
 
 interface Loot extends Circle {
@@ -179,6 +182,10 @@ interface Hero extends Circle {
     attackRange: number
 
     effects: ObjectEffect<Hero>[]
+
+    // Any damage the hero takes is multiplied by this state. This allows us to
+    // create effects that cause the hero to take increased or decreased damage.
+    incomingDamageMultiplier: ModifiableStat
 
     // Properties that are often being updated during game play
     lastAttackTime?: number

@@ -46,7 +46,7 @@ export const battleRager: PassiveAbilityDefinition = {
     name: 'Battle Rager',
     onHitTarget(state: GameState, hero: Hero, target: AttackTarget, ability: Ability) {
         let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
-        if (effect) {
+        if (effect?.effectType === 'abilityEffect') {
             effect.remove(state, hero);
             effect.stacks!++;
             effect.abilityLevel = ability.level;

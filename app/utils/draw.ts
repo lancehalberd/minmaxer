@@ -36,7 +36,7 @@ export function strokeX(context: CanvasRenderingContext2D, {x, y}: Point, size: 
     context.stroke();
 }
 
-export function renderLifeBar(context: CanvasRenderingContext2D, circle: Circle, health: number, maxHealth: number) {
+export function renderLifeBar(context: CanvasRenderingContext2D, circle: Circle, health: number, maxHealth: number, borderColor?: CanvasFill) {
     const barHeight = 5;
     const padding = 5;
     const bar: Rect = {
@@ -46,14 +46,14 @@ export function renderLifeBar(context: CanvasRenderingContext2D, circle: Circle,
         h: barHeight,
     }
     // Draw a white box for an outline around the bar.
-    fillRect(context, pad(bar, 1), '#FFF');
+    fillRect(context, pad(bar, 1), borderColor ?? '#FFF');
     // Draw a black box for the full bar.
     fillRect(context, bar, '#000');
     // Draw a colored box over the black box to indicate percent life left.
     fillRect(context, {
         ...bar,
         w: bar.w * health / maxHealth,
-    }, health >= maxHealth / 2 ? '#080' : '#F80');
+    }, (health >= maxHealth / 2 ? '#080' : '#F80'));
 }
 
 export function renderGameStatus(context: CanvasRenderingContext2D, message: string) {

@@ -5,7 +5,10 @@ import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
 import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {getModifiableStatValue} from 'app/utils/modifiableStat';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
+import {createModifiableStat} from 'app/utils/modifiableStat';
+
 
 function createHero(heroType: HeroType, {x, y}: Point): Hero {
     const definition = heroDefinitions[heroType]!;
@@ -22,13 +25,8 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         color: definition.color,
         experience: 0,
         health: derivedStats.maxHealth,
-        attacksPerSecond: {
-            baseValue: definition.attacksPerSecond,
-            addedBonus: 0,
-            percentBonus: 0,
-            multipliers: [],
-            finalValue: definition.attacksPerSecond,
-        },
+        attacksPerSecond: createModifiableStat(definition.attacksPerSecond),
+        incomingDamageMultiplier: createModifiableStat(1),
         getAttacksPerSecond: getHeroAttacksPerSecond,
         getDamageForTarget: getDamageForTarget,
         attackRange: definition.attackRange,
@@ -76,19 +74,6 @@ function getDamageForTarget(this: Hero, state: GameState, target: AbilityTarget)
 export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
 export const ranger: Hero = createHero('ranger', {x: 40, y: 30});
 export const wizard: Hero = createHero('wizard', {x: 0, y: -50});
-
-function getModifiableStatValue(stat: ModifiableStat): number {
-    if (!stat.isDirty) {
-        return stat.finalValue;
-    }
-    delete stat.isDirty;
-    stat.finalValue = (stat.baseValue + stat.addedBonus) * (1 + stat.percentBonus / 100);
-    for (const multiplier of stat.multipliers) {
-        stat.finalValue *= multiplier;
-    }
-    // console.log(stat, stat.finalValue);
-    return stat.finalValue;
-}
 
 function getHeroAttacksPerSecond(this: Hero, state: GameState): number {
     return getModifiableStatValue(this.attacksPerSecond);
@@ -257,7 +242,8 @@ function updateHero(this: Hero, state: GameState) {
                 gainEssence(state, this.attackTarget.essenceWorth);
                 // Possibly add a drop from the defeated enemy.
                 if (Math.random() < 0.1) {
-                    state.world.objects.push(createLoot('potion', this.attackTarget));
+                    const lootType = Math.random() < 0.9 ? 'potion' : 'invincibilityPotion';
+                    state.world.objects.push(createLoot(lootType, this.attackTarget));
                 }
             }
         }
@@ -321,7 +307,8 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
     fillCircle(context, {...this, r: this.r - 2, color: 'black'});
 
     if (state.heroSlots.includes(this)) {
-        renderLifeBar(context, this, this.health, this.maxHealth);
+        const isInvincible = getModifiableStatValue(this.incomingDamageMultiplier) === 0;
+        renderLifeBar(context, this, this.health, this.maxHealth, isInvincible ? '#FF0' : undefined);
     }
     // Draw hero level
     context.textBaseline = 'middle';
