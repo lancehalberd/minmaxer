@@ -1,6 +1,6 @@
 import {frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
-import {fillCircle, renderCooldownCircle, renderLifeBar} from 'app/utils/draw';
+import {fillCircle, renderCooldownCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {isPointInCircle} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';
 
@@ -48,7 +48,7 @@ class EnemySpawner implements Spawner {
             const p = (state.world.time - this.lastSpawnTime) / this.spawnCooldown;
             renderCooldownCircle(context, {x: this.x, y: this.y, r: this.r - 4}, p, 'rgba(0, 0, 0, 0.3)');
         }
-        renderLifeBar(context, this, this.health, this.maxHealth);
+        renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
     }
     update(state: GameState) {
         // The spawner does nothing during the initial delay.

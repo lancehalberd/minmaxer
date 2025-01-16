@@ -239,6 +239,8 @@ type FieldObject = Hero | Nexus | Enemy | Spawner | Loot;
 
 interface GameState {
     nexus: Nexus
+    city: CityStats
+    inventory: Inventory
     selectedHero?: Hero
     hoveredAbility?: Ability
     selectedAbility?: ActiveAbility
@@ -283,6 +285,46 @@ interface World {
     nextSpawnerLevel: number
     effects: FieldEffect[]
     objects: FieldObject[]
+}
+
+interface CityStats {
+    maxPopulation: number
+    population: number
+    // Stats from the Palisade upgrade.
+    maxWallHealth: number
+    wallHealth: number
+    wallReturnDamage: number
+}
+
+interface Inventory {
+    // Raw resources
+    wood: number
+    hardWood: number
+    stone: number
+    ironOre: number
+
+    // Wood chopping tools
+    woodHatchet: number
+    stoneHatchet: number
+    ironHatchet: number
+    steelHatchet: number
+
+    // Building tools
+    woodHammer: number
+    stoneHammer: number
+    ironHammer: number
+    steelHammer: number
+
+    // Archery weapons
+    shortBow: number
+    longBow: number
+    crossBow: number
+
+    // Archery ammunition
+    woodArrow: number
+    flintArrow: number
+    ironArrow: number
+    steelArrow: number
 }
 
 interface Nexus extends Circle {

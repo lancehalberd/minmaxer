@@ -1,7 +1,7 @@
 import {enemyDefinitions} from 'app/definitions/enemyDefinitions';
 import {framesPerSecond} from 'app/gameConstants';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
-import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
 
 export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point): Enemy {
@@ -61,7 +61,7 @@ export function updateEnemy(this: Enemy, state: GameState) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.attacksPerSecond;
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
-                damageTarget(state, this.attackTarget, this.damage);
+                damageTarget(state, this.attackTarget, this.damage, this);
                 this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
             }
@@ -105,5 +105,5 @@ export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, stat
         fillCircle(context, {...this, r: this.r + 2, color: '#FFF'});
     }
     fillCircle(context, this);
-    renderLifeBar(context, this, this.health, this.maxHealth);
+    renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
 }

@@ -4,6 +4,39 @@ import {nexus} from 'app/objects/nexus';
 export const state: GameState = {
     nexus,
     heroSlots: [null],
+    city: {
+        maxPopulation: 0,
+        population: 0,
+        // Stats from the Palisade upgrade.
+        maxWallHealth: 100,
+        wallHealth: 100,
+        wallReturnDamage: 2,
+    },
+    inventory: {
+        wood: 0,
+        hardWood: 0,
+        stone: 0,
+        ironOre: 0,
+        // Wood chopping tools
+        woodHatchet: 0,
+        stoneHatchet: 0,
+        ironHatchet: 0,
+        steelHatchet: 0,
+        // Building tools
+        woodHammer: 0,
+        stoneHammer: 0,
+        ironHammer: 0,
+        steelHammer: 0,
+        // Archery weapons
+        shortBow: 0,
+        longBow: 0,
+        crossBow: 0,
+        // Archery ammunition
+        woodArrow: 0,
+        flintArrow: 0,
+        ironArrow: 0,
+        steelArrow: 0,
+    },
     lastTimeRendered: 0,
     time : 0,
     isPaused: true,

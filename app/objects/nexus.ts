@@ -5,7 +5,7 @@ export const nexus: Nexus = {
     objectType: 'nexus',
     x: 0,
     y: 0,
-    r: 20,
+    r: 40,
     color: '#0FF',
     level: 1,
     deathCount: 0,
@@ -20,6 +20,16 @@ export const nexus: Nexus = {
         fillCircle(context, this);
         if (this.essence <= 0){
             renderGameStatus(context, "nexus destroyed!");
+        }
+        if (state.city.wallHealth > 0) {
+            context.save();
+                context.beginPath();
+                context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+                context.lineWidth = 3;
+                context.setLineDash([3, 3]);
+                context.strokeStyle = '#888';
+                context.stroke();
+            context.restore();
         }
       
     },

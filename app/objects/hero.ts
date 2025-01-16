@@ -4,7 +4,7 @@ import {createLoot, pickupLoot} from 'app/objects/loot';
 import {gainEssence, loseEssence} from 'app/objects/nexus';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
-import {fillCircle, renderLifeBar} from 'app/utils/draw';
+import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {createModifiableStat} from 'app/utils/modifiableStat';
@@ -71,9 +71,9 @@ function getDamageForTarget(this: Hero, state: GameState, target: AbilityTarget)
     return damage;
 }
 
-export const warrior: Hero = createHero('warrior', {x: -40, y: 30});
-export const ranger: Hero = createHero('ranger', {x: 40, y: 30});
-export const wizard: Hero = createHero('wizard', {x: 0, y: -50});
+export const warrior: Hero = createHero('warrior', {x: -60, y: 45});
+export const ranger: Hero = createHero('ranger', {x: 60, y: 45});
+export const wizard: Hero = createHero('wizard', {x: 0, y: -75});
 
 function getHeroAttacksPerSecond(this: Hero, state: GameState): number {
     return getModifiableStatValue(this.attacksPerSecond);
@@ -223,7 +223,7 @@ function updateHero(this: Hero, state: GameState) {
             const attackCooldown = 1000 / this.getAttacksPerSecond(state);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
                 const damage = this.getDamageForTarget(state, this.attackTarget);
-                damageTarget(state, this.attackTarget, damage);
+                damageTarget(state, this.attackTarget, damage, this);
                 this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
                 if (this.attackTarget.objectType === 'enemy') {
@@ -308,7 +308,7 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
 
     if (state.heroSlots.includes(this)) {
         const isInvincible = getModifiableStatValue(this.incomingDamageMultiplier) === 0;
-        renderLifeBar(context, this, this.health, this.maxHealth, isInvincible ? '#FF0' : undefined);
+        renderLifeBarOverCircle(context, this, this.health, this.maxHealth, isInvincible ? '#FF0' : undefined);
     }
     // Draw hero level
     context.textBaseline = 'middle';

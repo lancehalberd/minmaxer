@@ -2,11 +2,23 @@ import {loseEssence} from 'app/objects/nexus';
 import {doCirclesIntersect} from 'app/utils/geometry'
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
 
-export function damageTarget(state: GameState, target: AttackTarget, damage: number) {
+export function damageTarget(state: GameState, target: AttackTarget, damage: number, damageSource?: AttackTarget) {
     if (damage < 0) {
         return
     }
     if (target.objectType === 'nexus') {
+        if (state.city.wallHealth > 0) {
+            const tempDamage = damage;
+            damage -= state.city.wallHealth;
+            state.city.wallHealth -= tempDamage;
+            if (damageSource && state.city.wallReturnDamage) {
+                damageTarget(state, damageSource, state.city.wallReturnDamage);
+            }
+            // Stop if the wall absorbed all of the damage.
+            if (damage <= 0) {
+                return;
+            }
+        }
         loseEssence(state, damage);
         return;
     }
