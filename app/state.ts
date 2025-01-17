@@ -5,12 +5,13 @@ export const state: GameState = {
     nexus,
     heroSlots: [null],
     city: {
-        maxPopulation: 0,
-        population: 0,
+        maxPopulation: 10,
+        population: 10,
         // Stats from the Palisade upgrade.
         maxWallHealth: 100,
         wallHealth: 100,
         wallReturnDamage: 2,
+        archers: 5,
     },
     inventory: {
         wood: 0,
@@ -28,11 +29,11 @@ export const state: GameState = {
         ironHammer: 0,
         steelHammer: 0,
         // Archery weapons
-        shortBow: 0,
+        shortBow: 5,
         longBow: 0,
         crossBow: 0,
         // Archery ammunition
-        woodArrow: 0,
+        woodArrow: 100,
         flintArrow: 0,
         ironArrow: 0,
         steelArrow: 0,

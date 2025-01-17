@@ -1,5 +1,5 @@
 import {playPauseButton} from 'app/hud';
-import {getNextEssenceGoal} from 'app/objects/nexus';
+import {getNextEssenceGoal} from 'app/utils/essence';
 import {fillCircle, fillRect, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';

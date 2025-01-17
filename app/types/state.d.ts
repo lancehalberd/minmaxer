@@ -294,6 +294,10 @@ interface CityStats {
     maxWallHealth: number
     wallHealth: number
     wallReturnDamage: number
+    // Number of people assigned as archers.
+    archers: number
+    archersTarget?: EnemyTarget
+    archersLastAttackTime?: number
 }
 
 interface Inventory {

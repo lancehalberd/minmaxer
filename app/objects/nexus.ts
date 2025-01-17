@@ -1,5 +1,9 @@
+import {addProjectile} from 'app/effects/projectile';
+import {frameLength} from 'app/gameConstants';
+import {isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
-import { frameLength } from 'app/gameConstants';
+import {gainEssence} from 'app/utils/essence';
+import {getDistance} from 'app/utils/geometry';
 
 export const nexus: Nexus = {
     objectType: 'nexus',
@@ -36,7 +40,7 @@ export const nexus: Nexus = {
     update(state: GameState) {
         // If we are tracking gained essence, remove it linearly for 1 second following the last time
         // essence was gained.
-       if (this.gainedEssence) {
+        if (this.gainedEssence) {
             const timeLeft = this.gainedEssenceTime + 1000 - state.world.time;
             if (timeLeft > 0) {
                 // Reduce essence by one frame if there is time remaining.
@@ -59,82 +63,76 @@ export const nexus: Nexus = {
             }
 
         }
+        // Update archers
+        const maxArchers = Math.min(state.city.population, state.inventory.shortBow + state.inventory.longBow + state.inventory.crossBow);
+        const arrows = state.inventory.woodArrow; // + flintArrows etc.
+        // Distance is measured from the center of the nexus, so add the radius of the nexus.
+        const archerRange = this.r + 40;
+        state.city.archers = Math.min(state.city.archers, maxArchers);
+        if (state.city.archers > 0 && arrows > 0) {
+            if (state.city.archersTarget && !isTargetAvailable(state, state.city.archersTarget)) {
+                delete state.city.archersTarget
+            }
+            // Remove the target if it goes out of range since the archers cannot chase it.
+            if (state.city.archersTarget && getDistance(this, state.city.archersTarget)) {
+                delete state.city.archersTarget
+            }
+            // The archers will automatically attack an enemy within its range if it is idle.
+            if (!state.city.archersTarget) {
+                // Choose the closest valid target within the aggro radius as an attack target.
+                let closestDistance = archerRange;
+                for (const object of state.world.objects) {
+                    if (object.objectType === 'enemy') {
+                        const distance = getDistance(this, object);
+                        if (distance < closestDistance) {
+                            state.city.archersTarget = object;
+                            closestDistance = distance;
+                        }
+                    }
+                }
+            }
+            if (state.city.archersTarget) {
+                const attackTarget = state.city.archersTarget;
+                const attacksPerSecond = state.city.archers;
+                const attackCooldown = 1000 / attacksPerSecond;
+                if (!state.city.archersLastAttackTime || state.city.archersLastAttackTime + attackCooldown <= state.world.time) {
+                    // TODO: This should be calculated from various factors.
+                    const damage = 1;
+                    const speed = 100;
+                    const dx = attackTarget.x - this.x, dy = attackTarget.y - this.y;
+                    const mag = Math.sqrt(dx*dx + dy*dy);
+                    state.inventory.woodArrow--;
+                    addProjectile(state, {
+                        x: this.x + dx * this.r / mag,
+                        y: this.y + dy * this.r / mag,
+                        hitsEnemies: true,
+                        vx: dx * speed / mag,
+                        vy: dy * speed / mag,
+                        color: '#AAA',
+                        r: 3,
+                        duration: 1000 * archerRange / speed,
+                        damage,
+                    });
+                    //damageTarget(state, attackTarget, damage, this);
+                    //attackTarget.onHit?.(state, this);
+                    state.city.archersLastAttackTime = state.world.time;
+                }
+
+                // Remove the attack target when it is dead.
+                // Update hero experience.
+                if (attackTarget.health <= 0) {
+                    gainEssence(state, attackTarget.essenceWorth);
+                    // Don't drop items from enemies killed by the Nexus to prevent them from
+                    // stacking up too much.
+                }
+
+            }
+        }
+
+
         // Since this is gained every frame we don't want to animate this change.
         gainEssence(state, this.essenceGrowth * frameLength / 1000, false);
     },
 };
 
-const nexusLevels = [
-    {
-        goal:  200,
-        applyChanges(state: GameState) {
-            state.nexus.essenceGrowth++;
-            // TODO: allow building simple towers.
-        }
-    },
-    {
-        goal:  1000,
-        applyChanges(state: GameState) {
-            state.nexus.essenceGrowth++;
-            // TODO: allow forging hero equipment
-        }
-    },
-    {
-        goal:  5000,
-        applyChanges(state: GameState) {
-            state.nexus.essenceGrowth++;
-            // TODO: allow convering essence to hero experience.
-        }
-    },
-    {
-        goal:  10000,
-        applyChanges(state: GameState) {
-            state.nexus.essenceGrowth++;
-            // Gain an extra hero slot.
-            state.heroSlots.push(null);
-        }
-    },
-];
 
-export function gainEssence(state: GameState, essence: number, showDelta = true) {
-    if (essence <= 0) {
-        return;
-    }
-    state.nexus.essence += essence;
-    // Set gained essence to animate gaining the essence over time in the essence bar.
-    if (showDelta) {
-        state.nexus.gainedEssence += essence;
-        state.nexus.gainedEssenceTime = state.world.time;
-    }
-    checkToLeveNexusUp(state);
-}
-
-export function loseEssence(state: GameState, essence: number) {
-    if (essence <= 0) {
-        return;
-    }
-    state.nexus.essence = Math.max(0, state.nexus.essence - essence);
-    state.nexus.lostEssence += essence;
-    state.nexus.lostEssenceTime = state.world.time;
-}
-
-export function spendEssence(state: GameState, essence: number): boolean {
-    if (essence >= state.nexus.essence) {
-        return false;
-    }
-    loseEssence(state, essence);
-    return true;
-}
-
-export function getNextEssenceGoal(state: GameState): number|undefined {
-    return nexusLevels[state.nexus.level - 1]?.goal;
-}
-
-function checkToLeveNexusUp(state: GameState) {
-    let nextLevel = nexusLevels[state.nexus.level - 1];
-    while (nextLevel && nextLevel.goal <= state.nexus.essence) {
-        nextLevel.applyChanges(state);
-        state.nexus.level++;
-        nextLevel = nexusLevels[state.nexus.level - 1];
-    }
-}

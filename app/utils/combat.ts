@@ -1,4 +1,4 @@
-import {loseEssence} from 'app/objects/nexus';
+import {loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
 

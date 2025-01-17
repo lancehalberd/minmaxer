@@ -1,5 +1,5 @@
 import {getReviveCost, reviveHero} from 'app/objects/hero';
-import {spendEssence} from 'app/objects/nexus';
+import {spendEssence} from 'app/utils/essence';
 import {fillArc, fillCircle, renderCooldownCircle} from 'app/utils/draw';
 
 const padding = 15;
