@@ -33,7 +33,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         enemyDefeatCount: 0,
         render: renderHero,
         update: updateHero,
-        getFieldButtons: getHeroFieldButtons,
+        getChildren: getHeroFieldButtons,
         effects: [],
         onHit: onHitHero,
         abilities: definition.abilities.map(abilityDefinition => {
@@ -90,8 +90,8 @@ function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
     }
 }
 
-function getHeroFieldButtons(this: Hero, state: GameState): CanvasButton[] {
-    const buttons: CanvasButton[] = [];
+function getHeroFieldButtons(this: Hero, state: GameState): UIButton[] {
+    const buttons: UIButton[] = [];
     const firstEmptyIndex = state.heroSlots.indexOf(null);
     // If we can choose this hero as a champion, add a button for selecting them.
     if (firstEmptyIndex >= 0 && !state.heroSlots.includes(this)) {
@@ -314,7 +314,7 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
     context.textBaseline = 'middle';
     context.textAlign = 'center';
     context.fillStyle = '#FFF';
-    context.font = '10px sans-serif';
+    context.font = '10px san-serif';
     context.fillText(`${this.level}`, this.x, this.y);
 }
 

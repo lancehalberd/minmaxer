@@ -5,13 +5,13 @@ import {requireFrame, drawFrame} from 'app/utils/animations';
 
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
-export function updateHudButtons(state: GameState) {
-    state.hudButtons = [];
+export function updateHudUIElements(state: GameState) {
+    state.hudUIElements = [];
     if (state.selectedHero) {
-        state.hudButtons = [...state.hudButtons, ...getHeroAbilityButtons(state, state.selectedHero)];
+        state.hudUIElements = [...state.hudUIElements, ...getHeroAbilityButtons(state, state.selectedHero)];
     }
-    state.hudButtons = [...state.hudButtons, ...getHeroButtons(state)];
-    state.hudButtons.push(playPauseButton);
+    state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
+    state.hudUIElements.push(playPauseButton);
 }
 
 const padding = 10;
@@ -20,8 +20,8 @@ const playButton = requireFrame('gfx/playButton.png', {x: 0, y: 0, w: 139, h: 13
 const pauseButton = requireFrame('gfx/pauseButton.png', {x: 0, y: 0, w: 139, h: 138});
 
 let scale = 1/3;
-export const playPauseButton: CanvasButton = {
-    objectType: 'button',
+export const playPauseButton: UIButton = {
+    objectType: 'uiButton',
     x: canvas.width - playButton.w * scale - padding,
     y: padding,
     w: playButton.w * scale,

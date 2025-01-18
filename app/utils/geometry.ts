@@ -14,6 +14,10 @@ export function pad({x, y, w, h}: Rect, amount: number): Rect {
     };
 }
 
+export function rectCenter({x, y, w, h}: Rect): Point {
+    return {x: x + w / 2, y: y + h / 2};
+}
+
 export function isPointInCircle(circle: Circle, {x, y}: Point) {
     const dx = circle.x - x, dy = circle.y - y;
     const distanceToCenter = Math.sqrt(dx * dx + dy * dy);

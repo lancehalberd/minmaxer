@@ -36,26 +36,42 @@ function convertToWorldTarget(state: GameState, canvasPoint: Point): LocationTar
     }
 }
 
+// Recursively find an interactive element from the list of elements or their descendants.
+function getMouseElementAtPoint(state: GameState, point: Point, elements: UIElement[]): MouseTarget|null {
+    // const locationTarget = convertToWorldTarget(state, screenPoint);
+    for (const element of [...elements].reverse()) {
+        if (element.getChildren) {
+            const target = getMouseElementAtPoint(state, point, element.getChildren(state));
+            if (target){
+                return target;
+            }
+        }
+        if (element.objectType === 'uiButton' && isPointInRect(element, point)) {
+            return element;
+        }
+    }
+    return null;
+}
+
 
 // Returns the highest priority mouse target under the given screen point.
 function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarget {
     // First, check for HUD elements.
-    for (const button of [...state.hudButtons].reverse()) {
-        if (isPointInRect(button, screenPoint)) {
-            return button;
-        }
+    const hudTarget = getMouseElementAtPoint(state, screenPoint, state.hudUIElements);
+    if (hudTarget) {
+        return hudTarget;
     }
 
     // Second, check for button elements in the field.
+    // These use the world location of the mouse point, since these elements use world coordinates.
     const locationTarget = convertToWorldTarget(state, screenPoint);
     for (const object of [...state.world.objects].reverse()) {
-        if (!object.getFieldButtons) {
+        if (!object.getChildren) {
             continue;
         }
-        for (const button of [...object.getFieldButtons(state)].reverse()) {
-            if (isPointInRect(button, locationTarget)) {
-                return button;
-            }
+        const target = getMouseElementAtPoint(state, locationTarget, object.getChildren(state));
+        if (target) {
+            return target;
         }
     }
 
@@ -70,7 +86,7 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
 }
 function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
     const worldPoint = convertToWorldPosition(state, screenPoint);
-    if (target.objectType === 'button') {
+    if (target.objectType === 'uiButton') {
         return isPointInRect(target, worldPoint);
     }
     if (target.objectType === 'point') {
@@ -87,7 +103,7 @@ export function isMouseOverTarget(state: GameState, target: MouseTarget): boolea
     if (hoverTarget === target) {
         return true;
     }
-    if (target.objectType === 'button' && hoverTarget.objectType === 'button') {
+    if (target.objectType === 'uiButton' && hoverTarget.objectType === 'uiButton') {
         return hoverTarget.uniqueId === target.uniqueId;
     }
     return false;
@@ -121,7 +137,7 @@ export function updateMouseActions(state: GameState) {
             const target = getTargetAtScreenPoint(state, state.mouse.mouseDownPosition);
             state.mouse.mouseDownTarget = target;
             // Trigger the effect of a button.
-            if (target?.objectType === 'button') {
+            if (target?.objectType === 'uiButton') {
                 target.onPress?.(state);
             } else if (state.selectedHero) {
                 if (state.selectedAbility) {
@@ -175,7 +191,7 @@ export function updateMouseActions(state: GameState) {
     if (!state.mouse.mouseDownPosition) {
         const target = getTargetAtScreenPoint(state, state.mouse.currentPosition);
         state.mouse.mouseHoverTarget = target;
-        if (target?.objectType === 'button') {
+        if (target?.objectType === 'uiButton') {
             target.onHover?.(state);
         }
     }
@@ -187,7 +203,7 @@ function handleMouseClick(state: GameState, down: Point, up: Point) {
         return;
     }
     // Trigger the effect of a button.
-    if (target.objectType === 'button') {
+    if (target.objectType === 'uiButton') {
         target.onClick?.(state);
     }
     // Check if the user has clicked on an object by checking if the object

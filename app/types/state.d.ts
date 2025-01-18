@@ -21,19 +21,29 @@ interface HeroLevelDerivedStats {
     movementSpeed: number
 }
 
-interface CanvasButton extends Rect {
-    objectType: 'button'
+interface BaseUIElement extends Rect {
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
     // Unique id for this button that can be used to check if different instances of a button
     // are for the same button. For example, we recreate an instance of many buttons each frame,
     // but they are effectively the same button.
     uniqueId?: string
     disabled?: boolean
+    getChildren?: (state: GameState) => UIElement[]
+}
+
+interface UIContainer extends BaseUIElement {
+    objectType: 'uiContainer'
+}
+
+interface UIButton extends BaseUIElement {
+    objectType: 'uiButton'
     text?: string
-    render: (context: CanvasRenderingContext2D, state: GameState) => void
     onHover?: (state: GameState) => boolean
     onPress?: (state: GameState) => boolean
     onClick?: (state: GameState) => boolean
 }
+
+type UIElement = UIContainer | UIButton;
 
 type HeroType = 'warrior' | 'ranger' | 'wizard';
 
@@ -157,7 +167,7 @@ type ObjectEffect<T> = AbilityEffect<T> | SimpleEffect<T>;
 
 interface Loot extends Circle {
     objectType: 'loot'
-    getFieldButtons?: (state: GameState) => CanvasButton[]
+    getChildren?: (state: GameState) => UIElement[]
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     onPickup: (state: GameState, hero: Hero) => void
@@ -199,7 +209,7 @@ interface Hero extends Circle {
     // Methods
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
-    getFieldButtons?: (state: GameState) => CanvasButton[]
+    getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Enemy) => void
 
     abilities: Ability[]
@@ -245,7 +255,7 @@ interface GameState {
     hoveredAbility?: Ability
     selectedAbility?: ActiveAbility
     heroSlots: (Hero | null)[]
-    hudButtons: CanvasButton[]
+    hudUIElements: UIElement[]
     world: World
     isPaused: boolean
     lastTimeRendered: number
@@ -353,7 +363,7 @@ interface Nexus extends Circle {
     deathCount: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
-    getFieldButtons?: (state: GameState) => CanvasButton[]
+    getChildren?: (state: GameState) => UIElement[]
     onHit?: (state: GameState, attacker: Enemy) => void
 }
 
@@ -375,7 +385,7 @@ type AbilityTarget = FieldTarget;
 type AttackTarget = AllyTarget | EnemyTarget;
 
 // This will eventually include clickable targets like buttons or interactive objects.
-type MouseTarget = CanvasButton | FieldTarget;
+type MouseTarget = UIButton | FieldTarget;
 
 type EnemyType = 'kobold'|'snake'|'mummy';
 
@@ -411,7 +421,7 @@ interface Enemy extends Circle, EnemyLevelDerivedStats {
     health: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
-    getFieldButtons?: (state: GameState) => CanvasButton[]
+    getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Hero) => void
     aggroRadius: number
     // The last time the enemy attacked.
@@ -445,7 +455,7 @@ interface Spawner extends Circle {
     level: number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
-    getFieldButtons?: (state: GameState) => CanvasButton[]
+    getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Hero) => void
 }
 
@@ -499,4 +509,13 @@ interface CreateAnimationOptions {
     top?: number, left?: number
     duration?: number
     frameMap?: number[]
+}
+
+interface FillTextProperties extends Point {
+    text: number|string
+    textBaseline?: 'top' | 'middle' | 'bottom'
+    textAlign?: 'left' | 'center' | 'right'
+    size?: number
+    font?: 'san-serif'
+    color?: CanvasFill
 }

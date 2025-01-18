@@ -8,12 +8,12 @@ const heroButtonSize = {
     h: 40,
 };
 
-export function getHeroButtons(state: GameState): CanvasButton[] {
-    const buttons: CanvasButton[] = [];
+export function getHeroButtons(state: GameState): UIButton[] {
+    const buttons: UIButton[] = [];
     let y = 80;
     for (const hero of state.heroSlots) {
-        const heroButton: CanvasButton = {
-            objectType: 'button',
+        const heroButton: UIButton = {
+            objectType: 'uiButton',
             uniqueId: `hero-${y}`,
             x: padding,
             y,

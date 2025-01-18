@@ -4,10 +4,10 @@ import {convertToWorldPosition, isPointInRect, pad} from 'app/utils/geometry';
 import {createAnimation, drawFrameContentAt} from 'app/utils/animations';
 
 
-export function createFieldButtonForTarget(target: Circle, text: string, callback: (state: GameState) => boolean): CanvasButton {
+export function createFieldButtonForTarget(target: Circle, text: string, callback: (state: GameState) => boolean): UIButton {
     const measurements = context.measureText(text);
     return {
-        objectType: 'button',
+        objectType: 'uiButton',
         x: target.x + 5,
         y: target.y + 5,
         w: measurements.width,
@@ -18,7 +18,7 @@ export function createFieldButtonForTarget(target: Circle, text: string, callbac
     };
 }
 
-function renderFieldButton(this: CanvasButton, context: CanvasRenderingContext2D, state: GameState) {
+function renderFieldButton(this: UIButton, context: CanvasRenderingContext2D, state: GameState) {
     const mouseWorldPoint = convertToWorldPosition(state, state.mouse.currentPosition)
     if (!state.mouse.mouseDownTarget && isPointInRect(this, mouseWorldPoint)) {
         fillRect(context, this, '#0F0');
@@ -63,9 +63,9 @@ const [
     downPointerDisabled,
 ] = createAnimation('gfx/downPointer.png', {w: 16, h:16}, {cols: 4}).frames;
 
-export function createPointerButtonForTarget(target: Circle): CanvasButton {
+export function createPointerButtonForTarget(target: Circle): UIButton {
     return {
-        objectType: 'button',
+        objectType: 'uiButton',
         x: target.x - downPointerNormal.w / 2,
         y: target.y - target.r - downPointerNormal.h - 2,
         w: downPointerNormal.w,

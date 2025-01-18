@@ -2,7 +2,7 @@ import {canvas, frameLength} from 'app/gameConstants'
 import {reviveHero} from 'app/objects/hero';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
 import {state} from 'app/state';
-import {updateHudButtons} from 'app/hud';
+import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
 
@@ -53,7 +53,7 @@ function update() {
 
 
     updateCamera(state);
-    updateHudButtons(state);
+    updateHudUIElements(state);
 
     // Advance state time, game won't render anything new if this timer isn't updated.
     state.time += 20;

@@ -26,6 +26,18 @@ export function fillRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, 
     context.fillRect(x, y, w, h);
 }
 
+export function fillBorderedRect(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, props: {
+    borderColor?: CanvasFill
+    fillColor?: CanvasFill
+    borderSize?: number
+} = {}) {
+    context.fillStyle = props.borderColor ?? '#000';
+    context.fillRect(x, y, w, h);
+    context.fillStyle = props.fillColor ?? '#FFF';
+    const s = props.borderSize ?? 1;
+    context.fillRect(x + s, y + s, w - 2 * s, h - 2 * s);
+}
+
 export function strokeX(context: CanvasRenderingContext2D, {x, y}: Point, size: number, color: CanvasFill) {
     context.strokeStyle = color;
     context.beginPath();
@@ -34,6 +46,24 @@ export function strokeX(context: CanvasRenderingContext2D, {x, y}: Point, size: 
     context.moveTo(x + size / 2, y - size / 2);
     context.lineTo(x - size / 2, y + size / 2);
     context.stroke();
+}
+
+export function fillText(context: CanvasRenderingContext2D, props: FillTextProperties) {
+    const {
+        x, y, text,
+        size = 12,
+        font = 'san-serif',
+        color = '#000',
+        textBaseline = 'middle',
+        textAlign = 'center',
+    } = props;
+    context.save();
+        context.font = `${size}px ${font}`;
+        context.textBaseline = textBaseline;
+        context.textAlign = textAlign;
+        context.fillStyle = color;
+        context.fillText('' + text, x, y);
+    context.restore();
 }
 
 export function renderLifeBarOverCircle(context: CanvasRenderingContext2D, circle: Circle, health: number, maxHealth: number, borderColor?: CanvasFill) {

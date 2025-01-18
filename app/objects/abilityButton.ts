@@ -9,12 +9,12 @@ const abilityButtonSize = 40;
 const abilityLevelButtonSize = 16;
 const pillSize = 8;
 
-export function getHeroAbilityButtons(state: GameState, hero: Hero): CanvasButton[] {
-    const buttons: CanvasButton[] = [];
+export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] {
+    const buttons: UIButton[] = [];
     let x = canvas.width / 2 - abilityButtonSize - padding / 2;
     for (const ability of hero.abilities) {
-        const abilityButton: CanvasButton = {
-            objectType: 'button',
+        const abilityButton: UIButton = {
+            objectType: 'uiButton',
             uniqueId: `skill-${x}`,
             x,
             y: canvas.height - padding - abilityButtonSize,
@@ -89,8 +89,8 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): CanvasButto
         }
         buttons.push(abilityButton);
         if (ability.level < 5 && hero.totalSkillPoints > hero.spentSkillPoints) {
-            const abilityLevelUpButton: CanvasButton = {
-                objectType: 'button',
+            const abilityLevelUpButton: UIButton = {
+                objectType: 'uiButton',
                 uniqueId: `skill-level-${x}`,
                 x: abilityButton.x + abilityButton.w - abilityLevelButtonSize + 2,
                 y: abilityButton.y + abilityButton.h - abilityLevelButtonSize + 2,

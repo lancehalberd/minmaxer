@@ -3,6 +3,15 @@ import {isAbilityTargetValid} from 'app/utils/combat';
 import {fillCircle, strokeX} from 'app/utils/draw';
 import {convertToWorldPosition} from 'app/utils/geometry';
 
+export function renderFieldElements(context: CanvasRenderingContext2D, state: GameState, elements: UIElement[]) {
+    for (const element of elements) {
+        element.render(context, state);
+        if (element.getChildren) {
+            renderFieldElements(context, state, element.getChildren(state));
+        }
+    }
+}
+
 export function renderField(context: CanvasRenderingContext2D, state: GameState) {
     context.fillStyle = '#CC4';
     context.fillRect(0, 0, canvas.width, canvas.height)
@@ -25,11 +34,8 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
         }
         // If any objects have buttons associated with them, draw those on top next.
         for (const object of state.world.objects) {
-            if (!object.getFieldButtons) {
-                continue;
-            }
-            for (const button of object.getFieldButtons(state)) {
-                button.render(context, state);
+            if (object.getChildren) {
+                renderFieldElements(context, state, object.getChildren(state));
             }
         }
         // Render targeting graphics for abilities.

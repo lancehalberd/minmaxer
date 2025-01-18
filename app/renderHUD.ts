@@ -1,6 +1,7 @@
+import {canvas} from 'app/gameConstants';
 import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/utils/essence';
-import {fillCircle, fillRect, renderLifeBar} from 'app/utils/draw';
+import {fillCircle, fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';
 
@@ -20,8 +21,41 @@ export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
     context.fillStyle = '#FFF';
     context.fillText(time, playPauseButton.x - 10, playPauseButton.y + playPauseButton.h / 2);
 
-    for (const button of state.hudButtons) {
-        button.render(context, state);
+    for (const element of state.hudUIElements) {
+        element.render(context, state);
+    }
+
+    const inventorySize = {w: 200, h: 200};
+    renderInventory(context, state, {...inventorySize, x: canvas.width - inventorySize.w, y: 70});
+}
+
+export function renderInventory(context: CanvasRenderingContext2D, state: GameState, container: Rect) {
+    fillRect(context, container, '#FFF');
+    fillRect(context, pad(container, -2), '#666');
+    const text: Partial<FillTextProperties> = {
+        size: 15,
+        color: '#FFF',
+        textAlign: 'left',
+        textBaseline: 'top',
+    };
+    let y = container.y + 10, x = container.x + 5;
+    for (const key of Object.keys(state.inventory) as Array<keyof(Inventory)>) {
+        const value = state.inventory[key];
+        if (value > 0) {
+            fillText(context, {...text, text: key + ': ' + value, x, y});
+            y += 20;
+        }
+        if (y + 20 >= container.y + container.h) {
+            break;
+        }
+    }
+    for (const [key, value] of [['population', state.city.population]]) {
+        if (value > 0) {
+            fillText(context, {...text, text: key + ': ' + value, x, y});
+        }
+        if (y + 20 >= container.y + container.h) {
+            break;
+        }
     }
 }
 

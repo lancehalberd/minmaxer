@@ -11,10 +11,10 @@ export const state: GameState = {
         maxWallHealth: 100,
         wallHealth: 100,
         wallReturnDamage: 2,
-        archers: 5,
+        archers: 1,
     },
     inventory: {
-        wood: 0,
+        wood: 1000,
         hardWood: 0,
         stone: 0,
         ironOre: 0,
@@ -54,7 +54,7 @@ export const state: GameState = {
         effects: [],
         objects: [nexus, ranger, warrior, wizard],
     },
-    hudButtons: [],
+    hudUIElements: [],
     mouse: {
         currentPosition: {x: 300, y: 300},
     },
