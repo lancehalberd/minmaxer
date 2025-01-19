@@ -7,12 +7,12 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
         return
     }
     if (target.objectType === 'nexus') {
-        if (state.city.wallHealth > 0) {
+        if (state.city.wall.health > 0) {
             const tempDamage = damage;
-            damage -= state.city.wallHealth;
-            state.city.wallHealth -= tempDamage;
-            if (damageSource && state.city.wallReturnDamage) {
-                damageTarget(state, damageSource, state.city.wallReturnDamage);
+            damage -= state.city.wall.health;
+            state.city.wall.health -= tempDamage;
+            if (damageSource && state.city.wall.returnDamage) {
+                damageTarget(state, damageSource, state.city.wall.returnDamage);
             }
             // Stop if the wall absorbed all of the damage.
             if (damage <= 0) {

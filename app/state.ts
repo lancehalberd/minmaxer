@@ -7,11 +7,15 @@ export const state: GameState = {
     city: {
         maxPopulation: 10,
         population: 10,
-        // Stats from the Palisade upgrade.
-        maxWallHealth: 100,
-        wallHealth: 100,
-        wallReturnDamage: 2,
-        archers: 1,
+        jobs: {
+
+        },
+        wall: {
+            level: 0,
+            maxHealth: 0,
+            health: 0,
+            returnDamage: 0,
+        },
     },
     inventory: {
         wood: 1000,

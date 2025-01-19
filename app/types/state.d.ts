@@ -1,19 +1,37 @@
-interface Point {
-    x: number
-    y: number
+interface GameState {
+    nexus: Nexus
+    city: CityStats
+    inventory: Inventory
+    selectedHero?: Hero
+    hoveredAbility?: Ability
+    selectedAbility?: ActiveAbility
+    heroSlots: (Hero | null)[]
+    hudUIElements: UIElement[]
+    world: World
+    isPaused: boolean
+    lastTimeRendered: number
+    time: number
+    mouse: {
+        currentPosition: Point
+        mouseDownPosition?: Point
+        mouseDownTarget?: MouseTarget
+        mouseHoverTarget?: MouseTarget
+        isOverCanvas?: boolean
+        // This can be set to indicate the current mouse press has been handled and should not trigger
+        // any further actions, such as drag to move.
+        pressHandled?: boolean
+    },
+    keyboard: {
+        gameKeyValues: number[]
+        gameKeysDown: Set<number>
+        gameKeysPressed: Set<number>
+        // The set of most recent keys pressed, which is recalculated any time
+        // a new key is pressed to be those keys pressed in that same frame.
+        mostRecentKeysPressed: Set<number>
+        gameKeysReleased: Set<number>
+    },
 }
 
-interface Circle extends Point {
-    r: number
-    color?: CanvasFill
-}
-
-interface Rect extends Point {
-    w: number
-    h: number
-}
-
-type CanvasFill = string | CanvasGradient | CanvasPattern;
 
 interface HeroLevelDerivedStats {
     maxHealth: number
@@ -247,39 +265,6 @@ interface Projectile extends Circle {
 type FieldEffect = Projectile;
 type FieldObject = Hero | Nexus | Enemy | Spawner | Loot;
 
-interface GameState {
-    nexus: Nexus
-    city: CityStats
-    inventory: Inventory
-    selectedHero?: Hero
-    hoveredAbility?: Ability
-    selectedAbility?: ActiveAbility
-    heroSlots: (Hero | null)[]
-    hudUIElements: UIElement[]
-    world: World
-    isPaused: boolean
-    lastTimeRendered: number
-    time: number
-    mouse: {
-        currentPosition: Point
-        mouseDownPosition?: Point
-        mouseDownTarget?: MouseTarget
-        mouseHoverTarget?: MouseTarget
-        isOverCanvas?: boolean
-        // This can be set to indicate the current mouse press has been handled and should not trigger
-        // any further actions, such as drag to move.
-        pressHandled?: boolean
-    },
-    keyboard: {
-        gameKeyValues: number[]
-        gameKeysDown: Set<number>
-        gameKeysPressed: Set<number>
-        // The set of most recent keys pressed, which is recalculated any time
-        // a new key is pressed to be those keys pressed in that same frame.
-        mostRecentKeysPressed: Set<number>
-        gameKeysReleased: Set<number>
-    },
-}
 
 interface Camera extends Point {
     scale: number
@@ -295,50 +280,6 @@ interface World {
     nextSpawnerLevel: number
     effects: FieldEffect[]
     objects: FieldObject[]
-}
-
-interface CityStats {
-    maxPopulation: number
-    population: number
-    // Stats from the Palisade upgrade.
-    maxWallHealth: number
-    wallHealth: number
-    wallReturnDamage: number
-    // Number of people assigned as archers.
-    archers: number
-    archersTarget?: EnemyTarget
-    archersLastAttackTime?: number
-}
-
-interface Inventory {
-    // Raw resources
-    wood: number
-    hardWood: number
-    stone: number
-    ironOre: number
-
-    // Wood chopping tools
-    woodHatchet: number
-    stoneHatchet: number
-    ironHatchet: number
-    steelHatchet: number
-
-    // Building tools
-    woodHammer: number
-    stoneHammer: number
-    ironHammer: number
-    steelHammer: number
-
-    // Archery weapons
-    shortBow: number
-    longBow: number
-    crossBow: number
-
-    // Archery ammunition
-    woodArrow: number
-    flintArrow: number
-    ironArrow: number
-    steelArrow: number
 }
 
 interface Nexus extends Circle {
@@ -457,65 +398,4 @@ interface Spawner extends Circle {
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Hero) => void
-}
-
-
-
-interface ExtraAnimationProperties {
-    // The animation will loop unless this is explicitly set to false.
-    loop?: boolean
-    // Frame to start from after looping.
-    loopFrame?: number
-}
-type FrameAnimation = {
-    frames: Frame[]
-    frameDuration: number
-    duration: number
-} & ExtraAnimationProperties
-
-interface FrameDimensions {
-    w: number
-    h: number
-    // When a frame does not perfectly fit the size of the content, this content rectangle can be
-    // set to specify the portion of the image that is functionally part of the object in the frame.
-    // For example, a character with a long tail may have the content around the character's body and
-    // exclude the tail when looking at the width/height of the character.
-    content?: Rect
-}
-interface FrameRectangle extends Rect {
-    // When a frame does not perfectly fit the size of the content, this content rectangle can be
-    // set to specify the portion of the image that is functionally part of the object in the frame.
-    // For example, a character with a long tail may have the content around the character's body and
-    // exclude the tail when looking at the width/height of the character.
-    content?: Rect
-}
-
-interface Frame extends FrameRectangle {
-    image: HTMLCanvasElement | HTMLImageElement
-    // Additional property that may be used in some cases to indicate a frame should be flipped
-    // horizontally about the center of its content. Only some contexts respect this.
-    flipped?: boolean
-}
-
-interface FrameWithPattern extends Frame {
-    pattern?: CanvasPattern
-}
-
-interface CreateAnimationOptions {
-    x?: number, y?: number
-    xSpace?: number
-    ySpace?: number
-    rows?: number, cols?: number
-    top?: number, left?: number
-    duration?: number
-    frameMap?: number[]
-}
-
-interface FillTextProperties extends Point {
-    text: number|string
-    textBaseline?: 'top' | 'middle' | 'bottom'
-    textAlign?: 'left' | 'center' | 'right'
-    size?: number
-    font?: 'san-serif'
-    color?: CanvasFill
 }

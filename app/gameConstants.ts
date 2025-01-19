@@ -14,3 +14,6 @@ export const heroLevelCap = 20;
 
 // Level buffer for penalties to experience gain from level disparities.
 export const levelBuffer = 2;
+
+// Size the controls how large UI elements are. Represents the size of a small square button and single line of text.
+export const uiSize = 12;

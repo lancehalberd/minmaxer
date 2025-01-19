@@ -13,6 +13,14 @@ function update() {
     delete state.hoveredAbility;
 
     updateMouseActions(state);
+    // Show the "pointer" cursor when the mouse is over uiButtons.
+    // This is often a hand with a pointing index finger that appears over buttons and links
+    // in webpages.
+    if (state.mouse.mouseHoverTarget?.objectType === 'uiButton') {
+        canvas.style.cursor = 'pointer';
+    } else {
+        canvas.style.cursor = 'default';
+    }
     updateKeyboardState(state);
 
     if (wasGameKeyPressed(state, gameKeys.pause)) {

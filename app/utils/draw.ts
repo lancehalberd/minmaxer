@@ -1,4 +1,4 @@
-import { pad } from 'app/utils/geometry';
+import { pad, rectCenter } from 'app/utils/geometry';
 
 export function fillCircle(context: CanvasRenderingContext2D, circle: Circle) {
     context.beginPath();
@@ -103,4 +103,27 @@ export function renderCooldownCircle(context: CanvasRenderingContext2D, {x, y, r
     context.moveTo(x, y);
     context.arc(x, y, r, startTheta, 3 * Math.PI / 2);
     context.fill();
+}
+
+
+interface NumberFillBar extends Rect {
+    value: number
+    total: number
+    fontColor?: CanvasFill
+    borderColor?: CanvasFill
+    borderSize?: number
+    backgroundColor?: CanvasFill
+    fillColor?: CanvasFill
+}
+export function drawNumberFillBar(context: CanvasRenderingContext2D, numberFillBar: NumberFillBar) {
+    const {
+        value, total,
+        fontColor = '#000', borderColor = '#000', borderSize = 1, backgroundColor = '#FFF', fillColor = '#F80',
+    } = numberFillBar;
+    fillBorderedRect(context, numberFillBar, {borderColor, fillColor: backgroundColor, borderSize});
+    const insideRect = pad(numberFillBar, -borderSize);
+    fillRect(context, {...insideRect, w: Math.ceil(insideRect.w * value / total)}, fillColor);
+    const center = rectCenter(insideRect);
+    // For some reason the text doesn't appear centered, so we have to move it down slightly.
+    fillText(context, {x: center.x, y: center.y + 1, text: value, size: numberFillBar.h - 4, color: fontColor});
 }
