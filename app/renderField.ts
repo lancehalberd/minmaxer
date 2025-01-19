@@ -6,9 +6,10 @@ import {convertToWorldPosition} from 'app/utils/geometry';
 export function renderFieldElements(context: CanvasRenderingContext2D, state: GameState, elements: UIElement[]) {
     for (const element of elements) {
         element.render(context, state);
-        if (element.getChildren) {
+        // Elements are responsible for rendering their own children?
+        /*if (element.getChildren) {
             renderFieldElements(context, state, element.getChildren(state));
-        }
+        }*/
     }
 }
 

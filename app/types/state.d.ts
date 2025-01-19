@@ -2,6 +2,8 @@ interface GameState {
     nexus: Nexus
     city: CityStats
     inventory: Inventory
+    previewRequiredToolType?: ToolType
+    previewResourceCost?: ResourceCost
     selectedHero?: Hero
     hoveredAbility?: Ability
     selectedAbility?: ActiveAbility

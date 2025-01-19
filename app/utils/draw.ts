@@ -48,22 +48,26 @@ export function strokeX(context: CanvasRenderingContext2D, {x, y}: Point, size: 
     context.stroke();
 }
 
-export function fillText(context: CanvasRenderingContext2D, props: FillTextProperties) {
+export function fillText(context: CanvasRenderingContext2D, props: FillTextProperties): TextMetrics|null {
     const {
         x, y, text,
         size = 12,
+        bold = false,
         font = 'san-serif',
         color = '#000',
+        measure = false,
         textBaseline = 'middle',
         textAlign = 'center',
     } = props;
     context.save();
-        context.font = `${size}px ${font}`;
+        context.font = `${bold ? 'bold ' : ''}${size}px ${font}`;
         context.textBaseline = textBaseline;
         context.textAlign = textAlign;
         context.fillStyle = color;
         context.fillText('' + text, x, y);
+        const textMeasure = measure ? context.measureText('' + text) : null;
     context.restore();
+    return textMeasure
 }
 
 export function renderLifeBarOverCircle(context: CanvasRenderingContext2D, circle: Circle, health: number, maxHealth: number, borderColor?: CanvasFill) {

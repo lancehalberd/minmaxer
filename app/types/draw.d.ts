@@ -57,4 +57,6 @@ interface FillTextProperties extends Point {
     size?: number
     font?: 'san-serif'
     color?: CanvasFill
+    bold?: boolean
+    measure?: boolean
 }

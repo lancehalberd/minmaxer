@@ -24,11 +24,12 @@ export const state: GameState = {
         ironOre: 0,
         // Wood chopping tools
         woodHatchet: 0,
-        stoneHatchet: 0,
+        woodAxe: 0,
+        stoneAxe: 0,
         ironHatchet: 0,
-        steelHatchet: 0,
+        steelAxe: 0,
         // Building tools
-        woodHammer: 0,
+        woodHammer: 10,
         stoneHammer: 0,
         ironHammer: 0,
         steelHammer: 0,

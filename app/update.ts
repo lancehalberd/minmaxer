@@ -5,11 +5,14 @@ import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
+import {updateJobs} from 'app/utils/job';
 
 function update() {
     // Reset the essence preview every frame so it doesn't get stale.
     // This needs to run before updateMouseActions since it is often set when hovering over elements.
     state.nexus.previewEssenceChange = 0;
+    delete state.previewRequiredToolType;
+    delete state.previewResourceCost;
     delete state.hoveredAbility;
 
     updateMouseActions(state);
@@ -26,7 +29,6 @@ function update() {
     if (wasGameKeyPressed(state, gameKeys.pause)) {
         state.isPaused = !state.isPaused;
     }
-
 
     // If the nexus is destroyed, stop update function
     // Pan world.camera to nexus, change background color (gray) and return.
@@ -55,10 +57,10 @@ function update() {
             for (const object of state.world.objects) {
                 object.update(state);
             }
+            updateJobs(state);
             state.world.time += 20;
         }
     }
-
 
     updateCamera(state);
     updateHudUIElements(state);

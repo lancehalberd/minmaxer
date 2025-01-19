@@ -3,6 +3,7 @@ import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/utils/essence';
 import {fillCircle, fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
+import {getAvailableToolCount} from 'app/utils/job';
 import {millisecondsToTime} from 'app/utils/time';
 
 
@@ -39,10 +40,32 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
         textBaseline: 'top',
     };
     let y = container.y + 10, x = container.x + 5;
-    for (const key of Object.keys(state.inventory) as Array<keyof(Inventory)>) {
+    if (state.previewRequiredToolType) {
+        const hasTool = !!getAvailableToolCount(state, state.previewRequiredToolType)
+        const color = hasTool ? '#0F0' : '#F00';
+        fillText(context, {...text, bold: true, color, text: 'Requires a ' + state.previewRequiredToolType, x, y});
+        y += 20;
+    }
+    for (const key of Object.keys(state.inventory) as InventoryKey[]) {
         const value = state.inventory[key];
-        if (value > 0) {
-            fillText(context, {...text, text: key + ': ' + value, x, y});
+        const previewCost = state.previewResourceCost?.[key as ResourceKey];
+        if (value > 0 || previewCost) {
+            const metrics = fillText(context, {...text, measure: !!previewCost, text: key + ': ' + value, x, y});
+            if (previewCost && metrics) {
+                context.save();
+                    context.globalAlpha *= 0.5;
+                    context.beginPath();
+                    context.moveTo(x, y + 7);
+                    context.lineTo(x + metrics.width, y + 7);
+                    context.lineWidth = 6;
+                    context.strokeStyle = '#F00';
+                    context.stroke();
+                context.restore();
+                y += 20;
+                const result = value - previewCost;
+                const color = result < 0 ? '#F00' : '#FF0';
+                fillText(context, {...text, bold: true, color, text: key + ': ' + result, x, y});
+            }
             y += 20;
         }
         if (y + 20 >= container.y + container.h) {

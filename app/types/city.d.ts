@@ -5,17 +5,20 @@ interface CityWallStats {
     returnDamage: number
 }
 
-type JobKey = 'archer' | 'buildWall';
+type JobKey = 'archer' | 'buildWall' | 'repairWall';
 type ResourceKey = 'wood' | 'hardWood' | 'stone' | 'ironOre';
 type ToolType = 'hammer' | 'axe' | 'bow';
 type HammerType = 'woodHammer' | 'stoneHammer' | 'ironHammer' | 'steelHammer';
-type AxeType = 'woodHatchet' | 'stoneHatchet' | 'ironHatchet' | 'steelHatchet';
+type AxeType = 'woodHatchet' | 'woodAxe' | 'stoneAxe' | 'ironHatchet' | 'steelAxe';
 type BowType = 'shortBow' | 'longBow' | 'crossBow';
-type AmmoTyoe = 'arrow';
+type AmmoType = 'arrow';
 type ArrowType = 'woodArrow' | 'flintArrow' | 'ironArrow' | 'steelArrow';
 
-type InventoryKey = ResourceKey | HammerType;
+type InventoryKey = ResourceKey | AxeType | BowType | HammerType | ArrowType;
 
+type Inventory = {
+    [key in InventoryKey]: number
+};
 
 type ResourceCost = {
     [key in ResourceKey]?: number
@@ -23,16 +26,22 @@ type ResourceCost = {
 
 interface JobDefinition {
     key: JobKey
+    label: string
     // The level of the job for job's with multiple levels.
     level?: number
     // Which resources must be consumed in order to start this job.
     resourceCost?: ResourceCost
+    essenceCost?: number
+    requiredToolType?: ToolType
     // The default number of seconds it takes a single worker to complete this job by default.
     workerSeconds?: number
     // If true the job will repeat when completed.
     repeat?: boolean
+    // This can be set to freeze job progress in certain circumstances.
+    // For example, the repair wall job will freeze when the wall has full health.
+    canProgress?: (state: GameState, job: Job) => boolean
     update?: (state: GameState, job: Job) => void
-    onComplete?: (state: GameState, job: Job, completons: number) => void
+    onComplete?: (state: GameState, job: Job) => void
 }
 
 interface Job {
@@ -53,33 +62,3 @@ interface CityStats {
     archersLastAttackTime?: number
 }
 
-interface Inventory {
-    // Raw resources
-    wood: number
-    hardWood: number
-    stone: number
-    ironOre: number
-
-    // Wood chopping tools
-    woodHatchet: number
-    stoneHatchet: number
-    ironHatchet: number
-    steelHatchet: number
-
-    // Building tools
-    woodHammer: number
-    stoneHammer: number
-    ironHammer: number
-    steelHammer: number
-
-    // Archery weapons
-    shortBow: number
-    longBow: number
-    crossBow: number
-
-    // Archery ammunition
-    woodArrow: number
-    flintArrow: number
-    ironArrow: number
-    steelArrow: number
-}

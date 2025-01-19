@@ -24,16 +24,12 @@ Population jobs:
     Craft hammer:
         2 wood, 10 seconds
 
-    Build Palisade:
-        100 wood, requires hammer, takes 100 seconds
-        Build a wall around the city that protects the nexus and damages melee enemies. 100 health, 1 thorns damage
     Upgrade Palisade(N Levels):
         X resources, requires hammer, takes N seconds
         Improve the max life of the palisade + return damage
             500 wood -> 300 health, 5 thorns damage
             200 stone+2000 wood -> 1000 health, 20 thorns damage
-    Repair Palisade(ceil(1% of hp)):
-        ceil(sqrt(maxHp) / 10) wood, requires hammer, takes ceil(sqrt(maxHp) / 10) second
+
 
 
     Craft 1 bow:
