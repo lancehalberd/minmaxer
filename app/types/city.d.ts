@@ -5,8 +5,8 @@ interface CityWallStats {
     returnDamage: number
 }
 
-type JobKey = 'archer' | 'buildWall' | 'repairWall';
-type ResourceKey = 'wood' | 'hardWood' | 'stone' | 'ironOre';
+type JobKey = string;//'archer' | 'buildWall' | 'repairWall' | 'harvestWood';
+type ResourceKey = 'wood' | 'hardwood' | 'stone' | 'ironOre';
 type ToolType = 'hammer' | 'axe' | 'bow';
 type HammerType = 'woodHammer' | 'stoneHammer' | 'ironHammer' | 'steelHammer';
 type AxeType = 'woodHatchet' | 'woodAxe' | 'stoneAxe' | 'ironHatchet' | 'steelAxe';
@@ -42,19 +42,26 @@ interface JobDefinition {
     canProgress?: (state: GameState, job: Job) => boolean
     update?: (state: GameState, job: Job) => void
     onComplete?: (state: GameState, job: Job) => void
+    // Function called each tick for each hero working on this job.
+    applyHeroProgress?: (state: GameState, job: Job, hero: Hero) => void
 }
 
 interface Job {
     definition: JobDefinition
+    // Whether this job has been paid for already.
+    isPaidFor?: boolean
     workers: number
     workerSecondsCompleted: number
+    // Circle a hero must be in range of to participate in this job.
+    // For example, this is the Nexus for city jobs, or the forest for gathering wood.
+    getHeroTarget?: (state: GameState) => FieldTarget
 }
 
 interface CityStats {
     maxPopulation: number
     population: number
     jobs: {
-        [key in JobKey]?: Job
+        [key in JobKey]: Job
     }
     wall: CityWallStats
     // Number of people assigned as archers.

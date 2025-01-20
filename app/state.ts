@@ -5,11 +5,9 @@ export const state: GameState = {
     nexus,
     heroSlots: [null],
     city: {
-        maxPopulation: 10,
-        population: 10,
-        jobs: {
-
-        },
+        maxPopulation: 5,
+        population: 0,
+        jobs: {},
         wall: {
             level: 0,
             maxHealth: 0,
@@ -18,8 +16,8 @@ export const state: GameState = {
         },
     },
     inventory: {
-        wood: 1000,
-        hardWood: 0,
+        wood: 0,
+        hardwood: 0,
         stone: 0,
         ironOre: 0,
         // Wood chopping tools
@@ -29,19 +27,31 @@ export const state: GameState = {
         ironHatchet: 0,
         steelAxe: 0,
         // Building tools
-        woodHammer: 10,
+        woodHammer: 0,
         stoneHammer: 0,
         ironHammer: 0,
         steelHammer: 0,
         // Archery weapons
-        shortBow: 5,
+        shortBow: 0,
         longBow: 0,
         crossBow: 0,
         // Archery ammunition
-        woodArrow: 100,
+        woodArrow: 0,
         flintArrow: 0,
         ironArrow: 0,
         steelArrow: 0,
+    },
+    totalResources: {
+        wood: 0,
+        hardwood: 0,
+        stone: 0,
+        ironOre: 0,
+    },
+    availableResources: {
+        wood: 0,
+        hardwood: 0,
+        stone: 0,
+        ironOre: 0,
     },
     lastTimeRendered: 0,
     time : 0,

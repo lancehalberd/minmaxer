@@ -3,6 +3,7 @@ import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/utils/essence';
 import {fillCircle, fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
+import {inventoryLabels, toolTypeLabels} from 'app/utils/inventory';
 import {getAvailableToolCount} from 'app/utils/job';
 import {millisecondsToTime} from 'app/utils/time';
 
@@ -40,17 +41,34 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
         textBaseline: 'top',
     };
     let y = container.y + 10, x = container.x + 5;
+
+    /*for (const [key, value] of [['population', state.city.population]]) {
+        if (value > 0) {
+
+            y += 20;
+            if (y + 20 >= container.y + container.h) {
+                break;
+            }
+        }
+    }*/
+    if (state.city.population) {
+        fillText(context, {...text, text:'population: ' + state.city.population + ' / ' + state.city.maxPopulation, x, y});
+        y += 40;
+    }
+
     if (state.previewRequiredToolType) {
         const hasTool = !!getAvailableToolCount(state, state.previewRequiredToolType)
         const color = hasTool ? '#0F0' : '#F00';
-        fillText(context, {...text, bold: true, color, text: 'Requires a ' + state.previewRequiredToolType, x, y});
+        const label = toolTypeLabels[state.previewRequiredToolType] ?? state.previewRequiredToolType;
+        fillText(context, {...text, bold: true, color, text: 'Requires a ' + label, x, y});
         y += 20;
     }
     for (const key of Object.keys(state.inventory) as InventoryKey[]) {
         const value = state.inventory[key];
         const previewCost = state.previewResourceCost?.[key as ResourceKey];
+        const label = inventoryLabels[key] ?? key;
         if (value > 0 || previewCost) {
-            const metrics = fillText(context, {...text, measure: !!previewCost, text: key + ': ' + value, x, y});
+            const metrics = fillText(context, {...text, measure: !!previewCost, text: label + ': ' + value, x, y});
             if (previewCost && metrics) {
                 context.save();
                     context.globalAlpha *= 0.5;
@@ -64,17 +82,9 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
                 y += 20;
                 const result = value - previewCost;
                 const color = result < 0 ? '#F00' : '#FF0';
-                fillText(context, {...text, bold: true, color, text: key + ': ' + result, x, y});
+                fillText(context, {...text, bold: true, color, text: label + ': ' + result, x, y});
             }
             y += 20;
-        }
-        if (y + 20 >= container.y + container.h) {
-            break;
-        }
-    }
-    for (const [key, value] of [['population', state.city.population]]) {
-        if (value > 0) {
-            fillText(context, {...text, text: key + ': ' + value, x, y});
         }
         if (y + 20 >= container.y + container.h) {
             break;

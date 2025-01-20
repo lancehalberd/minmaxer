@@ -13,7 +13,7 @@ const archerJobDefinition: JobDefinition = {
     //workerSeconds: 1,
     //repeat: true,
 };
-export const archerJobElement = createJobElement(archerJobDefinition, { x: - 2 * uiSize, y: -uiSize});
+export const archerJobElement = createJobElement(archerJobDefinition, { x: -3 * uiSize, y: -uiSize});
 
 function updateArchers(state: GameState, archerJob: Job) {
     // Update archers

@@ -166,9 +166,16 @@ export function updateMouseActions(state: GameState) {
                     state.selectedHero.attackTarget = target;
                     state.selectedHero.selectedAttackTarget = target;
                     delete state.selectedHero.movementTarget;
+                    delete state.selectedHero.assignedJob;
                 } else if (target?.objectType === 'loot') {
                     delete state.selectedHero.attackTarget;
                     delete state.selectedHero.selectedAttackTarget;
+                    delete state.selectedHero.assignedJob;
+                    state.selectedHero.movementTarget = target;
+                } else if (target?.objectType === 'structure' || target?.objectType === 'nexus') {
+                    delete state.selectedHero.attackTarget;
+                    delete state.selectedHero.selectedAttackTarget;
+                    delete state.selectedHero.assignedJob;
                     state.selectedHero.movementTarget = target;
                 }
             }
@@ -227,7 +234,8 @@ function setMovementTarget(state: GameState, canvasPoint: Point) {
     const locationTarget = convertToWorldTarget(state, canvasPoint);
     if (state.selectedHero) {
         delete state.selectedHero.attackTarget;
-        delete state.selectedHero.selectedAttackTarget
+        delete state.selectedHero.selectedAttackTarget;
+        delete state.selectedHero.assignedJob;
         state.selectedHero.movementTarget = locationTarget;
     }
 }

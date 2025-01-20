@@ -5,6 +5,7 @@ import {gainEssence, loseEssence} from 'app/utils/essence';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
+import {applyHeroToJob} from 'app/utils/job';
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {createModifiableStat} from 'app/utils/modifiableStat';
@@ -19,6 +20,7 @@ function createHero(heroType: HeroType, {x, y}: Point): Hero {
         definition,
         level,
         ...derivedStats,
+        skills: {},
         x,
         y,
         r: definition.radius,
@@ -249,18 +251,25 @@ function updateHero(this: Hero, state: GameState) {
         }
         return;
     }
+    if (this.assignedJob) {
+        this.movementTarget = this.assignedJob.getHeroTarget?.(state);
+        // If there is not target associated with the job, the hero should attempt to start the job
+        // immediately.
+        if (!this.movementTarget) {
+            applyHeroToJob(state, this.assignedJob.definition, this);
+        }
+    }
     if (this.movementTarget) {
-        if (moveHeroTowardsTarget(state, this, this.movementTarget, 0)) {
+        if (moveHeroTowardsTarget(state, this, this.movementTarget, this.r + this.movementTarget.r)) {
             if (this.movementTarget.objectType === 'loot') {
                 pickupLoot(state, this, this.movementTarget);
+                delete this.movementTarget;
+            } else if (this.movementTarget.objectType === 'structure' || this.movementTarget.objectType === 'nexus') {
+                this.movementTarget.onHeroInteraction?.(state, this);
+            } else {
+                delete this.movementTarget;
             }
-            delete this.movementTarget;
         }
-    } else {
-        // hero.target = {
-        //     x: hero.r + Math.floor(Math.random() * (canvas.width - 2 * hero.r)),
-        //     y: hero.r + Math.floor(Math.random() * (canvas.height - 2 * hero.r)),
-        // };
     }
 }
 

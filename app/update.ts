@@ -56,6 +56,9 @@ function update() {
             }
             for (const object of state.world.objects) {
                 object.update(state);
+                for (const child of (object.getChildren?.(state) ?? [])) {
+                    child.update?.(state);
+                }
             }
             updateJobs(state);
             state.world.time += 20;

@@ -32,6 +32,9 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
         if (objectIndex >= 0) {
             state.world.objects.splice(objectIndex, 1);
         }
+        if ((target.objectType === 'enemy' || target.objectType === 'spawner') && target.onDeath) {
+            target.onDeath(state);
+        }
         if (target.objectType === 'hero') {
             const reviveTime = Math.floor(target.level * 5 * (1 + state.nexus.deathCount * 0.2));
             target.reviveCooldown = {
@@ -51,6 +54,9 @@ export function isTargetAvailable(state: GameState, target: AbilityTarget): bool
         return true;
     }
     if (target.objectType === 'loot') {
+        return true;
+    }
+    if (target.objectType === 'structure') {
         return true;
     }
     return target.health > 0;

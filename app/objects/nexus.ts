@@ -1,8 +1,10 @@
 import {archerJobElement} from 'app/city/archers';
 import {buildWallElement, repairWallElement} from 'app/city/cityWall';
+import {craftingJobDefinitions} from 'app/city/crafting';
 import {frameLength} from 'app/gameConstants';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
+import {applyHeroToJob, isJobDiscovered} from 'app/utils/job';
 
 export const nexus: Nexus = {
     objectType: 'nexus',
@@ -66,19 +68,32 @@ export const nexus: Nexus = {
         // Since this is gained every frame we don't want to animate this change.
         gainEssence(state, this.essenceGrowth * frameLength / 1000, false);
     },
+    onHeroInteraction(state: GameState, hero: Hero) {
+        if (hero.assignedJob) {
+            applyHeroToJob(state, hero.assignedJob.definition, hero);
+        }
+    },
     getChildren: getNexusElements,
 };
 
 
 function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     const elements: UIElement[] = [];
-    if (state.city.population && !state.city.wall.level) {
+    if (state.totalResources.wood && !state.city.wall.level) {
         elements.push(buildWallElement);
+    }
+    if (state.city.wall.level) {
+        elements.push(repairWallElement);
+        // elements.push(upgradeWallElement);
     }
     if (state.city.population && state.city.wall.level) {
         elements.push(archerJobElement);
-        elements.push(repairWallElement);
-        // elements.push(upgradeWallElement);
+    }
+    for (const craftingJobDefinition of craftingJobDefinitions) {
+        if (!craftingJobDefinition.jobDefinition || !craftingJobDefinition.element || !isJobDiscovered(state, craftingJobDefinition.jobDefinition)) {
+            continue;
+        }
+        elements.push(craftingJobDefinition.element);
     }
 
     return elements;

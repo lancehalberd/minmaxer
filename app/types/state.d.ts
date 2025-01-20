@@ -2,6 +2,14 @@ interface GameState {
     nexus: Nexus
     city: CityStats
     inventory: Inventory
+    // Total resources harvested this round.
+    totalResources: {
+        [key in ResourceKey]: number
+    }
+    // Resources available to harvest currently.
+    availableResources: {
+        [key in ResourceKey]: number
+    }
     previewRequiredToolType?: ToolType
     previewResourceCost?: ResourceCost
     selectedHero?: Hero
@@ -34,6 +42,7 @@ interface GameState {
     },
 }
 
+type Computed<T, U> = T | ((state: GameState, object: U) => T)
 
 interface HeroLevelDerivedStats {
     maxHealth: number
@@ -48,6 +57,7 @@ interface BaseUIElement extends Rect {
     // but they are effectively the same button.
     uniqueId?: string
     disabled?: boolean
+    update?: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
 }
 
@@ -65,29 +75,6 @@ interface UIButton extends BaseUIElement {
 
 type UIElement = UIContainer | UIButton;
 
-type HeroType = 'warrior' | 'ranger' | 'wizard';
-
-interface HeroDefinition {
-    // Name of the hero.
-    name: string
-    // Level that the hero starts at.
-    startingLevel: number
-    // Current and max life of the enemy.
-    getStatsForLevel: (level: number) => HeroLevelDerivedStats
-    // Essence cost of summoning this hero.
-    cost: number
-
-    // How fast the hero attacks in Hertz
-    attacksPerSecond: number
-    // How far away the hero can hit targets from in pixels.
-    attackRange: number
-
-    // Fields needed to render the hero.
-    color: string
-    radius: number
-
-    abilities: AbilityDefinition[]
-}
 
 type LootType = 'potion' | 'invincibilityPotion';
 
@@ -193,54 +180,6 @@ interface Loot extends Circle {
     onPickup: (state: GameState, hero: Hero) => void
 }
 
-interface Hero extends Circle {
-    objectType: 'hero'
-    definition: HeroDefinition
-    movementSpeed: number
-    level: number
-    // Net amount of experience the hero has accumulated
-    experience: number
-    health: number
-    maxHealth: number
-    // How much damage the enemy deals on attack
-    damage: number
-    // How fast the enemy attacks in Hertz
-    attacksPerSecond: ModifiableStat
-    getAttacksPerSecond: (state: GameState) => number
-    getDamageForTarget: (state: GameState, target?: AbilityTarget) => number
-    // How far away the hero can hit targets from in pixels.
-    attackRange: number
-
-    effects: ObjectEffect<Hero>[]
-
-    // Any damage the hero takes is multiplied by this state. This allows us to
-    // create effects that cause the hero to take increased or decreased damage.
-    incomingDamageMultiplier: ModifiableStat
-
-    // Properties that are often being updated during game play
-    lastAttackTime?: number
-    movementTarget?: FieldTarget
-    // The target of the last explicit command the hero was given, if any.
-    // Their actual attack target may be changed to an enemy that attacks them,
-    // but they will go back to this target once the enemy is defeated.
-    selectedAttackTarget?: EnemyTarget
-    attackTarget?: EnemyTarget
-    enemyDefeatCount: number
-    // Methods
-    render: (context: CanvasRenderingContext2D, state: GameState) => void
-    update: (state: GameState) => void
-    getChildren?: (state: GameState) => UIElement[]
-    onHit: (state: GameState, attacker: Enemy) => void
-
-    abilities: Ability[]
-    totalSkillPoints: number
-    spentSkillPoints: number
-    // Ability the hero is currently trying to use.
-    selectedAbility?: ActiveAbility
-    abilityTarget?: AbilityTarget
-
-    reviveCooldown?: Cooldown
-}
 
 interface Cooldown {
     // Length of the entire cooldown in seconds
@@ -265,7 +204,7 @@ interface Projectile extends Circle {
 }
 
 type FieldEffect = Projectile;
-type FieldObject = Hero | Nexus | Enemy | Spawner | Loot;
+type FieldObject = Hero | Nexus | Enemy | Spawner | Loot | Structure;
 
 
 interface Camera extends Point {
@@ -282,6 +221,17 @@ interface World {
     nextSpawnerLevel: number
     effects: FieldEffect[]
     objects: FieldObject[]
+}
+
+interface Structure extends Circle {
+    objectType: 'structure'
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
+    update: (state: GameState) => void
+    // Called when the structure becomes available to interact with.
+    onDiscover?: (state: GameState) => void
+    // Called when a hero reaches this structure as their movement target.
+    onHeroInteraction?: (state: GameState, hero: Hero) => void
+    getChildren?: (state: GameState) => UIElement[]
 }
 
 interface Nexus extends Circle {
@@ -308,7 +258,10 @@ interface Nexus extends Circle {
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit?: (state: GameState, attacker: Enemy) => void
+    // Called when a hero reaches this structure as their movement target.
+    onHeroInteraction?: (state: GameState, hero: Hero) => void
 }
+
 
 interface LocationTarget extends Point {
     objectType: 'point'
@@ -319,7 +272,7 @@ type AllyTarget = Hero | Nexus;
 type EnemyTarget = Enemy | Spawner;
 
 // Any target on the field.
-type FieldTarget = LocationTarget | Hero | Enemy | Spawner | Nexus | Loot;
+type FieldTarget = LocationTarget | Hero | Enemy | Spawner | Nexus | Loot | Structure;
 
 // Any target that an ability could theoretically target.
 type AbilityTarget = FieldTarget;
@@ -366,6 +319,7 @@ interface Enemy extends Circle, EnemyLevelDerivedStats {
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Hero) => void
+    onDeath?: (state: GameState) => void
     aggroRadius: number
     // The last time the enemy attacked.
     lastAttackTime?: number
@@ -396,8 +350,11 @@ interface Spawner extends Circle {
     // How much essence the enemy grants when defeated.
     essenceWorth: number
     level: number
+    // The structure left behind when this spawner is defeated.
+    structure?: Structure
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Hero) => void
+    onDeath?: (state: GameState) => void
 }

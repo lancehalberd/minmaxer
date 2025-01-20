@@ -1,4 +1,4 @@
-import {fillBorderedRect, fillRect} from 'app/utils/draw';
+import {fillBorderedRect, fillCircle, fillRect} from 'app/utils/draw';
 import {uiSize} from 'app/gameConstants';
 
 interface IconButtonProps extends Partial<UIButton> {
@@ -42,5 +42,12 @@ export class MinusIconButton extends IconButton {
     render(context: CanvasRenderingContext2D, state: GameState) {
         this.drawBackground(context, state);
         fillRect(context, {x: this.x + 2, y: this.y + this.h / 2 - 1, w: this.w - 4, h: 2}, this.color);
+    }
+}
+export class CircleIconButton extends IconButton {
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        this.drawBackground(context, state);
+        const r = Math.min(0.3 * this.w, 0.3 * this.h);
+        fillCircle(context, {x: this.x + this.w / 2, y: this.y + this.h / 2, r, color: this.color});
     }
 }
