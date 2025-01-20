@@ -1,7 +1,9 @@
 import {frameLength, uiSize} from 'app/gameConstants';
+import {CircleIconButton, MinusIconButton, PlusIconButton} from 'app/objects/iconButton';
+import {computeResourceCost, computeValue} from 'app/utils/computed';
 import {drawNumberFillBar, fillRect, fillText} from 'app/utils/draw';
 import {spendEssence} from 'app/utils/essence';
-import {CircleIconButton, MinusIconButton, PlusIconButton} from 'app/objects/iconButton';
+import {getAvailableToolCount} from 'app/utils/inventory';
 
 
 export function updateJobs(state: GameState) {
@@ -17,6 +19,7 @@ export function updateJobs(state: GameState) {
     }
 }
 
+// TODO: Add option to reveal jobs from previous play throughs before they are discovered in the current playthrough.
 export function isJobDiscovered(state: GameState, job: JobDefinition): boolean {
     if (job.resourceCost) {
         for (const key of Object.keys(job.resourceCost) as ResourceKey[]) {
@@ -24,6 +27,18 @@ export function isJobDiscovered(state: GameState, job: JobDefinition): boolean {
                 return false;
             }
         }
+    }
+    // Currently jobs the hero can do never require tools, so they are revealed regardless of tool status.
+    if (job.applyHeroProgress) {
+        return true;
+    }
+    // Any job that the hero cannot progress is hidden until the city has population to assign to the job.
+    if (!state.city.population) {
+        return false;
+    }
+    // For population only jobs, hide them until the required tool type is created.
+    if (job.requiredToolType) {
+        return getAvailableToolCount(state, job.requiredToolType) > 0;
     }
     return true;
 }
@@ -45,8 +60,7 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
             if (!payForJob(state, job)) {
                 // Cancel repeated jobs the player cannot afford.
                 // TODO: Consider freezing the job at zero progress instead.
-                job.workerSecondsCompleted = 0;
-                job.workers = 0;
+                stopJob(state, job);
                 break;
             }
         } else {
@@ -60,6 +74,24 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
         }
     }
     return true;
+}
+
+export function stopJob(state: GameState, job: Job) {
+    job.workerSecondsCompleted = 0;
+    job.workers = 0;
+    // Remove any heroes assigned to this job as well.
+    for (const hero of state.heroSlots) {
+        if (!hero) {
+            continue;
+        }
+        if (hero.assignedJob === job) {
+            delete hero.assignedJob;
+        }
+        const jobHeroTarget = job.getHeroTarget?.(state);
+        if (hero.movementTarget === jobHeroTarget) {
+            delete hero.movementTarget
+        }
+    }
 }
 
 export function applyHeroToJob(state: GameState, definition: JobDefinition, hero: Hero) {
@@ -88,21 +120,6 @@ function getOrCreateJob(state: GameState, definition: JobDefinition): Job {
     return state.city.jobs[definition.key] = job;
 }
 
-export function getAvailableToolCount(state: GameState, toolType: ToolType): number {
-    if (toolType === 'axe') {
-        return state.inventory.woodHatchet + state.inventory.woodAxe + state.inventory.stoneAxe
-            + state.inventory.ironHatchet + state.inventory.steelAxe;
-    }
-    if (toolType === 'hammer') {
-        return state.inventory.woodHammer + state.inventory.stoneHammer + state.inventory.ironHammer + state.inventory.steelHammer;
-    }
-    if (toolType === 'bow') {
-        return state.inventory.shortBow + state.inventory.longBow + state.inventory.crossBow;
-    }
-    // This will cause a compiler failure if a toolType is not handled above.
-    const never: never = toolType;
-    return never;
-}
 
 function getMaxWorkersForJob(state: GameState, jobDefinition: JobDefinition) {
     let max = state.city.population;
@@ -119,13 +136,13 @@ function updateWorkers(state: GameState, job: Job, delta: number) {
 
 function availableWorkersForJob(state: GameState, job: Job): number {
     // TODO: Improve performance by tracking state.city.idlePopulation instead of calculating this value.
-    let usedWorkers = 0;
+    /*let usedWorkers = 0;
     for (const otherJob of Object.values(state.city.jobs)) {
         if (otherJob !== job) {
             usedWorkers += otherJob.workers;
         }
-    }
-    return state.city.population - usedWorkers;
+    }*/
+    return state.city.idlePopulation + job.workers;
 }
 
 function payForJob(state: GameState, job: Job): boolean {
@@ -133,28 +150,31 @@ function payForJob(state: GameState, job: Job): boolean {
     // Return false if we cannot pay for the job.
     if (jobDefinition.resourceCost) {
         for (const [key, value] of Object.entries(jobDefinition.resourceCost) as [ResourceKey, number][]) {
-            if (state.inventory[key] < value) {
+            const computedValue = computeValue(state, jobDefinition, value, 0);
+            if (state.inventory[key] < computedValue) {
                 return false;
             }
         }
     }
-    if ((jobDefinition.essenceCost ?? 0) > state.nexus.essence) {
+    const essenceCost = computeValue(state, jobDefinition, jobDefinition.essenceCost, 0);
+    if (essenceCost > state.nexus.essence) {
         return false;
     }
     // Pay for the job and return true.
     if (jobDefinition.resourceCost) {
         for (const [key, value] of Object.entries(jobDefinition.resourceCost) as [ResourceKey, number][]) {
-            state.inventory[key] -= value;
+            const computedValue = computeValue(state, jobDefinition, value, 0);
+            state.inventory[key] -= computedValue;
         }
     }
-    if (jobDefinition.essenceCost) {
-        spendEssence(state, jobDefinition.essenceCost);
+    if (essenceCost) {
+        spendEssence(state, essenceCost);
     }
     job.isPaidFor = true;
     return true;
 }
 
-export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, getHeroTarget?: (state: GameState) => FieldTarget): UIContainer {
+export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, getHeroTarget?: (state: GameState) => FieldTarget): JobUIElement {
     const w = 6 * uiSize;
     // TODO: Turn the label into a button for the Hero.
     // TODO: Add max/empty buttons
@@ -187,7 +207,7 @@ export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, ge
                     state.nexus.previewEssenceChange = -jobDefinition.essenceCost;
                 }
                 if (jobDefinition.resourceCost) {
-                    state.previewResourceCost = jobDefinition.resourceCost;
+                    state.previewResourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
                 }
             }
             if (jobDefinition.requiredToolType) {
@@ -222,7 +242,7 @@ export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, ge
                     state.nexus.previewEssenceChange = -jobDefinition.essenceCost;
                 }
                 if (jobDefinition.resourceCost) {
-                    state.previewResourceCost = jobDefinition.resourceCost;
+                    state.previewResourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
                 }
                 // Currently heroes do not require tools.
                 //if (jobDefinition.requiredToolType) {
@@ -234,6 +254,7 @@ export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, ge
     });
     return {
         objectType: 'uiContainer',
+        jobDefinition,
         w, h: 2 * uiSize, x, y,
         update(state: GameState) {
             if (getHeroTarget) {
@@ -248,10 +269,17 @@ export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, ge
 
             // Draw population controls only once the city has a population.
             if (state.city.population > 0) {
+                const totalSpots = getMaxWorkersForJob(state, jobDefinition);
+                // This is the number of spots that cannot be filled because workers are busy in other jobs.
+                // We display this so that it is easy to see the limit of what can be assigned based on the available population
+                // while still showing the total possible if all workers could be assigned ot this job.
+                const reservedWorkers = Math.max(0, totalSpots - state.city.idlePopulation - job.workers);
                 drawNumberFillBar(context, {
                     x: this.x + uiSize, y: this.y + uiSize, w: this.w - 2 * uiSize, h: uiSize,
                     value: job.workers,
-                    total: getMaxWorkersForJob(state, jobDefinition),
+                    // Draw the whole bar as reserved if there are 0 total spots currently.
+                    total: totalSpots ? totalSpots : 1,
+                    reserved: totalSpots ? reservedWorkers : 1,
                 });
                 //plusButton.render(context, state);
                 //minusButton.render(context, state);

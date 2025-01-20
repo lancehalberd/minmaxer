@@ -7,20 +7,27 @@ interface CityWallStats {
 
 type JobKey = string;//'archer' | 'buildWall' | 'repairWall' | 'harvestWood';
 type ResourceKey = 'wood' | 'hardwood' | 'stone' | 'ironOre';
-type ToolType = 'hammer' | 'axe' | 'bow';
+type ToolType = 'hammer' | 'axe' | 'bow' | 'staff';
 type HammerType = 'woodHammer' | 'stoneHammer' | 'ironHammer' | 'steelHammer';
 type AxeType = 'woodHatchet' | 'woodAxe' | 'stoneAxe' | 'ironHatchet' | 'steelAxe';
 type BowType = 'shortBow' | 'longBow' | 'crossBow';
+type StaffType = 'woodStaff' | 'bronzeStaff' | 'steelStaff';
 type AmmoType = 'arrow';
 type ArrowType = 'woodArrow' | 'flintArrow' | 'ironArrow' | 'steelArrow';
 
-type InventoryKey = ResourceKey | AxeType | BowType | HammerType | ArrowType;
+type InventoryKey = ResourceKey
+    | AxeType | HammerType
+    | BowType | StaffType
+    | ArrowType;
 
 type Inventory = {
     [key in InventoryKey]: number
 };
 
-type ResourceCost = {
+type ResourceCost<T> = {
+    [key in ResourceKey]?: Computed<number, T>
+}
+type ComputedResourceCost = {
     [key in ResourceKey]?: number
 }
 
@@ -30,8 +37,8 @@ interface JobDefinition {
     // The level of the job for job's with multiple levels.
     level?: number
     // Which resources must be consumed in order to start this job.
-    resourceCost?: ResourceCost
-    essenceCost?: number
+    resourceCost?: ResourceCost<JobDefinition>
+    essenceCost?: Computed<number, JobDefinition>
     requiredToolType?: ToolType
     // The default number of seconds it takes a single worker to complete this job by default.
     workerSeconds?: number
@@ -57,9 +64,14 @@ interface Job {
     getHeroTarget?: (state: GameState) => FieldTarget
 }
 
+interface JobUIElement extends UIContainer {
+    jobDefinition: JobDefinition
+}
+
 interface CityStats {
     maxPopulation: number
     population: number
+    idlePopulation: number
     jobs: {
         [key in JobKey]: Job
     }

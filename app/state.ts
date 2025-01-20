@@ -7,6 +7,8 @@ export const state: GameState = {
     city: {
         maxPopulation: 5,
         population: 0,
+        // This is computed fresh each tick, and manually updated within each tick.
+        idlePopulation: 0,
         jobs: {},
         wall: {
             level: 0,
@@ -40,6 +42,10 @@ export const state: GameState = {
         flintArrow: 0,
         ironArrow: 0,
         steelArrow: 0,
+        // Magic weapons
+        woodStaff: 0,
+        bronzeStaff: 0,
+        steelStaff: 0,
     },
     totalResources: {
         wood: 0,

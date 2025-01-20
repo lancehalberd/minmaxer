@@ -24,10 +24,34 @@ export const inventoryLabels: {[key in InventoryKey]: string} = {
     flintArrow: 'Flint Arrow',
     ironArrow: 'Iron Arrow',
     steelArrow: 'Steel Arrow',
+    // Staff weapons
+    woodStaff: 'Wood Staff',
+    bronzeStaff: 'Bronze Staff',
+    steelStaff: 'Steel Staff',
 };
 
 export const toolTypeLabels:{[key in ToolType]: string} = {
     axe: 'Axe',
     hammer: 'Hammer',
     bow: 'Bow',
+    staff: 'Staff',
+}
+
+export function getAvailableToolCount(state: GameState, toolType: ToolType): number {
+    if (toolType === 'axe') {
+        return state.inventory.woodHatchet + state.inventory.woodAxe + state.inventory.stoneAxe
+            + state.inventory.ironHatchet + state.inventory.steelAxe;
+    }
+    if (toolType === 'hammer') {
+        return state.inventory.woodHammer + state.inventory.stoneHammer + state.inventory.ironHammer + state.inventory.steelHammer;
+    }
+    if (toolType === 'bow') {
+        return state.inventory.shortBow + state.inventory.longBow + state.inventory.crossBow;
+    }
+    if (toolType === 'staff') {
+        return state.inventory.woodStaff + state.inventory.bronzeStaff + state.inventory.steelStaff;
+    }
+    // This will cause a compiler failure if a toolType is not handled above.
+    const never: never = toolType;
+    return never;
 }

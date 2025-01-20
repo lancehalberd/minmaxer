@@ -17,7 +17,7 @@ export function gainSkillExperience(state: GameState, hero: Hero, skillType: Her
     let experienceForLevel = 10 * Math.pow(1.2, skill.level);
     while (skill.experience >= experienceForLevel) {
         skill.level++;
-        console.log(skillType + ' is now level ' + skill.level);
+        // console.log(skillType + ' is now level ' + skill.level);
         skill.experience -= experienceForLevel;
         experienceForLevel = 10 * Math.pow(1.2, skill.level);
     }

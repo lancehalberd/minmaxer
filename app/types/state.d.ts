@@ -11,7 +11,7 @@ interface GameState {
         [key in ResourceKey]: number
     }
     previewRequiredToolType?: ToolType
-    previewResourceCost?: ResourceCost
+    previewResourceCost?: ComputedResourceCost
     selectedHero?: Hero
     hoveredAbility?: Ability
     selectedAbility?: ActiveAbility
@@ -188,6 +188,12 @@ interface Cooldown {
     remaining: number
 }
 
+interface FieldAnimationEffect extends Point {
+    objectType: 'animation'
+    update: (state: GameState) => void
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
+}
+
 interface Projectile extends Circle {
     objectType: 'projectile'
     vx: number
@@ -199,11 +205,11 @@ interface Projectile extends Circle {
     hitsAllies?: boolean
     target?: AbilityTarget
     hitTargets: Set<AbilityTarget>
-    update: (this: Projectile, state: GameState) => void
-    render: (this: Projectile, context: CanvasRenderingContext2D, state: GameState) => void
+    update: (state: GameState) => void
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
 }
 
-type FieldEffect = Projectile;
+type FieldEffect = FieldAnimationEffect | Projectile;
 type FieldObject = Hero | Nexus | Enemy | Spawner | Loot | Structure;
 
 

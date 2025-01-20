@@ -1,11 +1,87 @@
+import {gainWallLevel} from 'app/city/cityWall';
 import {canvas, frameLength} from 'app/gameConstants'
-import {reviveHero} from 'app/objects/hero';
+import {reviveHero, ranger, warrior, wizard} from 'app/objects/hero';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
 import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
+import {gainEssence} from 'app/utils/essence';
+import {gainSkillExperience} from 'app/utils/hero';
 import {updateJobs} from 'app/utils/job';
+
+
+/*
+TODO:
+
+Fix essence price preview is overlapping essence.
+Remove heroes from the world during hero selection.
+Add upgrade wall jobs.
+Make spawners spawn additional forests, quarries, mines and villages.
+Add job element improvements.
+Display idle population.
+Make repair wall job cost/value based on wall max health.
+Move debugging code into its own file.
+
+Population jobs:
+    The quality of tools can effect the rate or outcome of the job.
+
+    Upgrade Palisade(N Levels):
+        X resources, requires hammer, takes N seconds
+        Improve the max life of the palisade + return damage
+            500 wood -> 300 health, 5 thorns damage
+            200 stone+2000 wood -> 1000 health, 20 thorns damage
+
+    Utility structures:
+        Market (Allow buying items)
+        Houses (increase population)
+        Farms
+        Armory (crafting armor)
+        Workshops (crafting  other tools)
+        Refinery (convert raw resources into refined resources like lumber -> planks, ore -> ingots)
+*/
+
+function advanceDebugGameState(state: GameState) {
+    const mainHero = state.heroSlots[0];
+    if (!mainHero) {
+        state.heroSlots[0] = state.selectedHero = [ranger, warrior, wizard][Math.floor(Math.random() * 3)];
+        state.isPaused = false;
+        return;
+    }
+    if (state.availableResources.wood && !state.inventory.wood) {
+        state.inventory.wood += 200;
+        state.totalResources.wood += 200;
+        state.availableResources.wood -= 200;
+        gainSkillExperience(state, mainHero, 'logging', 100);
+        return;
+    }
+    if (state.city.population && !state.inventory.woodHammer) {
+        state.inventory.woodHammer++;
+        state.inventory.woodHatchet++;
+        state.inventory.shortBow++;
+        state.inventory.woodStaff++;
+        state.inventory.woodArrow += 10;
+        return;
+    }
+    if (state.city.population && !state.city.wall.level) {
+        gainWallLevel(state);
+        return;
+    }
+
+    // If there is nothing else interesting to do, destroy the next spawner.
+    for (const object of state.world.objects) {
+        if (object.objectType === 'spawner') {
+            object.onDeath?.(state);
+            gainEssence(state, object.essenceWorth);
+            mainHero.experience += object.experienceWorth;
+            const objectIndex = state.world.objects.indexOf(object);
+            if (objectIndex >= 0) {
+                state.world.objects.splice(objectIndex, 1);
+            }
+            return;
+        }
+    }
+}
 
 function update() {
     // Reset the essence preview every frame so it doesn't get stale.
@@ -30,6 +106,11 @@ function update() {
         state.isPaused = !state.isPaused;
     }
 
+    // Pressing the debug key[K] allows you to quickly advance your progress for testing purposes.
+    if (wasGameKeyPressed(state, gameKeys.debug)) {
+        advanceDebugGameState(state);
+    }
+
     // If the nexus is destroyed, stop update function
     // Pan world.camera to nexus, change background color (gray) and return.
     if (state.nexus.essence <= 0) {
@@ -40,6 +121,7 @@ function update() {
     } else if (!state.isPaused){
         const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? 10 : 1;
         for (let i = 0; i < frameCount; i++) {
+            computeIdlePopulation(state);
             checkToAddNewSpawner(state);
             // Currently we update effects before objects so that new effects created by objects
             // do not update the frame they are created.
@@ -70,6 +152,13 @@ function update() {
 
     // Advance state time, game won't render anything new if this timer isn't updated.
     state.time += 20;
+}
+
+function computeIdlePopulation(state: GameState): void {
+    state.city.idlePopulation = state.city.population;
+    for (const job of Object.values(state.city.jobs)) {
+        state.city.idlePopulation -= job.workers;
+    }
 }
 
 //const minScrollSize = 200, maxScrollSize = 50;

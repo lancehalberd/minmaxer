@@ -84,29 +84,3 @@ export class Village implements Structure {
         fillText(context, {x: this.x, y: this.y - uiSize, size: 16, text: this.population, color: '#FFF'});
     }
 }
-
-
-/*
-TODO:
-
-Population jobs:
-    Jobs have prerequisites and are initially hidden if prereqs are not met
-        On rebirth known jobs can be seen or hidden based on player preference.
-    Jobs may have a limit to the number of people that can be assigned to them.
-    The quality of tools can effect the rate or outcome of the job.
-
-    Upgrade Palisade(N Levels):
-        X resources, requires hammer, takes N seconds
-        Improve the max life of the palisade + return damage
-            500 wood -> 300 health, 5 thorns damage
-            200 stone+2000 wood -> 1000 health, 20 thorns damage
-
-
-    Utility structures:
-        Market (Allow buying items)
-        Houses (increase population)
-        Farms
-        Armory (crafting armor)
-        Workshops (crafting  other tools)
-        Refinery (convert raw resources into refined resources like lumber -> planks, ore -> ingots)
-*/

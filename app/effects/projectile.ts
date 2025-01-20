@@ -1,4 +1,5 @@
 import {damageTarget, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
+import {removeEffect} from 'app/utils/effect';
 import {frameLength} from 'app/gameConstants';
 
 export function createProjectile(props: Partial<Projectile>): Projectile {
@@ -44,12 +45,6 @@ function updateProjectile(this: Projectile, state: GameState) {
     }
 }
 
-function removeEffect(state: GameState, effect: FieldEffect): void {
-    const index = state.world.effects.indexOf(effect);
-    if (index >= 0) {
-        state.world.effects.splice(index, 1);
-    }
-}
 
 
 // Default projectile is just a triangle with a point towards its heading.

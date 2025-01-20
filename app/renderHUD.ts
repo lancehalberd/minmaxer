@@ -3,8 +3,7 @@ import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/utils/essence';
 import {fillCircle, fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
-import {inventoryLabels, toolTypeLabels} from 'app/utils/inventory';
-import {getAvailableToolCount} from 'app/utils/job';
+import {getAvailableToolCount, inventoryLabels, toolTypeLabels} from 'app/utils/inventory';
 import {millisecondsToTime} from 'app/utils/time';
 
 

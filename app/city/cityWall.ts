@@ -2,6 +2,22 @@ import {frameLength, uiSize} from 'app/gameConstants';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {createJobElement, progressJob} from 'app/utils/job';
 
+
+export function gainWallLevel(state: GameState) {
+    state.city.wall.level++;
+    if (state.city.wall.level === 1) {
+        state.city.wall.maxHealth = 100;
+        state.city.maxPopulation += 5;
+        state.nexus.r = 60;
+    }
+    if (state.city.wall.level === 2) {
+        state.city.wall.maxHealth = 300;
+        state.city.maxPopulation += 10;
+        state.nexus.r = 70;
+    }
+    state.city.wall.health = state.city.wall.maxHealth;
+}
+
 const buildWallJobDefinition: JobDefinition = {
     key: 'buildWall',
     label: 'Build Wall',
@@ -11,14 +27,9 @@ const buildWallJobDefinition: JobDefinition = {
     requiredToolType: 'hammer',
     workerSeconds: 100,
     onComplete(state: GameState) {
-        state.city.wall = {
-            level: 1,
-            maxHealth: 100,
-            health: 100,
-            returnDamage: 1,
-        };
-        state.city.maxPopulation += 5;
-        state.nexus.r = 60;
+        if (!state.city.wall.level) {
+            gainWallLevel(state, )
+        }
     },
     applyHeroProgress(state: GameState, job: Job, hero: Hero) {
         const skill = getHeroSkill(state, hero, 'building');
