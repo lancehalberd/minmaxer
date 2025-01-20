@@ -10,6 +10,8 @@ interface GameState {
     availableResources: {
         [key in ResourceKey]: number
     }
+    // List of heroes available to summon.
+    availableHeroes: Hero[],
     previewRequiredToolType?: ToolType
     previewResourceCost?: ComputedResourceCost
     selectedHero?: Hero

@@ -80,6 +80,13 @@ export const nexus: Nexus = {
 
 function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     const elements: UIElement[] = [];
+    if (state.heroSlots.includes(null)) {
+        for (const hero of state.availableHeroes) {
+            for (const heroElement of (hero.getChildren?.(state) ?? [])) {
+                elements.push(heroElement);
+            }
+        }
+    }
     if (state.totalResources.wood && !state.city.wall.level) {
         elements.push(buildWallElement);
     }

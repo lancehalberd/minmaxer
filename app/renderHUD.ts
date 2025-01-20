@@ -164,17 +164,23 @@ export function renderEssenceBar(context: CanvasRenderingContext2D, state: GameS
     circle.color = gradient;
     fillCircle(context, circle);
 
-    context.font = "20px san-serif";
-    context.fillStyle = '#FFF';
-    context.textBaseline = 'middle';
-    context.textAlign = 'left';
-    context.fillText(goal ? (essence + '/' + goal) : '' + essence, bar.x + bar.h / 2, bar.y + bar.h / 2 + 1);
-    if (previewEssenceChange) {
+    let x = bar.x + bar.h / 2, y = bar.y + bar.h / 2 + 1;
+    const textMetrics = fillText(context, {
+        size: 20, color:'#FFF', textAlign: 'left',
+        x, y, text: goal ? (essence + '/' + goal) : '' + essence,
+        measure: true,
+    });
+    if (previewEssenceChange && textMetrics) {
         const symbol = (previewEssenceChange > 0) ? '+ ' : '- ';
-        let w = (bar.w * Math.min(1, Math.max(essence, displayedEssence + previewEssenceChange) / goal) | 0) - bar.h / 2;
-        w = Math.max(w, bar.h / 2 + 100);
-        context.textAlign = 'right';
-        context.fillText(symbol + Math.abs(previewEssenceChange), bar.x + w, bar.y + bar.h / 2 + 1);
+        //let w = (bar.w * Math.min(1, Math.max(essence, displayedEssence + previewEssenceChange) / goal) | 0) - bar.h / 2;
+        //w = Math.max(w, bar.h / 2 + 100);
+        x = bar.x + bar.w - bar.h / 2;
+        //context.textAlign = 'right';
+        //context.fillText(symbol + Math.abs(previewEssenceChange), Math.max(bar.x + w, x + textMetrics.width), bar.y + bar.h / 2 + 1);
+        fillText(context, {
+            size: 20, color:'#FFF', textAlign: 'right',
+            x, y, text: symbol + Math.abs(previewEssenceChange),
+        });
     }
 }
 

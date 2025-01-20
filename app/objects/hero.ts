@@ -1,10 +1,11 @@
 import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/objects/fieldButton';
 import {createLoot, pickupLoot} from 'app/objects/loot';
-import {gainEssence, loseEssence} from 'app/utils/essence';
+import {gainEssence} from 'app/utils/essence';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
+import {summonHero} from 'app/utils/hero';
 import {applyHeroToJob} from 'app/utils/job';
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
@@ -100,16 +101,7 @@ function getHeroFieldButtons(this: Hero, state: GameState): UIButton[] {
         const button = createPointerButtonForTarget(this);
         button.disabled = state.nexus.essence <= this.definition.cost;
         button.onPress = (state: GameState) => {
-            if (state.nexus.essence <= this.definition.cost) {
-                return true;
-            }
-            loseEssence(state, this.definition.cost);
-            state.heroSlots[firstEmptyIndex] = this;
-            // Unpause the game automatically if this is the first hero selected.
-            if (!state.selectedHero) {
-                state.isPaused = false;
-            }
-            state.selectedHero = this;
+            summonHero(state, this);
             return true;
         }
         button.onHover = (state: GameState) => {

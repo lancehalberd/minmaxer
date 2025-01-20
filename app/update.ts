@@ -9,13 +9,12 @@ import {updateMouseActions} from 'app/mouse';
 import {gainEssence} from 'app/utils/essence';
 import {gainSkillExperience} from 'app/utils/hero';
 import {updateJobs} from 'app/utils/job';
+import {summonHero} from 'app/utils/hero';
 
 
 /*
 TODO:
 
-Fix essence price preview is overlapping essence.
-Remove heroes from the world during hero selection.
 Add upgrade wall jobs.
 Make spawners spawn additional forests, quarries, mines and villages.
 Add job element improvements.
@@ -43,11 +42,13 @@ Population jobs:
 
 function advanceDebugGameState(state: GameState) {
     const mainHero = state.heroSlots[0];
+    // If there is no summoned hero, summon one at random.
     if (!mainHero) {
-        state.heroSlots[0] = state.selectedHero = [ranger, warrior, wizard][Math.floor(Math.random() * 3)];
+        summonHero(state, [ranger, warrior, wizard][Math.floor(Math.random() * 3)]);
         state.isPaused = false;
         return;
     }
+    // If wood is available, but not collected, simulate collecting 200 wood.
     if (state.availableResources.wood && !state.inventory.wood) {
         state.inventory.wood += 200;
         state.totalResources.wood += 200;
@@ -55,16 +56,20 @@ function advanceDebugGameState(state: GameState) {
         gainSkillExperience(state, mainHero, 'logging', 100);
         return;
     }
+    // If the city has people, but no tools, acquire a starter set of tools.
     if (state.city.population && !state.inventory.woodHammer) {
         state.inventory.woodHammer++;
         state.inventory.woodHatchet++;
         state.inventory.shortBow++;
         state.inventory.woodStaff++;
         state.inventory.woodArrow += 10;
+        gainSkillExperience(state, mainHero, 'crafting', 100);
         return;
     }
-    if (state.city.population && !state.city.wall.level) {
+    // If the city has people, wood and tools, simulate building a wall if it is missing.
+    if (state.city.population && state.inventory.wood && !state.city.wall.level) {
         gainWallLevel(state);
+        gainSkillExperience(state, mainHero, 'building', 100);
         return;
     }
 

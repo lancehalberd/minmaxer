@@ -59,6 +59,7 @@ export const state: GameState = {
         stone: 0,
         ironOre: 0,
     },
+    availableHeroes: [ranger, warrior, wizard],
     lastTimeRendered: 0,
     time : 0,
     isPaused: true,
@@ -73,7 +74,7 @@ export const state: GameState = {
         },
         nextSpawnerLevel: 1,
         effects: [],
-        objects: [nexus, ranger, warrior, wizard],
+        objects: [nexus],
     },
     hudUIElements: [],
     mouse: {
