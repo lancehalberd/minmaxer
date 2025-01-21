@@ -6,20 +6,42 @@ interface WallLevelDefinition {
     resourceCost: ComputedResourceCost
     workerSeconds: number
     maxHealth: number
+    returnDamage: number
     populationIncrease: number
     nexusSize: number
 }
 const wallLevels: WallLevelDefinition[] = [
-    {resourceCost: {wood: 100}, workerSeconds: 100, maxHealth: 100, populationIncrease: 5, nexusSize: 60},
-    {resourceCost: {wood: 500}, workerSeconds: 500, maxHealth: 300, populationIncrease: 10, nexusSize: 70},
-    {resourceCost: {wood: 2000, stone: 100}, workerSeconds: 2000, maxHealth: 500, populationIncrease: 10, nexusSize: 80},
-    {resourceCost: {wood: 10000, stone: 500}, workerSeconds: 10000, maxHealth: 1000, populationIncrease: 10, nexusSize: 90},
-    {resourceCost: {wood: 100000, stone: 2000}, workerSeconds: 100000, maxHealth: 2000, populationIncrease: 20, nexusSize: 100},
+    {
+        resourceCost: {wood: 100}, workerSeconds: 100,
+        maxHealth: 100, returnDamage: 1,
+        populationIncrease: 5, nexusSize: 60,
+    },
+    {
+        resourceCost: {wood: 500}, workerSeconds: 500,
+        maxHealth: 300, returnDamage: 5,
+        populationIncrease: 10, nexusSize: 70,
+    },
+    {
+        resourceCost: {wood: 2000, stone: 100}, workerSeconds: 2000,
+        maxHealth: 500, returnDamage: 10,
+        populationIncrease: 10, nexusSize: 80,
+    },
+    {
+        resourceCost: {wood: 10000, stone: 500}, workerSeconds: 10000,
+        maxHealth: 1000, returnDamage: 20,
+        populationIncrease: 10, nexusSize: 90,
+    },
+    {
+        resourceCost: {wood: 100000, stone: 2000}, workerSeconds: 100000,
+        maxHealth: 2000, returnDamage: 50,
+        populationIncrease: 20, nexusSize: 100,
+    },
 ];
 
 export function gainWallLevel(state: GameState) {
     const levelDefinition = wallLevels[state.city.wall.level];
     state.city.wall.maxHealth = levelDefinition.maxHealth;
+    state.city.wall.returnDamage = levelDefinition.returnDamage;
     state.city.maxPopulation += levelDefinition.populationIncrease;
     state.nexus.r = levelDefinition.nexusSize;
     state.city.wall.level++;

@@ -22,14 +22,6 @@ Make better tools more useful than base tools.
 Move debugging code into its own file.
 
 Population jobs:
-    The quality of tools can effect the rate or outcome of the job.
-
-    Upgrade Palisade(N Levels):
-        X resources, requires hammer, takes N seconds
-        Improve the max life of the palisade + return damage
-            500 wood -> 300 health, 5 thorns damage
-            200 stone+2000 wood -> 1000 health, 20 thorns damage
-
     Utility structures:
         Market (Allow buying items)
         Houses (increase population)
