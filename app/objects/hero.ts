@@ -4,7 +4,7 @@ import {createLoot, pickupLoot} from 'app/objects/loot';
 import {gainEssence} from 'app/utils/essence';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
-import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
+import {fillCircle, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
 import {summonHero} from 'app/utils/hero';
 import {applyHeroToJob} from 'app/utils/job';
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
@@ -282,6 +282,9 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
             color: 'blue',
         });
     }
+    if (this.attackTarget) {
+        fillRing(context, {...this.attackTarget, r: this.attackTarget.r + 2, r2: this.attackTarget.r - 2, color: '#FFF'});
+    }
 
     // Draw a circle for the hero centered at their location, with their radius and color.
     fillCircle(context, this);
@@ -312,11 +315,7 @@ function renderHero(this: Hero, context: CanvasRenderingContext2D, state: GameSt
         renderLifeBarOverCircle(context, this, this.health, this.maxHealth, isInvincible ? '#FF0' : undefined);
     }
     // Draw hero level
-    context.textBaseline = 'middle';
-    context.textAlign = 'center';
-    context.fillStyle = '#FFF';
-    context.font = '10px san-serif';
-    context.fillText(`${this.level}`, this.x, this.y);
+    fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});
 }
 
 function totalExperienceForLevel(level: number) {

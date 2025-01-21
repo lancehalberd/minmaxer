@@ -1,6 +1,6 @@
 import {canvas} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
-import {fillRect, renderCooldownCircle} from 'app/utils/draw';
+import {fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 
 
@@ -23,11 +23,11 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] 
             render(context: CanvasRenderingContext2D, state: GameState) {
                 fillRect(context, this, '#FFF');
                 fillRect(context, pad(this, -2), ability.level > 0 ? '#000' : '#888');
-                context.font = "20px san-serif";
-                context.textBaseline = 'middle';
-                context.textAlign = 'center';
-                context.fillStyle = '#FFF';
-                context.fillText(ability.definition.abilityType === 'activeAbility' ? 'A' : 'P', this.x + this.w / 2 + 3, this.y + this.h / 2);
+                fillText(context, {
+                    size: 20, color: '#FFF',
+                    text: ability.definition.abilityType === 'activeAbility' ? 'A' : 'P',
+                    x: this.x + this.w / 2 + 3, y: this.y + this.h / 2,
+                });
                 for (let i = 0; i < 5; i++) {
                     const pillRect = {x: this.x, y: this.y + i * pillSize, w: pillSize, h: pillSize};
                     fillRect(context, pillRect, '#FFF');
@@ -71,7 +71,7 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] 
                         }
                     } else {
                         // If the ability does not target, it is activated immediately.
-                        definition.onActivate(state, hero, ability)
+                        definition.onActivate(state, hero, ability, undefined)
                         ability.cooldown = definition.getCooldown(state, hero, ability);
                     }
                 }

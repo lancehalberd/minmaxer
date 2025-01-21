@@ -33,6 +33,9 @@ export const state: GameState = {
         stoneHammer: 0,
         ironHammer: 0,
         steelHammer: 0,
+        stonePickaxe: 0,
+        ironPickaxe: 0,
+        steelPickaxe: 0,
         // Archery weapons
         shortBow: 0,
         longBow: 0,

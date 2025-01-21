@@ -14,13 +14,8 @@ export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
     }
     const time = millisecondsToTime(state.world.time);
 
-    context.font = "30px san-serif";
-    context.textBaseline = 'middle';
-    context.textAlign = 'right';
-    context.fillStyle = '#000';
-    context.fillText(time, playPauseButton.x - 10 + 1, playPauseButton.y + playPauseButton.h / 2 + 1);
-    context.fillStyle = '#FFF';
-    context.fillText(time, playPauseButton.x - 10, playPauseButton.y + playPauseButton.h / 2);
+    fillText(context, {text: time, size: 30, textAlign: 'right', x: playPauseButton.x - 10 + 1, y: playPauseButton.y + playPauseButton.h / 2 + 1});
+    fillText(context, {text: time, color: '#FFF', size: 30, textAlign: 'right', x: playPauseButton.x - 10 + 1, y: playPauseButton.y + playPauseButton.h / 2});
 
     for (const element of state.hudUIElements) {
         element.render(context, state);
@@ -51,7 +46,9 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
         }
     }*/
     if (state.city.population) {
-        fillText(context, {...text, text:'population: ' + state.city.population + ' / ' + state.city.maxPopulation, x, y});
+        fillText(context, {...text, text: 'population: ' + state.city.population + ' / ' + state.city.maxPopulation, x, y});
+        y += 30;
+        fillText(context, {...text, text: 'idle: ' + state.city.idlePopulation, x, y});
         y += 40;
     }
 
@@ -172,11 +169,7 @@ export function renderEssenceBar(context: CanvasRenderingContext2D, state: GameS
     });
     if (previewEssenceChange && textMetrics) {
         const symbol = (previewEssenceChange > 0) ? '+ ' : '- ';
-        //let w = (bar.w * Math.min(1, Math.max(essence, displayedEssence + previewEssenceChange) / goal) | 0) - bar.h / 2;
-        //w = Math.max(w, bar.h / 2 + 100);
         x = bar.x + bar.w - bar.h / 2;
-        //context.textAlign = 'right';
-        //context.fillText(symbol + Math.abs(previewEssenceChange), Math.max(bar.x + w, x + textMetrics.width), bar.y + bar.h / 2 + 1);
         fillText(context, {
             size: 20, color:'#FFF', textAlign: 'right',
             x, y, text: symbol + Math.abs(previewEssenceChange),

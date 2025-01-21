@@ -99,11 +99,6 @@ export function updateEnemy(this: Enemy, state: GameState) {
 }
 
 export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, state: GameState) {
-    // TODO: Instead of this, the enemy should aggro when it is hit be any hero if it doesn't
-    // have a higher priority target.
-    if (state.selectedHero?.attackTarget === this) {
-        fillCircle(context, {...this, r: this.r + 2, color: '#FFF'});
-    }
     fillCircle(context, this);
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
 }

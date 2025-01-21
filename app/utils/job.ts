@@ -51,12 +51,13 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
         return false;
     }
     job.workerSecondsCompleted += workerSeconds;
-    while (job.workerSecondsCompleted >= job.definition.workerSeconds) {
+    while (job.workerSecondsCompleted >= computeValue(state, job.definition, job.definition.workerSeconds, 0)) {
+    // while (job.workerSecondsCompleted >= job.definition.workerSeconds) { // This line did not correctly give a TS error on old versions of TS.
         if (job.definition.onComplete) {
             job.definition.onComplete(state, job);
         }
         if (job.definition.repeat) {
-            job.workerSecondsCompleted -= job.definition.workerSeconds;
+            job.workerSecondsCompleted -= computeValue(state, job.definition, job.definition.workerSeconds, 0);
             if (!payForJob(state, job)) {
                 // Cancel repeated jobs the player cannot afford.
                 // TODO: Consider freezing the job at zero progress instead.
@@ -148,10 +149,11 @@ function availableWorkersForJob(state: GameState, job: Job): number {
 function payForJob(state: GameState, job: Job): boolean {
     const jobDefinition = job.definition;
     // Return false if we cannot pay for the job.
-    if (jobDefinition.resourceCost) {
-        for (const [key, value] of Object.entries(jobDefinition.resourceCost) as [ResourceKey, number][]) {
+    const computedResourceCost =  jobDefinition.resourceCost ? computeResourceCost(state, jobDefinition, jobDefinition.resourceCost) : undefined;
+    if (computedResourceCost) {
+        for (const [key, value] of Object.entries(computedResourceCost)) {
             const computedValue = computeValue(state, jobDefinition, value, 0);
-            if (state.inventory[key] < computedValue) {
+            if (state.inventory[key as ResourceKey] < computedValue) {
                 return false;
             }
         }
@@ -161,10 +163,10 @@ function payForJob(state: GameState, job: Job): boolean {
         return false;
     }
     // Pay for the job and return true.
-    if (jobDefinition.resourceCost) {
-        for (const [key, value] of Object.entries(jobDefinition.resourceCost) as [ResourceKey, number][]) {
+    if (computedResourceCost) {
+        for (const [key, value] of Object.entries(computedResourceCost)) {
             const computedValue = computeValue(state, jobDefinition, value, 0);
-            state.inventory[key] -= computedValue;
+            state.inventory[key as ResourceKey] -= computedValue;
         }
     }
     if (essenceCost) {
@@ -289,7 +291,7 @@ export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, ge
                 child.render(context, state);
             }
             if (jobDefinition.workerSeconds && job.workerSecondsCompleted) {
-                const p = job.workerSecondsCompleted / jobDefinition.workerSeconds;
+                const p = job.workerSecondsCompleted / computeValue(state, job.definition, job.definition.workerSeconds, 0);
                 fillRect(context, {x: this.x, y: this.y + uiSize - 1, w: Math.floor(this.w * p), h: 2}, '#0AF');
                 fillRect(context, {x: this.x + Math.ceil(this.w * p) - 1, y: this.y + uiSize - 1, w: 1, h: 2}, '#8FF');
             }

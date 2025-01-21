@@ -10,14 +10,17 @@ export function computeValue<T, U>(state: GameState, object: U, computed: Comput
     return computed ?? defaultValue;
 }
 
-export function computeResourceCost<T>(state: GameState, object: T, resourceCost: ResourceCost<T>): ComputedResourceCost {
-    const computedResourceCost: ComputedResourceCost = {};
-    for (const [key, value] of Object.entries(resourceCost) as [ResourceKey, number][]) {
+export function computeResourceCost<T>(state: GameState, object: T, resourceCost: Computed<ResourceCost<T>, T>): ComputedResourceCost {
+    // Run compute against the resource object itself, in case it is dynamic.
+    const computedResourceCost: ResourceCost<T> = computeValue(state, object, resourceCost, {});
+    // This stores the concrete results of the computation which will be returned.
+    const fullyComputedResourceCost: ComputedResourceCost = {};
+    for (const [key, value] of Object.entries(computedResourceCost)) {
+        // Compute each individual resource cost.
         const computedValue = computeValue(state, object, value, 0);
         if (computedValue) {
-            computedResourceCost[key] = computedValue;
+            fullyComputedResourceCost[key as ResourceKey] = computedValue;
         }
     }
-
-    return computedResourceCost;
+    return fullyComputedResourceCost;
 }

@@ -1,6 +1,6 @@
 import {archerJobElement} from 'app/city/archers';
 import {healerJobElement} from 'app/city/healer';
-import {buildWallElement, repairWallElement} from 'app/city/cityWall';
+import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
 import {craftingJobDefinitions} from 'app/city/crafting';
 import {frameLength} from 'app/gameConstants';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
@@ -92,7 +92,7 @@ function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     }
     if (state.city.wall.level) {
         elements.push(repairWallElement);
-        // elements.push(upgradeWallElement);
+        elements.push(upgradeWallElement);
     }
 
     // Archers and healers occupy the city wall.

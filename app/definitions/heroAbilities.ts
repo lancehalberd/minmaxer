@@ -22,7 +22,7 @@ export const spinStrike: ActiveAbilityDefinition = {
         const hitCircle = {x: hero.x, y: hero.y, r: targetingInfo.hitRadius || 0};
         const targets = getTargetsInCircle(state, getEnemyTargets(state), hitCircle);
         // This attack does 25/35/45/55/65% increased base damage.
-        const damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.getDamageForTarget(state)
+        const damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.damage;
         for (const target of targets) {
             damageTarget(state, target, damage);
         }
@@ -72,7 +72,7 @@ function getPiercingShotRange(state: GameState, hero: Hero, ability: Ability): n
     return [80, 90, 100, 110, 120][ability.level - 1];
 }
 const piercingShotRadius = 10;
-export const piercingShot: ActiveAbilityDefinition = {
+export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeAbility',
     name: 'Piercing Shot',
     getTargetingInfo(state: GameState, hero: Hero, ability: Ability) {
@@ -121,7 +121,7 @@ function getCriticalShotDamageMultiplier(abilityLevel: number): number {
 export const criticalShot: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Critical Shot',
-    modifyDamage(state: GameState, hero: Hero, target: AttackTarget, ability: Ability, damage: number): number {
+    modifyDamage(state: GameState, hero: Hero, target: AbilityTarget|undefined, ability: Ability, damage: number): number {
         // Nothing happens if the critical strike roll fails.
         if (Math.random() > getCriticalShotChance(ability.level) / 100) {
             return damage;

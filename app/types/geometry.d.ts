@@ -12,3 +12,7 @@ interface Rect extends Point {
     w: number
     h: number
 }
+
+interface Ring extends Circle {
+    r2: number
+}

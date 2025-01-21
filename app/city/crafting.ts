@@ -46,10 +46,33 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
         workerSeconds: 10,
         repeat: true,
     },
+    {
+        item: 'stonePickaxe',
+        resourceCost: {stone: 2},
+        workerSeconds: 60,
+    },
+    {
+        item: 'stoneAxe',
+        resourceCost: {stone: 2},
+        workerSeconds: 60,
+    },
+    {
+        item: 'stoneHammer',
+        resourceCost: {stone: 2},
+        workerSeconds: 60,
+    },
+    {
+        item: 'flintArrow',
+        // TODO: Add upgrades to eventually increase this to 100.
+        amount: 10,
+        resourceCost: {stone: 1, wood: 2},
+        workerSeconds: 20,
+        repeat: true,
+    },
 ];
 
 
-let y = -4 * uiSize;
+let y = -4 * uiSize, x = 5 * uiSize;
 for (const craftingJobDefinition of craftingJobDefinitions) {
     const label = inventoryLabels[craftingJobDefinition.item] ?? craftingJobDefinition.item;
     const jobDefinition: JobDefinition = {
@@ -72,7 +95,11 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
         },
     }
     craftingJobDefinition.jobDefinition = jobDefinition;
-    craftingJobDefinition.element = createJobElement(jobDefinition, {x: 5 * uiSize, y});
+    craftingJobDefinition.element = createJobElement(jobDefinition, {x, y});
     y += 3 * uiSize;
+    if (y >= 11 * uiSize) {
+        y = -4 * uiSize;
+        x += 8 * uiSize
+    }
 };
 

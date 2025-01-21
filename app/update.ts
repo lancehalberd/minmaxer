@@ -14,12 +14,11 @@ import {summonHero} from 'app/utils/hero';
 
 /*
 TODO:
-
-Add upgrade wall jobs.
-Make spawners spawn additional forests, quarries, mines and villages.
 Add job element improvements.
-Display idle population.
-Make repair wall job cost/value based on wall max health.
+Hero should not repeat assignedJob if the job isn't set to repeat automatically.
+Make better tools more useful than base tools.
+    Nx multiplier for hero based on best tool.
+    Nx multiplier for each tool available to population.
 Move debugging code into its own file.
 
 Population jobs:
@@ -49,11 +48,19 @@ function advanceDebugGameState(state: GameState) {
         return;
     }
     // If wood is available, but not collected, simulate collecting 200 wood.
-    if (state.availableResources.wood && !state.inventory.wood) {
+    if (state.availableResources.wood && !state.totalResources.wood) {
         state.inventory.wood += 200;
         state.totalResources.wood += 200;
         state.availableResources.wood -= 200;
         gainSkillExperience(state, mainHero, 'logging', 100);
+        return;
+    }
+    // If stone is available, but not collected, simulate collecting 200 stone.
+    if (state.availableResources.stone && !state.totalResources.stone) {
+        state.inventory.stone += 200;
+        state.totalResources.stone += 200;
+        state.availableResources.stone -= 200;
+        gainSkillExperience(state, mainHero, 'mining', 100);
         return;
     }
     // If the city has people, but no tools, acquire a starter set of tools.
@@ -181,7 +188,7 @@ function updateCamera(state: GameState) {
     const pixelsPerFrame = camera.speed * frameLength / 1000;
     // Move the camera so the hero is in the center of the screen:
     if (state.nexus.essence <= 0) {
-        camera.speed = 400;
+        camera.speed = 600;
         camera.target.x = state.nexus.x;
         camera.target.y = state.nexus.y;
     } else {
@@ -195,7 +202,7 @@ function updateCamera(state: GameState) {
     if (mag < pixelsPerFrame) {
         camera.x = camera.target.x;
         camera.y = camera.target.y;
-        camera.speed = 200;
+        camera.speed = 400;
     } else {
         camera.x += pixelsPerFrame * dx / mag;
         camera.y += pixelsPerFrame * dy / mag;

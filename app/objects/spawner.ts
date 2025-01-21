@@ -1,7 +1,7 @@
 import {frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
-import {Forest, Village} from 'app/objects/structure';
-import {fillCircle, fillText, renderCooldownCircle, renderLifeBarOverCircle} from 'app/utils/draw';
+import {Forest, Quary, Village} from 'app/objects/structure';
+import {fillCircle, fillRing, fillText, renderCooldownCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {isPointInCircle} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';
 
@@ -9,7 +9,7 @@ class EnemySpawner implements Spawner {
     objectType = 'spawner' as const;
     x = 0;
     y = 0;
-    r = 20;
+    r = 30;
     delay = 0;
     color = 'purple';
     spawnCooldown = 5000;
@@ -23,7 +23,7 @@ class EnemySpawner implements Spawner {
     health = this.maxHealth;
     essenceWorth = this.sampleEnemy.essenceWorth * 50;
     experienceWorth = this.sampleEnemy.experienceWorth * 50;
-    lastSpawnTime: number;
+    lastSpawnTime: number = 0;
 
     constructor(public enemyType: EnemyType, public enemyLevel: number, props: Partial<Spawner> = {}) {
         // Set any properties from props onto this instance.
@@ -31,25 +31,22 @@ class EnemySpawner implements Spawner {
         if (this.structure) {
             this.x = this.structure.x;
             this.y = this.structure.y;
-            this.r = this.structure.r;
+            this.r = this.structure.r + 5;
         }
     }
 
     render(context: CanvasRenderingContext2D, state: GameState) {
-        if (state.selectedHero?.attackTarget === this) {
-            fillCircle(context, {...this, r: this.r + 2, color: '#FFF'});
-        }
         fillCircle(context, this);
+        if (this.structure) {
+            this.structure.render(context, state);
+            context.save();
+                context.globalAlpha *= 0.6
+                fillRing(context, {...this, r2: this.r - 10});
+            context.restore();
+        }
         if (this.delay) {
             const time = millisecondsToTime(this.delay);
-            fillText(context, {x: this.x, y: this.y, size: 16, text: time, color: '#FFF'});
-            /*context.font = "16px san-serif";
-            context.textBaseline = 'middle';
-            context.textAlign = 'center';
-            context.fillStyle = '#000';
-            context.fillText(time, this.x, this.y);
-            context.fillStyle = '#FFF';
-            context.fillText(time, this.x, this.y);*/
+            fillText(context, {x: this.x, y: this.y + 12, size: 16, text: time, color: '#FFF'});
         }
         // Render a cooldown circle over the spawner while it is on cooldown.
         if (this.lastSpawnTime && state.world.time - this.lastSpawnTime < this.spawnCooldown) {
@@ -152,9 +149,18 @@ export function checkToAddNewSpawner(state: GameState) {
         const enemyType = enemyTypes[(Math.random() * enemyTypes.length) | 0];
         const theta = 2 * Math.PI * level / 8;
         const spawnRadius = 300 + 20 * level;
+        const x = state.nexus.x + spawnRadius * Math.cos(theta);
+        const y = state.nexus.y - spawnRadius * Math.sin(theta);
+        let structure: Structure;
+        if (level % 3 === 0) {
+            structure = new Quary({stone: level * 1000, x, y});
+        } else if (level % 3 === 1) {
+            structure = new Forest({wood: level * 1000, x, y});
+        } else {
+            structure = new Village({population: 5, x, y});
+        }
         state.world.objects.push(new EnemySpawner(enemyType, level, {
-            x: state.nexus.x + spawnRadius * Math.cos(theta),
-            y: state.nexus.y - spawnRadius * Math.sin(theta),
+            structure,
             delay: nextTargetTime - state.world.time,
             spawnCount: enemyType === 'snake' ? 2 : 1,
         }));

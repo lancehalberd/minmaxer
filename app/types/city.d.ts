@@ -7,16 +7,17 @@ interface CityWallStats {
 
 type JobKey = string;//'archer' | 'buildWall' | 'repairWall' | 'harvestWood';
 type ResourceKey = 'wood' | 'hardwood' | 'stone' | 'ironOre';
-type ToolType = 'hammer' | 'axe' | 'bow' | 'staff';
+type ToolType = 'hammer' | 'axe' | 'pickaxe' | 'bow' | 'staff';
 type HammerType = 'woodHammer' | 'stoneHammer' | 'ironHammer' | 'steelHammer';
 type AxeType = 'woodHatchet' | 'woodAxe' | 'stoneAxe' | 'ironHatchet' | 'steelAxe';
+type PickaxeType = 'stonePickaxe' | 'ironPickaxe' | 'steelPickaxe';
 type BowType = 'shortBow' | 'longBow' | 'crossBow';
 type StaffType = 'woodStaff' | 'bronzeStaff' | 'steelStaff';
 type AmmoType = 'arrow';
 type ArrowType = 'woodArrow' | 'flintArrow' | 'ironArrow' | 'steelArrow';
 
 type InventoryKey = ResourceKey
-    | AxeType | HammerType
+    | AxeType | HammerType | PickaxeType
     | BowType | StaffType
     | ArrowType;
 
@@ -27,6 +28,7 @@ type Inventory = {
 type ResourceCost<T> = {
     [key in ResourceKey]?: Computed<number, T>
 }
+
 type ComputedResourceCost = {
     [key in ResourceKey]?: number
 }
@@ -37,11 +39,11 @@ interface JobDefinition {
     // The level of the job for job's with multiple levels.
     level?: number
     // Which resources must be consumed in order to start this job.
-    resourceCost?: ResourceCost<JobDefinition>
+    resourceCost?: Computed<ResourceCost<JobDefinition>, JobDefinition>
     essenceCost?: Computed<number, JobDefinition>
     requiredToolType?: ToolType
     // The default number of seconds it takes a single worker to complete this job by default.
-    workerSeconds?: number
+    workerSeconds?: Computed<number, JobDefinition>
     // If true the job will repeat when completed.
     repeat?: boolean
     // This can be set to freeze job progress in certain circumstances.

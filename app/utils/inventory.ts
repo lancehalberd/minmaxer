@@ -10,6 +10,10 @@ export const inventoryLabels: {[key in InventoryKey]: string} = {
     stoneAxe: 'Stone Axe',
     ironHatchet: 'Iron Hatchet',
     steelAxe: 'Steel Axe',
+    // Mining tools
+    stonePickaxe: 'Stone Pickaxe',
+    ironPickaxe: 'Iron Pickaxe',
+    steelPickaxe: 'Steel Pickaxe',
     // Building tools
     woodHammer: 'Mallet',
     stoneHammer: 'Stone Hammer',
@@ -33,6 +37,7 @@ export const inventoryLabels: {[key in InventoryKey]: string} = {
 export const toolTypeLabels:{[key in ToolType]: string} = {
     axe: 'Axe',
     hammer: 'Hammer',
+    pickaxe: 'Pickaxe',
     bow: 'Bow',
     staff: 'Staff',
 }
@@ -44,6 +49,9 @@ export function getAvailableToolCount(state: GameState, toolType: ToolType): num
     }
     if (toolType === 'hammer') {
         return state.inventory.woodHammer + state.inventory.stoneHammer + state.inventory.ironHammer + state.inventory.steelHammer;
+    }
+    if (toolType === 'pickaxe') {
+        return state.inventory.stonePickaxe + state.inventory.ironPickaxe + state.inventory.steelPickaxe;
     }
     if (toolType === 'bow') {
         return state.inventory.shortBow + state.inventory.longBow + state.inventory.crossBow;
