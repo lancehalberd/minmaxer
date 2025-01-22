@@ -1,7 +1,7 @@
 import {frameLength} from 'app/gameConstants';
 import {computeResourceCost, computeValue} from 'app/utils/computed';
 import {spendEssence} from 'app/utils/essence';
-import {getAvailableToolCount} from 'app/utils/inventory';
+import {getAvailableToolCount, getJobMultiplierFromTools} from 'app/utils/inventory';
 
 
 export function updateJobs(state: GameState) {
@@ -11,7 +11,14 @@ export function updateJobs(state: GameState) {
                 job.definition.update(state, job);
             }
             if (job.definition.workerSeconds) {
-                progressJob(state, job, job.workers * frameLength / 1000);
+                let jobMultiplier = job.workers;
+                // If the job uses a tool, a bonus is applied assuming the workers are using the best tools available
+                // to them.
+                if (job.definition.requiredToolType) {
+                    jobMultiplier = getJobMultiplierFromTools(state, job.workers, job.definition.requiredToolType);
+                    console.log(jobMultiplier);
+                }
+                progressJob(state, job, jobMultiplier * frameLength / 1000);
             }
         }
     }

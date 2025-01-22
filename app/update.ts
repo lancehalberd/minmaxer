@@ -11,9 +11,12 @@ import {advanceDebugGameState} from 'app/utils/debug';
 /*
 TODO:
 Add job element improvements.
-Make better tools more useful than base tools.
-    Nx multiplier for hero based on best tool.
-    Nx multiplier for each tool available to population.
+Make assignments based on total tool power instead of population.
+    Total tool power for a job is the sum of the best N tools used by N people where N is min(number of tools, population).
+    reserved tool power assumes the worst tools will not be used.
+    Assigned population will assume the best tools are being used.
+Allow equipping a tool to a hero for Nx boost to any jobs using the tool.
+    But while equipped the tool is removed from inventory and cannot be used by the population.
 
 Population jobs:
     Utility structures:
