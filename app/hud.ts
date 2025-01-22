@@ -1,6 +1,6 @@
 import {canvas} from 'app/gameConstants';
-import {getHeroAbilityButtons} from 'app/objects/abilityButton';
-import {getHeroButtons} from 'app/objects/heroButton';
+import {getHeroAbilityButtons} from 'app/ui/abilityButton';
+import {getHeroButtons} from 'app/ui/heroButton';
 import {requireFrame, drawFrame} from 'app/utils/animations';
 
 

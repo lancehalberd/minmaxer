@@ -1,6 +1,7 @@
 import {frameLength, uiSize} from 'app/gameConstants';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
-import {createJobElement, progressJob} from 'app/utils/job';
+import {progressJob} from 'app/utils/job';
+import {createJobComponent} from 'app/ui/jobComponent';
 
 interface WallLevelDefinition {
     resourceCost: ComputedResourceCost
@@ -59,6 +60,9 @@ const buildWallJobDefinition: JobDefinition = {
             gainWallLevel(state, )
         }
     },
+    isValid(state: GameState) {
+        return state.totalResources.wood > 0 && !state.city.wall.level;
+    },
     applyHeroProgress(state: GameState, job: Job, hero: Hero) {
         const skill = getHeroSkill(state, hero, 'building');
         const progress = (skill.level + 1) * frameLength / 1000;
@@ -68,7 +72,7 @@ const buildWallJobDefinition: JobDefinition = {
     },
 };
 
-export const buildWallElement = createJobElement(buildWallJobDefinition, {x: -3 * uiSize, y: -uiSize}, (state: GameState) => state.nexus);
+export const buildWallElement = createJobComponent(buildWallJobDefinition, {x: -3 * uiSize, y: -uiSize}, (state: GameState) => state.nexus);
 
 // Job to repair wall. Initially this takes 1 wood + 1 second to repair 1% of health (1)
 // But as the max health of the wall increases the cost in wood+time increase proportional to sqrt(maxWallHealth)
@@ -84,6 +88,9 @@ const repairWallJobDefinition: JobDefinition = {
     requiredToolType: 'hammer',
     // This is the same value used for the wood cost above.
     workerSeconds: (state: GameState) => Math.ceil(Math.sqrt(state.city.wall.maxHealth) / 10),
+    isValid(state: GameState) {
+        return state.city.wall.level > 0;
+    },
     canProgress(state: GameState) {
         return state.city.wall.health < state.city.wall.maxHealth;
     },
@@ -100,7 +107,7 @@ const repairWallJobDefinition: JobDefinition = {
     },
 };
 
-export const repairWallElement = createJobElement(repairWallJobDefinition, {x: -3 * uiSize, y: 1.5 * uiSize}, (state: GameState) => state.nexus);
+export const repairWallElement = createJobComponent(repairWallJobDefinition, {x: -3 * uiSize, y: 1.5 * uiSize}, (state: GameState) => state.nexus);
 
 const upgradeWallJobDefinition: JobDefinition = {
     key: 'upgradeWall',
@@ -108,8 +115,8 @@ const upgradeWallJobDefinition: JobDefinition = {
     resourceCost: (state: GameState) => wallLevels[state.city.wall.level].resourceCost,
     requiredToolType: 'hammer',
     workerSeconds: (state: GameState) => wallLevels[state.city.wall.level].workerSeconds,
-    canProgress(state: GameState) {
-        return !!wallLevels[state.city.wall.level]
+    isValid(state: GameState) {
+        return state.city.wall.level > 0 && !!wallLevels[state.city.wall.level];
     },
     onComplete(state: GameState) {
         gainWallLevel(state);
@@ -123,4 +130,4 @@ const upgradeWallJobDefinition: JobDefinition = {
     },
 };
 
-export const upgradeWallElement = createJobElement(upgradeWallJobDefinition, {x: -3 * uiSize, y: -uiSize}, (state: GameState) => state.nexus);
+export const upgradeWallElement = createJobComponent(upgradeWallJobDefinition, {x: -3 * uiSize, y: -uiSize}, (state: GameState) => state.nexus);

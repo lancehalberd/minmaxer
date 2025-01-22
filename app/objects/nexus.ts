@@ -87,12 +87,11 @@ function getNexusElements(this: Nexus, state: GameState): UIElement[] {
             }
         }
     }
-    if (state.totalResources.wood && !state.city.wall.level) {
-        elements.push(buildWallElement);
-    }
-    if (state.city.wall.level) {
-        elements.push(repairWallElement);
-        elements.push(upgradeWallElement);
+    for (const wallElement of [buildWallElement, repairWallElement, upgradeWallElement]) {
+        const definition = wallElement.jobDefinition;
+         if (!definition.isValid || definition.isValid(state)) {
+             elements.push(wallElement);
+         }
     }
 
     // Archers and healers occupy the city wall.
@@ -102,7 +101,6 @@ function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     if (state.city.wall.level && isJobDiscovered(state, healerJobElement.jobDefinition)) {
         elements.push(healerJobElement);
     }
-
 
     for (const craftingJobDefinition of craftingJobDefinitions) {
         if (!craftingJobDefinition.jobDefinition || !craftingJobDefinition.element || !isJobDiscovered(state, craftingJobDefinition.jobDefinition)) {

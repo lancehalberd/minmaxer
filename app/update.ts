@@ -1,25 +1,19 @@
-import {gainWallLevel} from 'app/city/cityWall';
 import {canvas, frameLength} from 'app/gameConstants'
-import {reviveHero, ranger, warrior, wizard} from 'app/objects/hero';
+import {reviveHero} from 'app/objects/hero';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
 import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
-import {gainEssence} from 'app/utils/essence';
-import {gainSkillExperience} from 'app/utils/hero';
 import {updateJobs} from 'app/utils/job';
-import {summonHero} from 'app/utils/hero';
-
+import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
 Add job element improvements.
-Hero should not repeat assignedJob if the job isn't set to repeat automatically.
 Make better tools more useful than base tools.
     Nx multiplier for hero based on best tool.
     Nx multiplier for each tool available to population.
-Move debugging code into its own file.
 
 Population jobs:
     Utility structures:
@@ -30,62 +24,6 @@ Population jobs:
         Workshops (crafting  other tools)
         Refinery (convert raw resources into refined resources like lumber -> planks, ore -> ingots)
 */
-
-function advanceDebugGameState(state: GameState) {
-    const mainHero = state.heroSlots[0];
-    // If there is no summoned hero, summon one at random.
-    if (!mainHero) {
-        summonHero(state, [ranger, warrior, wizard][Math.floor(Math.random() * 3)]);
-        state.isPaused = false;
-        return;
-    }
-    // If wood is available, but not collected, simulate collecting 200 wood.
-    if (state.availableResources.wood && !state.totalResources.wood) {
-        state.inventory.wood += 200;
-        state.totalResources.wood += 200;
-        state.availableResources.wood -= 200;
-        gainSkillExperience(state, mainHero, 'logging', 100);
-        return;
-    }
-    // If stone is available, but not collected, simulate collecting 200 stone.
-    if (state.availableResources.stone && !state.totalResources.stone) {
-        state.inventory.stone += 200;
-        state.totalResources.stone += 200;
-        state.availableResources.stone -= 200;
-        gainSkillExperience(state, mainHero, 'mining', 100);
-        return;
-    }
-    // If the city has people, but no tools, acquire a starter set of tools.
-    if (state.city.population && !state.inventory.woodHammer) {
-        state.inventory.woodHammer++;
-        state.inventory.woodHatchet++;
-        state.inventory.shortBow++;
-        state.inventory.woodStaff++;
-        state.inventory.woodArrow += 10;
-        gainSkillExperience(state, mainHero, 'crafting', 100);
-        return;
-    }
-    // If the city has people, wood and tools, simulate building a wall if it is missing.
-    if (state.city.population && state.inventory.wood && !state.city.wall.level) {
-        gainWallLevel(state);
-        gainSkillExperience(state, mainHero, 'building', 100);
-        return;
-    }
-
-    // If there is nothing else interesting to do, destroy the next spawner.
-    for (const object of state.world.objects) {
-        if (object.objectType === 'spawner') {
-            object.onDeath?.(state);
-            gainEssence(state, object.essenceWorth);
-            mainHero.experience += object.experienceWorth;
-            const objectIndex = state.world.objects.indexOf(object);
-            if (objectIndex >= 0) {
-                state.world.objects.splice(objectIndex, 1);
-            }
-            return;
-        }
-    }
-}
 
 function update() {
     // Reset the essence preview every frame so it doesn't get stale.

@@ -1,6 +1,6 @@
 import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
-import {createPointerButtonForTarget} from 'app/objects/fieldButton';
 import {createLoot, pickupLoot} from 'app/objects/loot';
+import {createPointerButtonForTarget} from 'app/ui/fieldButton';
 import {gainEssence} from 'app/utils/essence';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';

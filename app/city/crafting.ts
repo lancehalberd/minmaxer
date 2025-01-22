@@ -2,13 +2,13 @@ import {frameLength, uiSize} from 'app/gameConstants';
 import {computeValue} from 'app/utils/computed';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {inventoryLabels} from 'app/utils/inventory';
-import {createJobElement, progressJob} from 'app/utils/job';
+import {progressJob} from 'app/utils/job';
+import {createJobComponent} from 'app/ui/jobComponent';
 
 interface CraftingJobDefinition {
     item: InventoryKey
     // Defaults to 1.
     amount?: Computed<number, JobDefinition>
-    // Use Computed to allow making these variable.
     resourceCost: ResourceCost<JobDefinition>
     essenceCost?: number
     workerSeconds: number
@@ -77,12 +77,11 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
     const label = inventoryLabels[craftingJobDefinition.item] ?? craftingJobDefinition.item;
     const jobDefinition: JobDefinition = {
         key: 'craft-' + craftingJobDefinition.item,
-        // TODO: Add item key -> item label mapping here and to inventory.
         label: 'Make ' + label,
         resourceCost: craftingJobDefinition.resourceCost,
         essenceCost: craftingJobDefinition.essenceCost,
         workerSeconds: craftingJobDefinition.workerSeconds,
-        repeat:craftingJobDefinition.repeat,
+        repeat: craftingJobDefinition.repeat,
         onComplete(state: GameState) {
             state.inventory[craftingJobDefinition.item] += computeValue(state, jobDefinition, craftingJobDefinition.amount, 1);
         },
@@ -95,9 +94,9 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
         },
     }
     craftingJobDefinition.jobDefinition = jobDefinition;
-    craftingJobDefinition.element = createJobElement(jobDefinition, {x, y});
-    y += 3 * uiSize;
-    if (y >= 11 * uiSize) {
+    craftingJobDefinition.element = createJobComponent(jobDefinition, {x, y});
+    y += 2.5 * uiSize;
+    if (y >= 8 * uiSize) {
         y = -4 * uiSize;
         x += 8 * uiSize
     }

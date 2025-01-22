@@ -25,11 +25,6 @@ interface HeroDefinition {
     abilities: AbilityDefinition[]
 }
 
-interface HeroSkill {
-    level: number
-    experience: number
-}
-
 interface Hero extends Circle {
     objectType: 'hero'
     definition: HeroDefinition
@@ -81,6 +76,24 @@ interface Hero extends Circle {
     abilityTarget?: AbilityTarget
 
     reviveCooldown?: Cooldown
+}
+
+interface Cooldown {
+    // Length of the entire cooldown in seconds
+    total: number
+    // Length of the remaining cooldown in seconds
+    remaining: number
+}
+
+interface HeroLevelDerivedStats {
+    maxHealth: number
+    damage: number
+    movementSpeed: number
+}
+
+interface HeroSkill {
+    level: number
+    experience: number
 }
 
 interface ModifiableStat {

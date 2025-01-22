@@ -2,7 +2,7 @@ import {addHealEffect} from 'app/effects/healAnimation';
 import {uiSize} from 'app/gameConstants';
 import {isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
-import {createJobElement} from 'app/utils/job';
+import {createJobComponent} from 'app/ui/jobComponent';
 
 // We should probably find a way to track this on the state, but since we update this
 // every tick, it probably won't break anything to have this here.
@@ -40,5 +40,5 @@ const healerJobDefinition: JobDefinition = {
         }
     }
 };
-export const healerJobElement = createJobElement(healerJobDefinition, { x: -11 * uiSize, y: -3.5 * uiSize});
+export const healerJobElement = createJobComponent(healerJobDefinition, { x: -11 * uiSize, y: -3.5 * uiSize});
 

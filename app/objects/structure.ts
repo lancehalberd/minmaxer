@@ -1,7 +1,8 @@
 import {frameLength, uiSize} from 'app/gameConstants';
 import {fillCircle, fillText} from 'app/utils/draw';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
-import {createJobElement, applyHeroToJob, progressJob} from 'app/utils/job'
+import {applyHeroToJob, progressJob} from 'app/utils/job'
+import {createJobComponent} from 'app/ui/jobComponent';
 
 const loggingJobDefinition: JobDefinition = {
     key: 'harvestWood',
@@ -36,7 +37,7 @@ export class Forest implements Structure {
     r = this.props.r ?? 40;
     color = this.props.color ?? '#080';
     wood = this.props.wood;
-    harvestJobElement = createJobElement(loggingJobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
+    harvestJobElement = createJobComponent(loggingJobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
 
     constructor(public props: ForestProps) {}
     update(state: GameState) {
@@ -93,7 +94,7 @@ export class Quary implements Structure {
     r = this.props.r ?? 40;
     color = this.props.color ?? '#888';
     stone = this.props.stone;
-    harvestJobElement = createJobElement(quaryJobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
+    harvestJobElement = createJobComponent(quaryJobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
 
     constructor(public props: QuaryProps) {}
     update(state: GameState) {

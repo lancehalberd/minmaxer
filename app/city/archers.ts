@@ -3,7 +3,7 @@ import {uiSize} from 'app/gameConstants';
 import {isTargetAvailable} from 'app/utils/combat';
 import {gainEssence} from 'app/utils/essence';
 import {getDistance} from 'app/utils/geometry';
-import {createJobElement} from 'app/utils/job';
+import {createJobComponent} from 'app/ui/jobComponent';
 
 const archerJobDefinition: JobDefinition = {
     key: 'archer',
@@ -13,7 +13,7 @@ const archerJobDefinition: JobDefinition = {
     //workerSeconds: 1,
     //repeat: true,
 };
-export const archerJobElement = createJobElement(archerJobDefinition, { x: -11 * uiSize, y: -uiSize});
+export const archerJobElement = createJobComponent(archerJobDefinition, { x: -11 * uiSize, y: -uiSize});
 
 function updateArchers(state: GameState, archerJob: Job) {
     // Update archers

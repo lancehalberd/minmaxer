@@ -46,6 +46,9 @@ interface JobDefinition {
     workerSeconds?: Computed<number, JobDefinition>
     // If true the job will repeat when completed.
     repeat?: boolean
+    // If this is set and returns true, then the job should be hidden from the UI and
+    // all work should be stopped.
+    isValid?: (state: GameState) => boolean
     // This can be set to freeze job progress in certain circumstances.
     // For example, the repair wall job will freeze when the wall has full health.
     canProgress?: (state: GameState, job: Job) => boolean
@@ -58,7 +61,9 @@ interface JobDefinition {
 interface Job {
     definition: JobDefinition
     // Whether this job has been paid for already.
-    isPaidFor?: boolean
+    isPaidFor: boolean
+    // Controls whether the job should be repeated.
+    shouldRepeatJob: boolean
     workers: number
     workerSecondsCompleted: number
     // Circle a hero must be in range of to participate in this job.

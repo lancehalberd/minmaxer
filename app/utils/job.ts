@@ -1,7 +1,5 @@
-import {frameLength, uiSize} from 'app/gameConstants';
-import {CircleIconButton, MinusIconButton, PlusIconButton} from 'app/objects/iconButton';
+import {frameLength} from 'app/gameConstants';
 import {computeResourceCost, computeValue} from 'app/utils/computed';
-import {drawNumberFillBar, fillRect, fillText} from 'app/utils/draw';
 import {spendEssence} from 'app/utils/essence';
 import {getAvailableToolCount} from 'app/utils/inventory';
 
@@ -47,6 +45,9 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
     if (!job.definition.workerSeconds) {
         return false;
     }
+    if (job.definition.isValid && !job.definition.isValid(state)) {
+        return false;
+    }
     if (job.definition.canProgress && !job.definition.canProgress(state, job)) {
         return false;
     }
@@ -56,7 +57,12 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
         if (job.definition.onComplete) {
             job.definition.onComplete(state, job);
         }
-        if (job.definition.repeat) {
+        // Check if a job is invalid after completing it
+        if (job.definition.isValid && !job.definition.isValid(state)) {
+            stopJob(state, job);
+            break;
+        }
+        if (job.shouldRepeatJob) {
             job.workerSecondsCompleted -= computeValue(state, job.definition, job.definition.workerSeconds, 0);
             if (!payForJob(state, job)) {
                 // Cancel repeated jobs the player cannot afford.
@@ -65,6 +71,7 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
                 break;
             }
         } else {
+            stopJob(state, job);
             delete state.city.jobs[job.definition.key];
             break
         }
@@ -108,7 +115,7 @@ export function applyHeroToJob(state: GameState, definition: JobDefinition, hero
     definition.applyHeroProgress(state, job, hero);
 }
 
-function getOrCreateJob(state: GameState, definition: JobDefinition): Job {
+export function getOrCreateJob(state: GameState, definition: JobDefinition): Job {
     let job = state.city.jobs[definition.key];
     if (job) {
         return job;
@@ -117,12 +124,14 @@ function getOrCreateJob(state: GameState, definition: JobDefinition): Job {
         definition,
         workers: 0,
         workerSecondsCompleted: 0,
+        isPaidFor: false,
+        shouldRepeatJob: !!definition.repeat,
     };
     return state.city.jobs[definition.key] = job;
 }
 
 
-function getMaxWorkersForJob(state: GameState, jobDefinition: JobDefinition) {
+export function getMaxWorkersForJob(state: GameState, jobDefinition: JobDefinition) {
     let max = state.city.population;
     if (jobDefinition.requiredToolType) {
         max = Math.min(max ?? 0, getAvailableToolCount(state, jobDefinition.requiredToolType));
@@ -130,20 +139,29 @@ function getMaxWorkersForJob(state: GameState, jobDefinition: JobDefinition) {
     return max;
 }
 
-function updateWorkers(state: GameState, job: Job, delta: number) {
-    job.workers = Math.max(0, Math.min(job.workers + delta, availableWorkersForJob(state, job)));
-    job.workers = Math.min(job.workers, getMaxWorkersForJob(state, job.definition));
-}
 
 function availableWorkersForJob(state: GameState, job: Job): number {
-    // TODO: Improve performance by tracking state.city.idlePopulation instead of calculating this value.
-    /*let usedWorkers = 0;
-    for (const otherJob of Object.values(state.city.jobs)) {
-        if (otherJob !== job) {
-            usedWorkers += otherJob.workers;
-        }
-    }*/
     return state.city.idlePopulation + job.workers;
+}
+
+
+export function updateAssignedWorkers(state: GameState, jobDefinition: JobDefinition, delta: number) {
+    const job = getOrCreateJob(state, jobDefinition);
+    const availableWorkers = availableWorkersForJob(state, job);
+    if (delta > 0) {
+        // Action fails if max workers is 0 (for example, if the required tools for the job are not available).
+        if (!getMaxWorkersForJob(state, jobDefinition)) {
+            return;
+        }
+        if (!job.isPaidFor) {
+            // When starting a job, pay all the costs up front.
+            if (!availableWorkers || !payForJob(state, job)) {
+                return;
+            }
+        }
+    }
+    job.workers = Math.max(0, Math.min(job.workers + delta, availableWorkersForJob(state, job)));
+    job.workers = Math.min(job.workers, getMaxWorkersForJob(state, jobDefinition));
 }
 
 function payForJob(state: GameState, job: Job): boolean {
@@ -176,136 +194,4 @@ function payForJob(state: GameState, job: Job): boolean {
     return true;
 }
 
-export function createJobElement(jobDefinition: JobDefinition, {x, y}: Point, getHeroTarget?: (state: GameState) => FieldTarget): JobUIElement {
-    const w = 6 * uiSize;
-    // TODO: Turn the label into a button for the Hero.
-    // TODO: Add max/empty buttons
-    // TODO: Add repeat toggle button.
-    const plusButton = new PlusIconButton({
-        x: x + w - uiSize,
-        y: y + uiSize,
-        onClick(state: GameState) {
-            // Action fails if max workers is 0 (for example, if the required tools for the job are not available).
-            if (!getMaxWorkersForJob(state, jobDefinition)) {
-                return true;
-            }
-            const job = getOrCreateJob(state, jobDefinition);
-            if (!job.isPaidFor) {
-                // When starting a job, pay all the costs up front.
-                const availableWorkers = availableWorkersForJob(state, job);
-                if (availableWorkers && payForJob(state, job)) {
-                    updateWorkers(state, job, 1);
-                }
-            } else {
-                updateWorkers(state, job, 1);
-            }
-            return true;
-        },
-        onHover(state: GameState) {
-            const job = getOrCreateJob(state, jobDefinition);
-            // Always show job resource cost for repeated jobs.
-            if (!job.isPaidFor || jobDefinition.repeat) {
-                if (jobDefinition.essenceCost) {
-                    state.nexus.previewEssenceChange = -jobDefinition.essenceCost;
-                }
-                if (jobDefinition.resourceCost) {
-                    state.previewResourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
-                }
-            }
-            if (jobDefinition.requiredToolType) {
-                state.previewRequiredToolType = jobDefinition.requiredToolType;
-            }
-            return true;
-        }
-    });
-    const minusButton = new MinusIconButton({
-        x,
-        y: y + uiSize,
-        onClick(state: GameState) {
-            updateWorkers(state, getOrCreateJob(state, jobDefinition), -1);
-            return true;
-        }
-    });
-    const heroButton = new CircleIconButton({
-        x: x - uiSize,
-        y,
-        onClick(state: GameState) {
-            if (state.selectedHero) {
-                const job = getOrCreateJob(state, jobDefinition);
-                state.selectedHero.assignedJob = job;
-            }
-            return true;
-        },
-        onHover(state: GameState) {
-            const job = getOrCreateJob(state, jobDefinition);
-            // Always show job resource cost for repeated jobs.
-            if (!job.isPaidFor || jobDefinition.repeat) {
-                if (jobDefinition.essenceCost) {
-                    state.nexus.previewEssenceChange = -jobDefinition.essenceCost;
-                }
-                if (jobDefinition.resourceCost) {
-                    state.previewResourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
-                }
-                // Currently heroes do not require tools.
-                //if (jobDefinition.requiredToolType) {
-                //    state.previewRequiredToolType = jobDefinition.requiredToolType;
-                //}
-            }
-            return true;
-        }
-    });
-    return {
-        objectType: 'uiContainer',
-        jobDefinition,
-        w, h: 2 * uiSize, x, y,
-        update(state: GameState) {
-            if (getHeroTarget) {
-                const job = getOrCreateJob(state, jobDefinition);
-                job.getHeroTarget = getHeroTarget;
-            }
-        },
-        render(context: CanvasRenderingContext2D, state: GameState) {
-            const job = getOrCreateJob(state, jobDefinition);
-            fillRect(context, {...this, h: uiSize}, '#000');
-            fillText(context, {text: jobDefinition.label, x: this.x + this. w / 2, y: this.y + uiSize / 2 + 1, size: uiSize - 4, color: '#FFF'});
 
-            // Draw population controls only once the city has a population.
-            if (state.city.population > 0) {
-                const totalSpots = getMaxWorkersForJob(state, jobDefinition);
-                // This is the number of spots that cannot be filled because workers are busy in other jobs.
-                // We display this so that it is easy to see the limit of what can be assigned based on the available population
-                // while still showing the total possible if all workers could be assigned ot this job.
-                const reservedWorkers = Math.max(0, totalSpots - state.city.idlePopulation - job.workers);
-                drawNumberFillBar(context, {
-                    x: this.x + uiSize, y: this.y + uiSize, w: this.w - 2 * uiSize, h: uiSize,
-                    value: job.workers,
-                    // Draw the whole bar as reserved if there are 0 total spots currently.
-                    total: totalSpots ? totalSpots : 1,
-                    reserved: totalSpots ? reservedWorkers : 1,
-                });
-                //plusButton.render(context, state);
-                //minusButton.render(context, state);
-            }
-            const children = this.getChildren?.(state) ?? [];
-            for (const child of children) {
-                child.render(context, state);
-            }
-            if (jobDefinition.workerSeconds && job.workerSecondsCompleted) {
-                const p = job.workerSecondsCompleted / computeValue(state, job.definition, job.definition.workerSeconds, 0);
-                fillRect(context, {x: this.x, y: this.y + uiSize - 1, w: Math.floor(this.w * p), h: 2}, '#0AF');
-                fillRect(context, {x: this.x + Math.ceil(this.w * p) - 1, y: this.y + uiSize - 1, w: 1, h: 2}, '#8FF');
-            }
-        },
-        getChildren(state: GameState) {
-            const buttons: UIElement[] = [];
-            if (state.city.population) {
-                buttons.push(plusButton);
-                buttons.push(minusButton);
-            }
-            if (state.selectedHero && jobDefinition.applyHeroProgress) {
-                buttons.push(heroButton);
-            }
-            return buttons;
-        }
-    };
-}
