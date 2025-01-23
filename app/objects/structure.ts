@@ -76,10 +76,10 @@ const quaryJobDefinition: JobDefinition = {
         state.inventory.stone++;
     },
     applyHeroProgress(state: GameState, job: Job, hero: Hero) {
-        const skill = getHeroSkill(state, hero, 'logging');
+        const skill = getHeroSkill(state, hero, 'mining');
         const progress = (skill.level + 1) * frameLength / 1000;
         if (progressJob(state, job, progress)) {
-            gainSkillExperience(state, hero, 'logging', frameLength / 1000);
+            gainSkillExperience(state, hero, 'mining', frameLength / 1000);
         }
     },
 };

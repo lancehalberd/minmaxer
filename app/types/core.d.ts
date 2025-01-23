@@ -1,3 +1,2 @@
 
-type Computed<T, U> = T | ((state: GameState, object: U) => T)
-
+type Computed<T, U> = T | ((state: GameState, object: U) => T);

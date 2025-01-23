@@ -16,7 +16,6 @@ export function updateJobs(state: GameState) {
                 // to them.
                 if (job.definition.requiredToolType) {
                     jobMultiplier = getJobMultiplierFromTools(state, job.workers, job.definition.requiredToolType);
-                    console.log(jobMultiplier);
                 }
                 progressJob(state, job, jobMultiplier * frameLength / 1000);
             }
@@ -79,7 +78,6 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
             }
         } else {
             stopJob(state, job);
-            delete state.city.jobs[job.definition.key];
             break
         }
         // Reset to progress 0 on repeat if the job cannot progress.

@@ -21,7 +21,7 @@ export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
         element.render(context, state);
     }
 
-    const inventorySize = {w: 200, h: 200};
+    const inventorySize = {w: 200, h: 300};
     renderInventory(context, state, {...inventorySize, x: canvas.width - inventorySize.w, y: 70});
 }
 

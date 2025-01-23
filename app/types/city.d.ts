@@ -1,10 +1,3 @@
-interface CityWallStats {
-    level: number
-    maxHealth: number
-    health: number
-    returnDamage: number
-}
-
 type JobKey = string;//'archer' | 'buildWall' | 'repairWall' | 'harvestWood';
 type ResourceKey = 'wood' | 'hardwood' | 'stone' | 'ironOre';
 type ToolType = 'hammer' | 'axe' | 'pickaxe' | 'bow' | 'staff';
@@ -86,5 +79,12 @@ interface CityStats {
     // Number of people assigned as archers.
     archersTarget?: EnemyTarget
     archersLastAttackTime?: number
+}
+
+interface CityWallStats {
+    level: number
+    maxHealth: number
+    health: number
+    returnDamage: number
 }
 
