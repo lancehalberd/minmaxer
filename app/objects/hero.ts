@@ -234,10 +234,11 @@ function updateHero(this: Hero, state: GameState) {
                 this.experience += Math.max(this.attackTarget.experienceWorth * experiencePenalty, 0);
                 this.enemyDefeatCount += 1;
                 gainEssence(state, this.attackTarget.essenceWorth);
-                // Possibly add a drop from the defeated enemy.
+                // Loot creation
                 if (Math.random() < 0.1) {
                     const lootType = Math.random() < 0.9 ? 'potion' : 'invincibilityPotion';
-                    state.world.objects.push(createLoot(lootType, this.attackTarget));
+                    // Auto-pickup loot
+                    pickupLoot(state, this, createLoot(lootType, this.attackTarget));
                 }
             }
         }
@@ -253,10 +254,7 @@ function updateHero(this: Hero, state: GameState) {
     }
     if (this.movementTarget) {
         if (moveHeroTowardsTarget(state, this, this.movementTarget, this.r + this.movementTarget.r)) {
-            if (this.movementTarget.objectType === 'loot') {
-                pickupLoot(state, this, this.movementTarget);
-                delete this.movementTarget;
-            } else if (this.movementTarget.objectType === 'structure' || this.movementTarget.objectType === 'nexus') {
+            if (this.movementTarget.objectType === 'structure' || this.movementTarget.objectType === 'nexus') {
                 this.movementTarget.onHeroInteraction?.(state, this);
             } else {
                 delete this.movementTarget;

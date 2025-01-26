@@ -19,10 +19,6 @@ export function createLoot(lootType: LootType, {x, y}: Point): Loot {
 export function pickupLoot(state: GameState, hero: Hero, loot: Loot) {
     // Apply the loot to the hero.
     loot.onPickup(state, hero);
-
-    // Remove the picked up loot from the world.
-    const lootIndex = state.world.objects.indexOf(loot);
-    state.world.objects.splice(lootIndex, 1);
 }
 
 export function updateLoot(this: Loot, state: GameState) {
