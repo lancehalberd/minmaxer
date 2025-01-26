@@ -56,6 +56,30 @@ function update() {
         advanceDebugGameState(state);
     }
 
+    // Pressing the key[R] allows you to use the hero's active ability.
+    if (wasGameKeyPressed(state, gameKeys.ability)) {
+        const hero = state.selectedHero;
+        if (hero) {
+            const ability = hero.abilities.filter((ability) => ability.abilityType === 'activeAbility')[0] as ActiveAbility;
+            const definition = ability.definition;
+            if (ability.cooldown === 0) {
+                const targetingInfo = definition.getTargetingInfo(state, hero, ability);
+                if (targetingInfo.canTargetEnemy || targetingInfo.canTargetAlly || targetingInfo.canTargetLocation) {
+                    // If the ability can target, we selected it to allow the user to choose the target.
+                    if (state.selectedAbility === ability) {
+                        delete state.selectedAbility;
+                    } else {
+                        state.selectedAbility = ability;
+                    }
+                } else {
+                    // If the ability does not target, it is activated immediately.
+                    definition.onActivate(state, hero, ability, undefined)
+                    ability.cooldown = definition.getCooldown(state, hero, ability);
+                }
+            }
+        }
+    }
+
     // If the nexus is destroyed, stop update function
     // Pan world.camera to nexus, change background color (gray) and return.
     if (state.nexus.essence <= 0) {
