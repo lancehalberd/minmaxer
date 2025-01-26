@@ -62,7 +62,8 @@ function update() {
         if (hero) {
             const ability = hero.abilities.filter((ability) => ability.abilityType === 'activeAbility')[0] as ActiveAbility;
             const definition = ability.definition;
-            if (ability.cooldown === 0) {
+            // Use ability if not on cooldown and has been leveled up.
+            if (ability.level > 0 && ability.cooldown === 0) {
                 const targetingInfo = definition.getTargetingInfo(state, hero, ability);
                 if (targetingInfo.canTargetEnemy || targetingInfo.canTargetAlly || targetingInfo.canTargetLocation) {
                     // If the ability can target, we selected it to allow the user to choose the target.
