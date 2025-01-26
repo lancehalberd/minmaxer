@@ -51,7 +51,7 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] 
             },
             onPress(state: GameState) {
                 if (ability.abilityType !== 'activeAbility') {
-                    return true;;
+                    return true;
                 }
                 if (ability.level <= 0 || ability.cooldown > 0) {
                     return true;
