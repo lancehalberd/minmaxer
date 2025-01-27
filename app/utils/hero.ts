@@ -50,7 +50,7 @@ export function summonHero(state: GameState, hero: Hero): boolean {
     return true;
 }
 
-export function useHeroActiveAbility(state: GameState, hero: Hero, ability: Ability) {
+export function activateHeroAbility(state: GameState, hero: Hero, ability: Ability) {
     if (ability.abilityType !== 'activeAbility') {
         return;
     }

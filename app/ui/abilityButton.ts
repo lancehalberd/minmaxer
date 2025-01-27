@@ -2,7 +2,7 @@ import {canvas} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
 import {fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
-import {useHeroActiveAbility} from 'app/utils/hero';
+import {activateHeroAbility} from 'app/utils/hero';
 
 
 const padding = 10;
@@ -51,7 +51,7 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] 
                 }
             },
             onPress(state: GameState) {
-                useHeroActiveAbility(state, hero, ability);
+                activateHeroAbility(state, hero, ability);
                 return true;
             },
             onHover(state: GameState) {

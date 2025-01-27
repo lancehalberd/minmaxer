@@ -5,7 +5,7 @@ import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
-import {useHeroActiveAbility} from 'app/utils/hero';
+import {activateHeroAbility} from 'app/utils/hero';
 import {updateJobs} from 'app/utils/job';
 import {advanceDebugGameState} from 'app/utils/debug';
 
@@ -63,8 +63,8 @@ function update() {
         if (hero) {
             const activeAbilities = hero.abilities.filter(({abilityType}) => abilityType === 'activeAbility');
             // Currently there is only one active ability per Hero.
-            // In the future this chould change to select a specific ability.
-            useHeroActiveAbility(state, hero, activeAbilities[0]);
+            // In the future this could change to select a specific ability.
+            activateHeroAbility(state, hero, activeAbilities[0]);
         }
     }
 
