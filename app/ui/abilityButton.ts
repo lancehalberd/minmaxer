@@ -2,6 +2,7 @@ import {canvas} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
 import {fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
+import {useHeroActiveAbility} from 'app/utils/hero';
 
 
 const padding = 10;
@@ -50,36 +51,12 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] 
                 }
             },
             onPress(state: GameState) {
-                if (ability.abilityType !== 'activeAbility') {
-                    return true;
-                }
-                if (ability.level <= 0 || ability.cooldown > 0) {
-                    return true;
-                }
-                const definition = ability.definition;
-                if (definition.abilityType === 'activeAbility') {
-                    if (definition.canActivate && !definition.canActivate(state, hero, ability)) {
-                        return true;
-                    }
-                    const targetingInfo = definition.getTargetingInfo(state, hero, ability);
-                    if (targetingInfo.canTargetEnemy || targetingInfo.canTargetAlly || targetingInfo.canTargetLocation) {
-                        // If the ability can target, we selected it to allow the user to choose the target.
-                        if (state.selectedAbility === ability) {
-                            delete state.selectedAbility;
-                        } else {
-                            state.selectedAbility = ability;
-                        }
-                    } else {
-                        // If the ability does not target, it is activated immediately.
-                        definition.onActivate(state, hero, ability, undefined)
-                        ability.cooldown = definition.getCooldown(state, hero, ability);
-                    }
-                }
+                useHeroActiveAbility(state, hero, ability);
                 return true;
             },
             onHover(state: GameState) {
                 if (ability.abilityType !== 'activeAbility') {
-                    return true;;
+                    return true;
                 }
                 if (ability.level > 0 && ability.cooldown <= 0) {
                     state.hoveredAbility = ability;

@@ -49,3 +49,28 @@ export function summonHero(state: GameState, hero: Hero): boolean {
     state.selectedHero = hero;
     return true;
 }
+
+export function useHeroActiveAbility(state: GameState, hero: Hero, ability: Ability) {
+    if (ability.abilityType !== 'activeAbility') {
+        return;
+    }
+    if (ability.level <= 0 || ability.cooldown > 0) {
+        return;
+    }
+    const definition = ability.definition;
+    if (!definition.canActivate || definition.canActivate(state, hero, ability)) {
+        const targetingInfo = definition.getTargetingInfo(state, hero, ability);
+        if (targetingInfo.canTargetEnemy || targetingInfo.canTargetAlly || targetingInfo.canTargetLocation) {
+            // If the ability can target, we selected it to allow the user to choose the target.
+            if (state.selectedAbility === ability) {
+                delete state.selectedAbility;
+            } else {
+                state.selectedAbility = ability;
+            }
+        } else {
+            // If the ability does not target, it is activated immediately.
+            definition.onActivate(state, hero, ability, undefined)
+            ability.cooldown = definition.getCooldown(state, hero, ability);
+        }
+    }
+}

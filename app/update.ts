@@ -5,6 +5,7 @@ import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
+import {useHeroActiveAbility} from 'app/utils/hero';
 import {updateJobs} from 'app/utils/job';
 import {advanceDebugGameState} from 'app/utils/debug';
 
@@ -56,28 +57,14 @@ function update() {
         advanceDebugGameState(state);
     }
 
-    // Pressing the key[R] allows you to use the hero's active ability.
+    // Pressing the key[R] allows you to use the selected hero's active ability.
     if (wasGameKeyPressed(state, gameKeys.ability)) {
         const hero = state.selectedHero;
         if (hero) {
-            const ability = hero.abilities.filter((ability) => ability.abilityType === 'activeAbility')[0] as ActiveAbility;
-            const definition = ability.definition;
-            // Use ability if not on cooldown and has been leveled up.
-            if (ability.level > 0 && ability.cooldown === 0) {
-                const targetingInfo = definition.getTargetingInfo(state, hero, ability);
-                if (targetingInfo.canTargetEnemy || targetingInfo.canTargetAlly || targetingInfo.canTargetLocation) {
-                    // If the ability can target, we selected it to allow the user to choose the target.
-                    if (state.selectedAbility === ability) {
-                        delete state.selectedAbility;
-                    } else {
-                        state.selectedAbility = ability;
-                    }
-                } else {
-                    // If the ability does not target, it is activated immediately.
-                    definition.onActivate(state, hero, ability, undefined)
-                    ability.cooldown = definition.getCooldown(state, hero, ability);
-                }
-            }
+            const activeAbilities = hero.abilities.filter(({abilityType}) => abilityType === 'activeAbility');
+            // Currently there is only one active ability per Hero.
+            // In the future this chould change to select a specific ability.
+            useHeroActiveAbility(state, hero, activeAbilities[0]);
         }
     }
 
