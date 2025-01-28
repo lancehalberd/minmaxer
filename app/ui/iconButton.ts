@@ -20,6 +20,7 @@ export class IconButton implements UIButton {
     onHover = this.props.onHover;
     onPress = this.props.onPress;
     onClick = this.props.onClick;
+    uniqueId = this.props.uniqueId;
     constructor(public props: IconButtonProps) {}
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {
         fillBorderedRect(context, this, {

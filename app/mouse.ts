@@ -1,5 +1,5 @@
 import {canvas, canvasScale} from 'app/gameConstants'
-import {isAbilityTargetValid} from 'app/utils/combat';
+import {isAbilityMouseTargetValid} from 'app/utils/combat';
 import {convertToWorldPosition, isPointInCircle, isPointInRect} from 'app/utils/geometry';
 
 let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
@@ -84,10 +84,12 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
 
     return locationTarget;
 }
+// TODO: We don't know if the target is in world coordinates or screen coordinates so we just check both.
+// This could probably cause undesirable results in some situations.
 function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
     const worldPoint = convertToWorldPosition(state, screenPoint);
     if (target.objectType === 'uiButton') {
-        return isPointInRect(target, worldPoint);
+        return isPointInRect(target, worldPoint) || isPointInRect(target, screenPoint);
     }
     if (target.objectType === 'point') {
         return false;
@@ -144,7 +146,7 @@ export function updateMouseActions(state: GameState) {
                     const definition = state.selectedAbility.definition;
                     if (definition.abilityType === 'activeAbility') {
                         const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
-                        if (isAbilityTargetValid(state, targetingInfo)) {
+                        if (isAbilityMouseTargetValid(state, targetingInfo)) {
                             if (targetingInfo.moveToTarget) {
                                 // Assign the ability action to the hero if they should move until the
                                 // target is in range.

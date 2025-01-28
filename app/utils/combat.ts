@@ -90,7 +90,7 @@ export function removeEffectFromHero(state: GameState, effect: ObjectEffect<Hero
     effect.remove(state, hero);
 }
 
-export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo): boolean {
+export function isAbilityMouseTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo): boolean {
     const mouseTarget = state.mouse.mouseHoverTarget;
     if (!mouseTarget) {
         return false;
@@ -98,10 +98,33 @@ export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTar
     if (mouseTarget.objectType === 'point') {
         return !!targetingInfo.canTargetLocation;
     }
+    if (mouseTarget.objectType === 'uiButton') {
+        return false;
+    }
+    return isAbilityTargetValid(state, targetingInfo, mouseTarget);
+    /*if (!mouseTarget) {
+        return false;
+    }
     if (mouseTarget.objectType === 'enemy' || mouseTarget.objectType === 'spawner') {
         return !!targetingInfo.canTargetEnemy;
     }
     if (mouseTarget.objectType === 'hero') {
+        return !!targetingInfo.canTargetAlly;
+    }
+    return false;*/
+}
+
+export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo, target: FieldTarget): boolean {
+    if (!target) {
+        return false;
+    }
+    if (target.objectType === 'point') {
+        return !!targetingInfo.canTargetLocation;
+    }
+    if (target.objectType === 'enemy' || target.objectType === 'spawner') {
+        return !!targetingInfo.canTargetEnemy;
+    }
+    if (target.objectType === 'hero') {
         return !!targetingInfo.canTargetAlly;
     }
     return false;

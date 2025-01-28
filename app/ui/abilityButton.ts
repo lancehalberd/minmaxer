@@ -1,5 +1,6 @@
 import {canvas} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
+import {RepeatToggle} from 'app/ui/iconButton';
 import {fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {activateHeroAbility} from 'app/utils/hero';
@@ -88,9 +89,25 @@ export function getHeroAbilityButtons(state: GameState, hero: Hero): UIButton[] 
                     }
                     return true;
                 }
-            }
+            };
             buttons.push(abilityLevelUpButton);
-
+        }
+        if (ability.level && ability.abilityType === 'activeAbility') {
+            const autoCastToggle = new RepeatToggle({
+                uniqueId: `skill-autocast-${x}`,
+                x: abilityButton.x + abilityButton.w - abilityLevelButtonSize + 2,
+                y: abilityButton.y - 2,
+                w: abilityLevelButtonSize, h: abilityLevelButtonSize,
+                isActive(state: GameState) {
+                    return ability.autocast;
+                },
+                onClick(state: GameState): boolean {
+                    console.log(ability.autocast);
+                    ability.autocast = !ability.autocast;
+                    return true;
+                },
+            });
+            buttons.push(autoCastToggle);
         }
         x += abilityButtonSize + padding;
     }

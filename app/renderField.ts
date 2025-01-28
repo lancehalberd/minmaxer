@@ -1,5 +1,5 @@
 import {canvas} from 'app/gameConstants';
-import {isAbilityTargetValid} from 'app/utils/combat';
+import {isAbilityMouseTargetValid} from 'app/utils/combat';
 import {fillCircle, strokeX} from 'app/utils/draw';
 import {convertToWorldPosition} from 'app/utils/geometry';
 
@@ -44,7 +44,7 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
             const definition = state.selectedAbility.definition;
             if (definition.abilityType === 'activeAbility') {
                 const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
-                const isTargetValid = isAbilityTargetValid(state, targetingInfo);
+                const isTargetValid = isAbilityMouseTargetValid(state, targetingInfo);
                 const target: Point = state.mouse.mouseHoverTarget || convertToWorldPosition(state, state.mouse.currentPosition);;
                 if (isTargetValid) {
                     if (targetingInfo.hitRadius) {

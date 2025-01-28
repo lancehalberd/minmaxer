@@ -2,7 +2,7 @@ import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameC
 import {createLoot, pickupLoot} from 'app/objects/loot';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
 import {gainEssence} from 'app/utils/essence';
-import {damageTarget, isTargetAvailable} from 'app/utils/combat';
+import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
 import {fillCircle, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
 import {summonHero} from 'app/utils/hero';
@@ -132,6 +132,23 @@ function moveHeroTowardsTarget(state: GameState, hero: Hero, target: AbilityTarg
     return false;
 }
 
+// Automatically use ability if there is a target in range.
+function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbility) {
+    const targetingInfo = ability.definition.getTargetingInfo(state, hero, ability);
+    for (const object of state.world.objects) {
+        // Skip this object if the ability doesn't target this type of object.
+        if (!isAbilityTargetValid(state, targetingInfo, object)) {
+            continue;
+        }
+        // Use the ability on the target if it is in range.
+        if (getDistance(hero, object) < hero.r + object.r + targetingInfo.range) {
+            ability.definition.onActivate(state, hero, ability, object);
+            ability.cooldown = ability.definition.getCooldown(state, hero, ability);
+            return;
+        }
+    }
+}
+
 function updateHero(this: Hero, state: GameState) {
     // Calculate Hero level increase
     const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
@@ -150,7 +167,7 @@ function updateHero(this: Hero, state: GameState) {
             if (ability.cooldown > 0) {
                 ability.cooldown -= frameLength;
             } else if (ability.autocast) {
-                // TODO: Automatically use ability if there is a target in range.
+                checkToAutocastAbility(state, this, ability);
             }
         }
     }
