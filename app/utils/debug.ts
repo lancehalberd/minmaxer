@@ -49,7 +49,7 @@ export function advanceDebugGameState(state: GameState) {
     for (const object of state.world.objects) {
         if (object.objectType === 'spawner') {
             object.onDeath?.(state);
-            gainEssence(state, object.essenceWorth);
+            gainEssence(state, 10 * object.essenceWorth);
             mainHero.experience += object.experienceWorth;
             const objectIndex = state.world.objects.indexOf(object);
             if (objectIndex >= 0) {
