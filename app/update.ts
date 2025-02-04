@@ -11,6 +11,36 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
+
+Design equipment, probably simple tiered equipment like ROTMG, weapon, armor, charm(1 or more slots)
+    Charms:
+        Ruby +3 str (+1 str to recipes)
+        Sapphire +3 int (+1 int to recipes)
+        Emerald +3 dex (+1 dex to recipes)
+        Ruby Ring(etc) +10 str
+        Ruby Necklace(etc) +50 str
+
+    Craft Armor:
+        1-5x material slots that add armor and raise armor cap.
+        1-10x decoration slots that add additional stats
+        (room to expand further for example 1-4 enchantment slots)
+
+    Material
+        Hide: +1 Armor, 10 Armor Cap
+        Leather: +2 Armor, 20 Armor Cap
+
+
+
+Core state growth:
+    1 passive point 2-3 dex
+    1 low level accessory 2-3 dex
+    starting value vs end game value  (5-10)~2000
+    Flat damage from characters main stat
+
+
+Gear recipes with generic requirements, ingredients that give special bonuses when used.
+    Leather boots requires 2 leather, but using normal leather vs cured leather vs magic leather gives different results.
+
 Make assignments based on total tool power instead of population.
     Total tool power for a job is the sum of the best N tools used by N people where N is min(number of tools, population).
     reserved tool power assumes the worst tools will not be used.

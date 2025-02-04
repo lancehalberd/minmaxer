@@ -16,13 +16,16 @@ const healerJobDefinition: JobDefinition = {
     repeat: true,
     essenceCost: 10,
     canProgress(state: GameState) {
-        if (lastTarget && (!isTargetAvailable(state, lastTarget) || lastTarget.health >= lastTarget.maxHealth)) {
+        if (lastTarget && (
+            !isTargetAvailable(state, lastTarget)
+            || lastTarget.health >= lastTarget.getMaxHealth(state)
+        )) {
             lastTarget = undefined;
         }
         if (!lastTarget) {
             let closestDistance = state.nexus.r + healerRange;
             for (const object of state.world.objects) {
-                if (object.objectType === 'hero' && object.health < object.maxHealth) {
+                if (object.objectType === 'hero' && object.health < object.getMaxHealth(state)) {
                     const distance = getDistance(state.nexus, object);
                     if (distance < closestDistance) {
                         lastTarget = object;
@@ -35,7 +38,7 @@ const healerJobDefinition: JobDefinition = {
     },
     onComplete(state: GameState) {
         if (lastTarget) {
-            lastTarget.health = Math.min(lastTarget.maxHealth, lastTarget.health + 20);
+            lastTarget.health = Math.min(lastTarget.getMaxHealth(state), lastTarget.health + 20);
             addHealEffect(state, {target: lastTarget});
         }
     }

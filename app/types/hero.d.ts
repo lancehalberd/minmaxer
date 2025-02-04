@@ -3,13 +3,23 @@ type HeroType = 'warrior' | 'ranger' | 'wizard';
 
 type HeroSkillType = 'logging' | 'mining' | 'building' | 'crafting';
 
+type CoreStat = 'dex' | 'str' | 'int';
+
+
+type ModifiableHeroStat = CoreStat | 'maxHealth' | 'movementSpeed'
+    | 'damage' | 'attacksPerSecond' | 'extraHitChance' | 'criticalChance' | 'criticalMultiplier'
+    | 'cooldownSpeed'
+    | 'armor' | 'maxDamageReduction' | 'incomingDamageMultiplier'
+
 interface HeroDefinition {
     // Name of the hero.
     name: string
+    coreState: CoreStat
     // Level that the hero starts at.
     startingLevel: number
-    // Current and max life of the enemy.
-    getStatsForLevel: (level: number) => HeroLevelDerivedStats
+    // TODO: Replace this with getClassBonuses that give arbitrary bonuses
+    // to stats based on class.
+    // getStatsForLevel: (level: number) => HeroLevelDerivedStats
     // Essence cost of summoning this hero.
     cost: number
 
@@ -25,10 +35,13 @@ interface HeroDefinition {
     abilities: AbilityDefinition[]
 }
 
+type ModifiableHeroStats = {[key in ModifiableHeroStat]: ModifiableStat<Hero>}
+
 interface Hero extends Circle {
     objectType: 'hero'
     definition: HeroDefinition
-    movementSpeed: number
+    stats: ModifiableHeroStats
+    getMovementSpeed: (state: GameState) => number
     level: number
     skills: {
         [key in HeroSkillType]?: HeroSkill
@@ -36,21 +49,32 @@ interface Hero extends Circle {
     // Net amount of experience the hero has accumulated
     experience: number
     health: number
-    maxHealth: number
+    getMaxHealth: (state: GameState) => number
     // How much damage the enemy deals on attack
-    damage: number
-    // How fast the enemy attacks in Hertz
-    attacksPerSecond: ModifiableStat
+    getDamage: (state: GameState) => number
     getAttacksPerSecond: (state: GameState) => number
     getDamageForTarget: (state: GameState, target: AbilityTarget) => number
     // How far away the hero can hit targets from in pixels.
-    attackRange: number
+    getAttackRange: (state: GameState) => number
+    // Grants 1% bonus hit chance, up to 1 Armor Class. Also gives flat damage to dex heroes.
+    getDex: (state: GameState) => number
+    // Grants 1% increased damage and 2 max health. Also gives flat damage to strength heroes.
+    getStr: (state: GameState) => number
+    // Grants 1% cooldown speed, and 0.5% critical chance. Also gives flat damage to intelligence heroes.
+    getInt: (state: GameState) => number
+    getArmor: (state: GameState) => number
+    getArmorClass: (state: GameState) => number
+    getMaxDamageReduction: (state: GameState) => number
+    getExtraHitChance: (state: GameState) => number
+    getCriticalChance: (state: GameState) => number
+    getCooldownSpeed: (state: GameState) => number
+    getCriticalMultipler: (state: GameState) => number
+    // Any damage the hero takes is multiplied by this state. This allows us to
+    // create effects that cause the hero to take increased or decreased damage.
+    getIncomingDamageMultiplier: (state: GameState) => number
 
     effects: ObjectEffect<Hero>[]
 
-    // Any damage the hero takes is multiplied by this state. This allows us to
-    // create effects that cause the hero to take increased or decreased damage.
-    incomingDamageMultiplier: ModifiableStat
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
@@ -96,8 +120,9 @@ interface HeroSkill {
     experience: number
 }
 
-interface ModifiableStat {
-    baseValue: number
+
+interface ModifiableStat<T> {
+    baseValue: Computed<number, T>
     addedBonus: number
     percentBonus: number
     multipliers: number[]
@@ -180,3 +205,9 @@ interface SimpleEffect<T> extends BaseEffect<T> {
     effectType: 'simpleEffect'
 }
 type ObjectEffect<T> = AbilityEffect<T> | SimpleEffect<T>;
+
+interface AttackHit {
+    damage: number
+    isCrit?: boolean
+    source?: AttackTarget
+}

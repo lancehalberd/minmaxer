@@ -1,8 +1,8 @@
+import {addDamageNumber} from 'app/effects/damageNumber';
 import {loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
-import {getModifiableStatValue} from 'app/utils/modifiableStat';
 
-export function damageTarget(state: GameState, target: AttackTarget, damage: number, damageSource?: AttackTarget) {
+export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source}: AttackHit) {
     if (damage < 0) {
         return
     }
@@ -11,8 +11,8 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
             const tempDamage = damage;
             damage -= state.city.wall.health;
             state.city.wall.health -= tempDamage;
-            if (damageSource && state.city.wall.returnDamage) {
-                damageTarget(state, damageSource, state.city.wall.returnDamage);
+            if (source && state.city.wall.returnDamage) {
+                damageTarget(state, source, {damage: state.city.wall.returnDamage});
             }
             // Stop if the wall absorbed all of the damage.
             if (damage <= 0) {
@@ -23,9 +23,16 @@ export function damageTarget(state: GameState, target: AttackTarget, damage: num
         return;
     }
     if (target.objectType === 'hero') {
-        damage *= getModifiableStatValue(target.incomingDamageMultiplier);
+        damage *= target.getIncomingDamageMultiplier(state);
+        const armorClass = target.getArmorClass(state);
+        const maxDamageReduction = target.getMaxDamageReduction(state);
+        damage = Math.max(
+            damage - armorClass,
+            Math.ceil(damage * (1 - maxDamageReduction)),
+        );
     }
     target.health = Math.max(0, target.health - damage);
+    addDamageNumber(state, {target, damage, isCrit});
     if (target.health <= 0) {
         // remove the object from the state, if not a 'nexus' when it dies.
         const objectIndex = state.world.objects.indexOf(target);
@@ -117,6 +124,10 @@ export function isAbilityMouseTargetValid(state: GameState, targetingInfo: Abili
 export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo, target: FieldTarget): boolean {
     if (!target) {
         return false;
+    }
+    // Abilities that don't specify any target type are assumed to target enemies.
+    if (!targetingInfo.canTargetLocation && !targetingInfo.canTargetEnemy && !targetingInfo.canTargetAlly) {
+        return target.objectType === 'enemy' || target.objectType === 'spawner';
     }
     if (target.objectType === 'point') {
         return !!targetingInfo.canTargetLocation;

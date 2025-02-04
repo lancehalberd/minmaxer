@@ -10,7 +10,7 @@ export const spinStrike: ActiveAbilityDefinition = {
         // This skill is used immediately where the hero is standing when activated.
         return {
             // The attack radius is 1.1/1.2/1.3/1.4/1.5x of the base radius.
-            hitRadius: hero.r + [1.1, 1.2, 1.3, 1.4, 1.5][ability.level - 1] * hero.attackRange,
+            hitRadius: hero.r + [1.1, 1.2, 1.3, 1.4, 1.5][ability.level - 1] * hero.getAttackRange(state),
             range: 0,
         };
     },
@@ -22,9 +22,9 @@ export const spinStrike: ActiveAbilityDefinition = {
         const hitCircle = {x: hero.x, y: hero.y, r: targetingInfo.hitRadius || 0};
         const targets = getTargetsInCircle(state, getEnemyTargets(state), hitCircle);
         // This attack does 25/35/45/55/65% increased base damage.
-        const damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.damage;
+        const damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.getDamage(state);
         for (const target of targets) {
-            damageTarget(state, target, damage);
+            damageTarget(state, target, {damage, source: hero});
         }
     },
 };
@@ -34,12 +34,12 @@ function getBattleRagerBonusValue(abilityLevel: number, stacks: number): number 
     return Math.min([5, 6, 7, 8, 10][abilityLevel - 1] * stacks, [30, 35, 40, 45, 50][abilityLevel - 1]);
 }
 function applyBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.attacksPerSecond.percentBonus += getBattleRagerBonusValue(this.abilityLevel, this.stacks);
-    hero.attacksPerSecond.isDirty = true;
+    hero.stats.attacksPerSecond.percentBonus += getBattleRagerBonusValue(this.abilityLevel, this.stacks);
+    hero.stats.attacksPerSecond.isDirty = true;
 }
 function removeBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.attacksPerSecond.percentBonus -= getBattleRagerBonusValue(this.abilityLevel, this.stacks);
-    hero.attacksPerSecond.isDirty = true;
+    hero.stats.attacksPerSecond.percentBonus -= getBattleRagerBonusValue(this.abilityLevel, this.stacks);
+    hero.stats.attacksPerSecond.isDirty = true;
 }
 export const battleRager: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
@@ -105,7 +105,7 @@ export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
             r: piercingShotRadius,
             duration: 1000 * getPiercingShotRange(state, hero, ability) / speed,
             piercing: true,
-            damage,
+            hit: {damage, source: hero},
         });
     },
 };

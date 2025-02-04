@@ -10,22 +10,22 @@ lootDefinitions.potion = {
     color: 'red',
     r: 5,
     onPickup(state: GameState, hero: Hero) {
-        hero.health = Math.min(hero.maxHealth, hero.health + 20);
+        hero.health = Math.min(hero.getMaxHealth(state), hero.health + 20);
         addHealEffect(state, {target: hero});
     }
 };
 
 
 function applyInvulnerabilityEffect(this: SimpleEffect<Hero>, state: GameState, hero: Hero) {
-    hero.incomingDamageMultiplier.multipliers.push(0);
-    hero.incomingDamageMultiplier.isDirty = true;
+    hero.stats.incomingDamageMultiplier.multipliers.push(0);
+    hero.stats.incomingDamageMultiplier.isDirty = true;
 }
 function removeInvulnerabilityEffect(this: SimpleEffect<Hero>, state: GameState, hero: Hero) {
-    const index = hero.incomingDamageMultiplier.multipliers.indexOf(0);
+    const index = hero.stats.incomingDamageMultiplier.multipliers.indexOf(0);
     if (index >= 0) {
-        hero.incomingDamageMultiplier.multipliers.splice(index, 1);
+        hero.stats.incomingDamageMultiplier.multipliers.splice(index, 1);
     }
-    hero.incomingDamageMultiplier.isDirty = true;
+    hero.stats.incomingDamageMultiplier.isDirty = true;
 }
 
 lootDefinitions.invincibilityPotion = {

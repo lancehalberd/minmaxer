@@ -29,7 +29,7 @@ interface Projectile extends Circle {
     vy: number
     duration: number
     piercing?: boolean
-    damage: number
+    hit: AttackHit
     hitsEnemies?: boolean
     hitsAllies?: boolean
     target?: AbilityTarget

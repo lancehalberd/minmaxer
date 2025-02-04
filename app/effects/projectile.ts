@@ -9,10 +9,10 @@ export function createProjectile(props: Partial<Projectile>): Projectile {
         vx: 0, vy: 0,
         r: 10,
         duration: 1000,
-        damage: 1,
         update: updateProjectile,
         render: renderProjectile,
         hitTargets: new Set(),
+        hit: props.hit ?? {damage: 1},
         ...props,
     };
     return projectile;
@@ -36,7 +36,7 @@ function updateProjectile(this: Projectile, state: GameState) {
             if (this.hitTargets.has(target)) {
                 continue;
             }
-            damageTarget(state, target, this.damage);
+            damageTarget(state, target, this.hit);
             this.hitTargets.add(target);
         }
         if (!this.piercing && this.hitTargets.size) {

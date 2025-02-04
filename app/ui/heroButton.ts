@@ -25,7 +25,7 @@ export function getHeroButtons(state: GameState): UIButton[] {
                 if (hero) {
                     // Draw health arc behind first.
                     fillArc(context, {...circle, r: circle.r + 8, color: '#000'}, - Math.PI / 2, Math.PI / 2);
-                    const p = hero.health / hero.maxHealth;
+                    const p = hero.health / hero.getMaxHealth(state);
                     fillArc(context, {...circle, r: circle.r + 8, color: p >= 0.6 ? '#080' : '#F80'}, Math.PI / 2 - p * Math.PI, Math.PI / 2);
                 }
                 fillCircle(context, {...circle, color: '#FFF'});

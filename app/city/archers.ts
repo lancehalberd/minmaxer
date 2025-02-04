@@ -62,7 +62,7 @@ function updateArchers(state: GameState, archerJob: Job) {
                     color: '#AAA',
                     r: 3,
                     duration: 1000 * archerRange / speed,
-                    damage,
+                    hit: {damage},
                 });
                 //damageTarget(state, attackTarget, damage, this);
                 //attackTarget.onHit?.(state, this);

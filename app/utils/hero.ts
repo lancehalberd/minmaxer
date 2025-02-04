@@ -40,6 +40,7 @@ export function summonHero(state: GameState, hero: Hero): boolean {
         return false;
     }
     state.heroSlots[firstEmptyIndex] = hero;
+    hero.health = hero.getMaxHealth(state);
     state.world.objects.push(hero);
     state.availableHeroes.splice(availableHeroIndex, 1);
     // Unpause the game automatically if hero is the first hero selected.

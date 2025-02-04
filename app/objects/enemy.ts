@@ -61,7 +61,7 @@ export function updateEnemy(this: Enemy, state: GameState) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.attacksPerSecond;
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
-                damageTarget(state, this.attackTarget, this.damage, this);
+                damageTarget(state, this.attackTarget, {damage: this.damage, source: this});
                 this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = state.world.time;
             }
