@@ -2,20 +2,26 @@ interface GameState {
     nexus: Nexus
     city: CityStats
     inventory: Inventory
-    // Total resources harvested this round.
-    totalResources: {
-        [key in ResourceKey]: number
-    }
+    // Which resources have been discovered this round.
+    discoveredItems: Set<InventoryKey>
     // Resources available to harvest currently.
     availableResources: {
-        [key in ResourceKey]: number
+        wood: number
+        stone: number
     }
     // List of heroes available to summon.
     availableHeroes: Hero[],
     previewRequiredToolType?: ToolType
     previewResourceCost?: ComputedResourceCost
     selectedHero?: Hero
+    openCharacterPanel?: boolean
+    openChooseArmorPanel?: boolean
+    openChooseWeaponPanel?: boolean
+    openChooseCharmPanel?: boolean
+    // Used for tracking which charm is being updated.
+    selectedCharmIndex?: number
     hoveredAbility?: Ability
+    hoverToolTip?: UIElement
     selectedAbility?: ActiveAbility
     heroSlots: (Hero | null)[]
     hudUIElements: UIElement[]

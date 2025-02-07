@@ -75,6 +75,16 @@ interface Hero extends Circle {
 
     effects: ObjectEffect<Hero>[]
 
+    equipment: HeroEquipment
+    equipArmor(state: GameState, armor: Armor): boolean
+    unequipArmor(state: GameState): Armor|undefined
+    equipWeapon(state: GameState, weapon: Weapon): boolean
+    unequipWeapon(state: GameState): Weapon|undefined
+    equipCharm(state: GameState, charm: Charm, index: number): boolean
+    unequipCharm(state: GameState, index: number): Charm|undefined
+
+    addStatModifiers: (modifiers?: StatModifier[]) => void
+    removeStatModifiers: (modifiers?: StatModifier[]) => void
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
@@ -100,6 +110,12 @@ interface Hero extends Circle {
     abilityTarget?: AbilityTarget
 
     reviveCooldown?: Cooldown
+}
+
+interface HeroEquipment {
+    armor?: Armor
+    weapon?: Weapon
+    charms: (Charm|undefined)[]
 }
 
 interface Cooldown {

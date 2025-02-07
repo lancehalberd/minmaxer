@@ -1,7 +1,7 @@
 import {frameLength, uiSize} from 'app/gameConstants';
 import {computeValue} from 'app/utils/computed';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
-import {inventoryLabels} from 'app/utils/inventory';
+import {getItemLabel} from 'app/utils/inventory';
 import {progressJob} from 'app/utils/job';
 import {createJobComponent} from 'app/ui/jobComponent';
 
@@ -74,7 +74,7 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
 
 let y = -4 * uiSize, x = 5 * uiSize;
 for (const craftingJobDefinition of craftingJobDefinitions) {
-    const label = inventoryLabels[craftingJobDefinition.item] ?? craftingJobDefinition.item;
+    const label = getItemLabel(craftingJobDefinition.item);
     const jobDefinition: JobDefinition = {
         key: 'craft-' + craftingJobDefinition.item,
         label: 'Make ' + label,
@@ -83,7 +83,8 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
         workerSeconds: craftingJobDefinition.workerSeconds,
         repeat: craftingJobDefinition.repeat,
         onComplete(state: GameState) {
-            state.inventory[craftingJobDefinition.item] += computeValue(state, jobDefinition, craftingJobDefinition.amount, 1);
+            state.inventory[craftingJobDefinition.item] = (state.inventory[craftingJobDefinition.item] ?? 0 )
+                + computeValue(state, jobDefinition, craftingJobDefinition.amount, 1);
         },
         applyHeroProgress(state: GameState, job: Job, hero: Hero) {
             const skill = getHeroSkill(state, hero, 'crafting');

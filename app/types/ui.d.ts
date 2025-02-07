@@ -16,7 +16,6 @@ interface UIContainer extends BaseUIElement {
 
 interface UIButton extends BaseUIElement {
     objectType: 'uiButton'
-    text?: string
     onHover?: (state: GameState) => boolean
     onPress?: (state: GameState) => boolean
     onClick?: (state: GameState) => boolean

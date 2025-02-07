@@ -34,12 +34,16 @@ function getBattleRagerBonusValue(abilityLevel: number, stacks: number): number 
     return Math.min([5, 6, 7, 8, 10][abilityLevel - 1] * stacks, [30, 35, 40, 45, 50][abilityLevel - 1]);
 }
 function applyBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.stats.attacksPerSecond.percentBonus += getBattleRagerBonusValue(this.abilityLevel, this.stacks);
-    hero.stats.attacksPerSecond.isDirty = true;
+    hero.addStatModifiers([{
+        stat: 'attacksPerSecond',
+        percentBonus: getBattleRagerBonusValue(this.abilityLevel, this.stacks),
+    }]);
 }
 function removeBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.stats.attacksPerSecond.percentBonus -= getBattleRagerBonusValue(this.abilityLevel, this.stacks);
-    hero.stats.attacksPerSecond.isDirty = true;
+    hero.removeStatModifiers([{
+        stat: 'attacksPerSecond',
+        percentBonus: getBattleRagerBonusValue(this.abilityLevel, this.stacks),
+    }]);
 }
 export const battleRager: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
@@ -94,7 +98,7 @@ export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
         const dx = target.x - hero.x, dy = target.y - hero.y;
         const mag = Math.sqrt(dx*dx + dy*dy);
         // This attack 1.5/1.7/1.9/2.1/2.3x base damage.
-        const damage = [1.5, 1.7, 1.9, 2.1, 2.3][ability.level - 1] * hero.getDamageForTarget(state, target);
+        const damage = ([1.5, 1.7, 1.9, 2.1, 2.3][ability.level - 1] * hero.getDamageForTarget(state, target)) | 0;
         const targetingInfo = this.getTargetingInfo(state, hero, ability);
         addProjectile(state, {
             x: hero.x + dx * hero.r / mag,

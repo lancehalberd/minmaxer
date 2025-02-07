@@ -1,18 +1,17 @@
-import {context} from 'app/gameConstants';
+// import {context} from 'app/gameConstants';
 import {fillRect} from 'app/utils/draw';
 import {convertToWorldPosition, isPointInRect, pad} from 'app/utils/geometry';
 import {createAnimation, drawFrameContentAt} from 'app/utils/animations';
 
 
-export function createFieldButtonForTarget(target: Circle, text: string, callback: (state: GameState) => boolean): UIButton {
-    const measurements = context.measureText(text);
+export function createFieldButtonForTarget(target: Circle, callback: (state: GameState) => boolean): UIButton {
+    //const measurements = context.measureText(text);
     return {
         objectType: 'uiButton',
         x: target.x + 5,
         y: target.y + 5,
-        w: measurements.width,
+        w: 100,
         h: 16,
-        text,
         onClick: callback,
         render: renderFieldButton,
     };
@@ -30,9 +29,9 @@ function renderFieldButton(this: UIButton, context: CanvasRenderingContext2D, st
     context.fillStyle = '#000';
     context.textBaseline = 'top';
     context.textAlign = 'center';
-    if (this.text) {
-        context.fillText(this.text, this.x + this.w / 2, this.y);
-    }
+    //if (this.text) {
+    //    context.fillText(this.text, this.x + this.w / 2, this.y);
+    //}
 }
 
 // Load the pointer graphics, which is 4 16x16 sprites in a row, so 64x16 total dimensions.

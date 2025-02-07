@@ -33,6 +33,122 @@ class HeroObject implements Hero {
     abilityTarget?: AbilityTarget;
     reviveCooldown?: Cooldown;
 
+    equipment: HeroEquipment = {
+        charms: [undefined]
+    };
+
+    equipArmor(state: GameState, armor: Armor): boolean {
+        if (this.equipment.armor) {
+            return false;
+        }
+        this.equipment.armor = armor;
+        this.stats.armor.isDirty = true;
+        this.addStatModifiers(armor.armorStats.modifiers);
+        return true;
+    }
+
+    unequipArmor(state: GameState): Armor|undefined {
+        if (!this.equipment.armor) {
+            return;
+        }
+        const armor = this.equipment.armor;
+        this.stats.armor.isDirty = true;
+        this.removeStatModifiers(armor.armorStats.modifiers);
+        delete this.equipment.armor;
+        return armor;
+    }
+
+    equipWeapon(state: GameState, weapon: Weapon): boolean {
+        if (this.equipment.weapon) {
+            return false;
+        }
+        this.equipment.weapon = weapon;
+        this.stats.damage.isDirty = true;
+        this.addStatModifiers(weapon.weaponStats.modifiers);
+        return true;
+    }
+
+    unequipWeapon(state: GameState): Weapon|undefined {
+        if (!this.equipment.weapon) {
+            return;
+        }
+        const weapon = this.equipment.weapon;
+        this.stats.damage.isDirty = true;
+        this.removeStatModifiers(weapon.weaponStats.modifiers);
+        delete this.equipment.weapon;
+        return weapon;
+    }
+
+    equipCharm(state: GameState, charm: Charm, index: number): boolean {
+        if (index >= this.equipment.charms.length || this.equipment.charms[index]) {
+            return false;
+        }
+        this.equipment.charms[index] = charm;
+        this.addStatModifiers(charm.charmStats.modifiers);
+        return true;
+    }
+
+    unequipCharm(state: GameState, index: number): Charm|undefined {
+        const charm = this.equipment.charms[index];
+        if (index >= this.equipment.charms.length || !charm) {
+            return;
+        }
+        this.removeStatModifiers(charm.charmStats.modifiers);
+        delete this.equipment.charms[index];
+        return charm;
+    }
+
+    addStatModifiers(modifiers?: StatModifier[]) {
+        if (!modifiers) {
+            return;
+        }
+        // TODO: remove this once we correctly mark derived stats as dirty.
+        // for example, updating primary stats should mark damage as dirty.
+        // updating dex should mark armor Class and bonus hit chance as dirty, etc.
+        this.markStatsDirty();
+        for (const modifier of modifiers) {
+            const stat = this.stats[modifier.stat];
+            if (modifier.flatBonus) {
+                stat.addedBonus += modifier.flatBonus;
+                stat.isDirty = true;
+            }
+            if (modifier.percentBonus) {
+                stat.percentBonus += modifier.percentBonus;
+                stat.isDirty = true;
+            }
+            if (modifier.multiplier !== undefined && modifier.multiplier !== 1) {
+                stat.multipliers.push(modifier.multiplier);
+                stat.isDirty = true;
+            }
+        }
+    }
+
+    removeStatModifiers(modifiers?: StatModifier[]) {
+        if (!modifiers) {
+            return;
+        }
+        for (const modifier of modifiers) {
+            const stat = this.stats[modifier.stat];
+            if (modifier.flatBonus) {
+                stat.addedBonus -= modifier.flatBonus;
+                stat.isDirty = true;
+            }
+            if (modifier.percentBonus) {
+                stat.percentBonus -= modifier.percentBonus;
+                stat.isDirty = true;
+            }
+            if (modifier.multiplier !== undefined && modifier.multiplier !== 1) {
+                const index = stat.multipliers.indexOf(modifier.multiplier);
+                if (index >= 0) {
+                    stat.multipliers.splice(index, 1);
+                    stat.isDirty = true;
+                } else {
+                    console.error('Failed to remove multiplier', stat, modifier);
+                }
+            }
+        }
+    }
+
     getAttacksPerSecond(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.attacksPerSecond);
     }
@@ -86,13 +202,16 @@ class HeroObject implements Hero {
         }),
         maxHealth: createModifiableStat<Hero>((state: GameState) => 5 + this.level * 5 + 2 * this.getStr(state)),
         movementSpeed: createModifiableStat<Hero>((state: GameState) => this.level * 2.5 + 97.5),
-        damage: createModifiableStat<Hero>((state: GameState) => this.getPrimaryStat(state)),
+        damage: createModifiableStat<Hero>((state: GameState) => {
+            const weaponDamage = this.equipment.weapon?.weaponStats.damage ?? 0;
+            return weaponDamage + this.getPrimaryStat(state);
+        }),
         attacksPerSecond: createModifiableStat<Hero>(this.definition.attacksPerSecond),
         extraHitChance: createModifiableStat<Hero>((state: GameState) => this.getDex(state) / 100),
         criticalChance: createModifiableStat<Hero>((state: GameState) => this.getInt(state) / 100),
         criticalMultiplier: createModifiableStat<Hero>((state: GameState) => 0.5),
         cooldownSpeed: createModifiableStat<Hero>((state: GameState) => this.getInt(state) / 100),
-        armor: createModifiableStat<Hero>((state: GameState) => 0),
+        armor: createModifiableStat<Hero>((state: GameState) => this.equipment.armor?.armorStats.armor ?? 0),
         maxDamageReduction: createModifiableStat<Hero>((state: GameState) => {
             const n = (4 * this.getArmor(state) + this.getDex(state)) / 100;
             return 0.6 + 0.4 * (1 - 1 / (1 + n));
@@ -104,7 +223,7 @@ class HeroObject implements Hero {
         this.x = x;
         this.y = y;
     }
-    markStatsDirty(state: GameState) {
+    markStatsDirty() {
         for (const stat of Object.values(this.stats)) {
             stat.isDirty = true;
         }
@@ -173,7 +292,7 @@ class HeroObject implements Hero {
             // Level up hero
             this.level = newHeroLevel;
             // Update hero stats based on level
-            this.markStatsDirty(state);
+            this.markStatsDirty();
             // Fully heal hero
             this.health = this.getMaxHealth(state);
             this.totalSkillPoints = Math.min(7, this.level);

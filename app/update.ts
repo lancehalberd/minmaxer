@@ -14,9 +14,6 @@ TODO:
 
 Design equipment, probably simple tiered equipment like ROTMG, weapon, armor, charm(1 or more slots)
     Charms:
-        Ruby +3 str (+1 str to recipes)
-        Sapphire +3 int (+1 int to recipes)
-        Emerald +3 dex (+1 dex to recipes)
         Ruby Ring(etc) +10 str
         Ruby Necklace(etc) +50 str
 
@@ -24,12 +21,6 @@ Design equipment, probably simple tiered equipment like ROTMG, weapon, armor, ch
         1-5x material slots that add armor and raise armor cap.
         1-10x decoration slots that add additional stats
         (room to expand further for example 1-4 enchantment slots)
-
-    Material
-        Hide: +1 Armor, 10 Armor Cap
-        Leather: +2 Armor, 20 Armor Cap
-
-
 
 Core state growth:
     1 passive point 2-3 dex
@@ -66,6 +57,7 @@ function update() {
     delete state.previewRequiredToolType;
     delete state.previewResourceCost;
     delete state.hoveredAbility;
+    delete state.hoverToolTip;
 
     updateMouseActions(state);
     // Show the "pointer" cursor when the mouse is over uiButtons.

@@ -26,8 +26,8 @@ export function updateJobs(state: GameState) {
 // TODO: Add option to reveal jobs from previous play throughs before they are discovered in the current playthrough.
 export function isJobDiscovered(state: GameState, job: JobDefinition): boolean {
     if (job.resourceCost) {
-        for (const key of Object.keys(job.resourceCost) as ResourceKey[]) {
-            if (!state.totalResources[key]) {
+        for (const key of Object.keys(job.resourceCost) as InventoryKey[]) {
+            if (!state.discoveredItems.has(key)) {
                 return false;
             }
         }
@@ -176,7 +176,7 @@ function payForJob(state: GameState, job: Job): boolean {
     if (computedResourceCost) {
         for (const [key, value] of Object.entries(computedResourceCost)) {
             const computedValue = computeValue(state, jobDefinition, value, 0);
-            if (state.inventory[key as ResourceKey] < computedValue) {
+            if ((state.inventory[key as InventoryKey] ?? 0) < computedValue) {
                 return false;
             }
         }
@@ -189,7 +189,7 @@ function payForJob(state: GameState, job: Job): boolean {
     if (computedResourceCost) {
         for (const [key, value] of Object.entries(computedResourceCost)) {
             const computedValue = computeValue(state, jobDefinition, value, 0);
-            state.inventory[key as ResourceKey] -= computedValue;
+            state.inventory[key as InventoryKey] = (state.inventory[key as InventoryKey] ?? 0) - computedValue;
         }
     }
     if (essenceCost) {

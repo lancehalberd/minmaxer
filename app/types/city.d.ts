@@ -1,29 +1,10 @@
 type JobKey = string;//'archer' | 'buildWall' | 'repairWall' | 'harvestWood';
-type ResourceKey = 'wood' | 'hardwood' | 'stone' | 'ironOre';
-type ToolType = 'hammer' | 'axe' | 'pickaxe' | 'bow' | 'staff';
-type HammerType = 'woodHammer' | 'stoneHammer' | 'ironHammer' | 'steelHammer';
-type AxeType = 'woodHatchet' | 'stoneAxe' | 'ironHatchet' | 'steelAxe';
-type PickaxeType = 'stonePickaxe' | 'ironPickaxe' | 'steelPickaxe';
-type BowType = 'shortBow' | 'longBow' | 'crossBow';
-type StaffType = 'woodStaff' | 'bronzeStaff' | 'steelStaff';
-type AmmoType = 'arrow';
-type ArrowType = 'woodArrow' | 'flintArrow' | 'ironArrow' | 'steelArrow';
-
-type InventoryKey = ResourceKey
-    | AxeType | HammerType | PickaxeType
-    | BowType | StaffType
-    | ArrowType;
-
-type Inventory = {
-    [key in InventoryKey]: number
-};
 
 type ResourceCost<T> = {
-    [key in ResourceKey]?: Computed<number, T>
+    [key in InventoryKey]?: Computed<number, T>
 }
-
 type ComputedResourceCost = {
-    [key in ResourceKey]?: number
+    [key in InventoryKey]?: number
 }
 
 interface JobDefinition {

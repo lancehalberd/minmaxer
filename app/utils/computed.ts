@@ -19,7 +19,7 @@ export function computeResourceCost<T>(state: GameState, object: T, resourceCost
         // Compute each individual resource cost.
         const computedValue = computeValue(state, object, value, 0);
         if (computedValue) {
-            fullyComputedResourceCost[key as ResourceKey] = computedValue;
+            fullyComputedResourceCost[key as InventoryKey] = computedValue;
         }
     }
     return fullyComputedResourceCost;

@@ -79,6 +79,27 @@ export function fillText(context: CanvasRenderingContext2D, props: FillTextPrope
     context.restore();
     return textMeasure
 }
+// This should match the logic above exactly so the text measurement is accurate.
+export function measureText(context: CanvasRenderingContext2D, props: FillTextProperties): TextMetrics {
+    const {
+        x, y, text,
+        size = 12,
+        bold = false,
+        font = 'san-serif',
+        color = '#000',
+        textBaseline = 'middle',
+        textAlign = 'center',
+    } = props;
+    context.save();
+        context.font = `${bold ? 'bold ' : ''}${size}px ${font}`;
+        context.textBaseline = textBaseline;
+        context.textAlign = textAlign;
+        context.fillStyle = color;
+        context.fillText('' + text, x, y);
+        const textMeasure = context.measureText('' + text);
+    context.restore();
+    return textMeasure
+}
 
 export function renderLifeBarOverCircle(context: CanvasRenderingContext2D, circle: Circle, health: number, maxHealth: number, borderColor?: CanvasFill) {
     const barHeight = 5;

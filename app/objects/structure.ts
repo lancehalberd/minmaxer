@@ -11,12 +11,12 @@ const loggingJobDefinition: JobDefinition = {
     workerSeconds: 1,
     repeat: true,
     canProgress(state: GameState) {
-        return state.availableResources.wood > 0
+        return (state.availableResources.wood ?? 0) > 0
     },
     onComplete(state: GameState) {
         state.availableResources.wood--;
-        state.totalResources.wood++;
-        state.inventory.wood++;
+        state.discoveredItems.add('wood');
+        state.inventory.wood = (state.inventory.wood ?? 0) + 1;
     },
     applyHeroProgress(state: GameState, job: Job, hero: Hero) {
         const skill = getHeroSkill(state, hero, 'logging');
@@ -72,8 +72,8 @@ const quaryJobDefinition: JobDefinition = {
     },
     onComplete(state: GameState) {
         state.availableResources.stone--;
-        state.totalResources.stone++;
-        state.inventory.stone++;
+        state.discoveredItems.add('stone');
+        state.inventory.stone = (state.inventory.stone ?? 0) + 1;
     },
     applyHeroProgress(state: GameState, job: Job, hero: Hero) {
         const skill = getHeroSkill(state, hero, 'mining');

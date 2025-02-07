@@ -142,6 +142,14 @@ export function updateMouseActions(state: GameState) {
             if (target?.objectType === 'uiButton') {
                 target.onPress?.(state);
             } else if (state.selectedHero) {
+                if (target === state.selectedHero) {
+                    state.openCharacterPanel = true;
+                } else {
+                    state.openCharacterPanel = false;
+                    state.openChooseArmorPanel = false;
+                    state.openChooseWeaponPanel = false;
+                    state.openChooseCharmPanel = false;
+                }
                 if (state.selectedAbility) {
                     const definition = state.selectedAbility.definition;
                     if (definition.abilityType === 'activeAbility') {

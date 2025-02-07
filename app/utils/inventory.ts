@@ -1,37 +1,4 @@
-
-export const inventoryLabels: {[key in InventoryKey]: string} = {
-    wood: 'Wood',
-    hardwood: 'Hardwood',
-    stone: 'Stone',
-    ironOre: 'Iron Ore',
-    // Wood chopping tools
-    woodHatchet: 'Hatchet',
-    stoneAxe: 'Stone Axe',
-    ironHatchet: 'Iron Hatchet',
-    steelAxe: 'Steel Axe',
-    // Mining tools
-    stonePickaxe: 'Stone Pickaxe',
-    ironPickaxe: 'Iron Pickaxe',
-    steelPickaxe: 'Steel Pickaxe',
-    // Building tools
-    woodHammer: 'Mallet',
-    stoneHammer: 'Stone Hammer',
-    ironHammer: 'Iron Hammer',
-    steelHammer: 'Steel Hammer',
-    // Archery weapons
-    shortBow: 'Short Bow',
-    longBow: 'Long Bow',
-    crossBow: 'Crossbow',
-    // Archery ammunition
-    woodArrow: 'Wood Arrow',
-    flintArrow: 'Flint Arrow',
-    ironArrow: 'Iron Arrow',
-    steelArrow: 'Steel Arrow',
-    // Staff weapons
-    woodStaff: 'Wood Staff',
-    bronzeStaff: 'Bronze Staff',
-    steelStaff: 'Steel Staff',
-};
+import {inventoryLabels, itemDefinitions} from 'app/definitions/itemDefinitions'
 
 export const toolTypeLabels:{[key in ToolType]: string} = {
     axe: 'Axe',
@@ -41,21 +8,46 @@ export const toolTypeLabels:{[key in ToolType]: string} = {
     staff: 'Staff',
 }
 
+export const axeTypes: AxeType[] = ['woodHatchet', 'stoneAxe', 'ironHatchet', 'steelAxe'];
+export const hammerTypes: HammerType[] = ['woodHammer', 'stoneHammer', 'ironHammer', 'steelHammer'];
+export const pickaxeTypes: PickaxeType[] = ['stonePickaxe', 'ironPickaxe', 'steelPickaxe'];
+export const bowTypes: BowType[] = ['shortBow', 'longBow', 'crossBow'];
+export const staffTypes: StaffType[] = ['woodStaff', 'bronzeStaff', 'steelStaff'];
+
+export function getItemLabel(itemKey: InventoryKey): string {
+    const definition = itemDefinitions[itemKey];
+    if (definition) {
+        return definition.name;
+    }
+    return inventoryLabels[itemKey] ?? itemKey;
+}
+
+export function getItemCount(state: GameState, key: InventoryKey): number {
+    return state.inventory[key] ?? 0;
+}
+export function sumItemCount(state: GameState, keys: InventoryKey[]): number {
+    let sum = 0;
+    for (const key of keys) {
+        sum += state.inventory[key] ?? 0;
+    }
+    return sum;
+}
+
 export function getAvailableToolCount(state: GameState, toolType: ToolType): number {
     if (toolType === 'axe') {
-        return state.inventory.woodHatchet + state.inventory.stoneAxe + state.inventory.ironHatchet + state.inventory.steelAxe;
+        return sumItemCount(state, axeTypes);
     }
     if (toolType === 'hammer') {
-        return state.inventory.woodHammer + state.inventory.stoneHammer + state.inventory.ironHammer + state.inventory.steelHammer;
+        return sumItemCount(state, hammerTypes);
     }
     if (toolType === 'pickaxe') {
-        return state.inventory.stonePickaxe + state.inventory.ironPickaxe + state.inventory.steelPickaxe;
+        return sumItemCount(state, pickaxeTypes);
     }
     if (toolType === 'bow') {
-        return state.inventory.shortBow + state.inventory.longBow + state.inventory.crossBow;
+        return sumItemCount(state, bowTypes);
     }
     if (toolType === 'staff') {
-        return state.inventory.woodStaff + state.inventory.bronzeStaff + state.inventory.steelStaff;
+        return sumItemCount(state, staffTypes);
     }
     // This will cause a compiler failure if a toolType is not handled above.
     const never: never = toolType;
@@ -63,11 +55,11 @@ export function getAvailableToolCount(state: GameState, toolType: ToolType): num
 }
 
 
-export function computeJobMultiplier(workerCount: number, toolValues: number[]) {
+export function computeJobMultiplier(state: GameState, workerCount: number, toolTypes: InventoryKey[]) {
     let sum = 0;
-    for (let i = toolValues.length; i > 0; i--) {
+    for (let i = toolTypes.length; i > 0; i--) {
         const toolBonus = i;
-        const toolCount = toolValues[i - 1];
+        const toolCount = state.inventory[toolTypes[i - 1]] ?? 0;
         if (toolCount < workerCount) {
             sum += toolBonus * toolCount;
             workerCount -= toolCount;
@@ -82,31 +74,60 @@ window.computeJobMultiplier = computeJobMultiplier;
 
 export function getJobMultiplierFromTools(state: GameState, workerCount: number, toolType: ToolType): number {
     if (toolType === 'axe') {
-        return computeJobMultiplier(workerCount, [
-            state.inventory.woodHatchet, state.inventory.stoneAxe, state.inventory.ironHatchet, state.inventory.steelAxe
-        ]);
+        return computeJobMultiplier(state, workerCount, axeTypes);
     }
     if (toolType === 'hammer') {
-        return computeJobMultiplier(workerCount, [
-            state.inventory.woodHammer, state.inventory.stoneHammer, state.inventory.ironHammer, state.inventory.steelHammer,
-        ]);
+        return computeJobMultiplier(state, workerCount, hammerTypes);
     }
     if (toolType === 'pickaxe') {
-        return computeJobMultiplier(workerCount, [
-            state.inventory.stonePickaxe, state.inventory.ironPickaxe, state.inventory.steelPickaxe,
-        ]);
+        return computeJobMultiplier(state, workerCount, pickaxeTypes);
     }
     if (toolType === 'bow') {
-        return computeJobMultiplier(workerCount, [
-            state.inventory.shortBow, state.inventory.longBow, state.inventory.crossBow,
-        ]);
+        return computeJobMultiplier(state, workerCount, bowTypes);
     }
     if (toolType === 'staff') {
-        return computeJobMultiplier(workerCount, [
-            state.inventory.woodStaff, state.inventory.bronzeStaff, state.inventory.steelStaff,
-        ]);
+        return computeJobMultiplier(state, workerCount, staffTypes);
     }
     // This will cause a compiler failure if a toolType is not handled above.
     const never: never = toolType;
     return never as never;
+}
+
+export function removeItemFromInventory(state: GameState, item?: InventoryItem) {
+    if (!item) {
+        return;
+    }
+    if (item.key && itemDefinitions[item.key]){
+        state.inventory[item.key] = (state.inventory[item.key] ?? 0) + 1;
+    } else {
+        // TODO: add item back to crafted items array.
+    }
+}
+
+export function addItemToInventory(state: GameState, item?: InventoryItem) {
+    if (!item) {
+        return;
+    }
+    if (item.key && itemDefinitions[item.key]){
+        state.inventory[item.key] = (state.inventory[item.key] ?? 0) - 1;
+    } else {
+        // TODO: remove item from crafted items array.
+    }
+}
+
+export function getModifierLines(state: GameState, modifiers?: StatModifier[]): (string|number)[] {
+    const lines: (string|number)[] = [];
+    for (const modifier of (modifiers ?? [])) {
+        // TODO: Use display friendly labels for stat keys here.
+        if (modifier.flatBonus) {
+            lines.push('+' + modifier.flatBonus + ' ' + modifier.stat);
+        }
+        if (modifier.percentBonus) {
+            lines.push(modifier.percentBonus + '% ' + modifier.stat);
+        }
+        if (modifier.multiplier) {
+            lines.push(modifier.flatBonus + 'x ' + modifier.stat);
+        }
+    }
+    return lines;
 }

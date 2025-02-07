@@ -61,7 +61,7 @@ const buildWallJobDefinition: JobDefinition = {
         }
     },
     isValid(state: GameState) {
-        return state.totalResources.wood > 0 && !state.city.wall.level;
+        return state.discoveredItems.has('wood') && !state.city.wall.level;
     },
     applyHeroProgress(state: GameState, job: Job, hero: Hero) {
         const skill = getHeroSkill(state, hero, 'building');

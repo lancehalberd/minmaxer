@@ -17,7 +17,7 @@ export const archerJobElement = createJobComponent(archerJobDefinition, { x: -11
 
 function updateArchers(state: GameState, archerJob: Job) {
     // Update archers
-    const arrows = state.inventory.woodArrow; // + flintArrows etc.
+    const arrows = state.inventory.woodArrow ?? 0; // + flintArrows etc.
     // Distance is measured from the center of the nexus, so add the radius of the nexus.
     const archerRange = state.nexus.r + 40;
     if (archerJob.workers > 0 && arrows > 0) {
@@ -52,7 +52,7 @@ function updateArchers(state: GameState, archerJob: Job) {
                 const speed = 100;
                 const dx = attackTarget.x - state.nexus.x, dy = attackTarget.y - state.nexus.y;
                 const mag = Math.sqrt(dx*dx + dy*dy);
-                state.inventory.woodArrow--;
+                state.inventory.woodArrow = arrows - 1;
                 addProjectile(state, {
                     x: state.nexus.x + dx * state.nexus.r / mag,
                     y: state.nexus.y + dy * state.nexus.r / mag,

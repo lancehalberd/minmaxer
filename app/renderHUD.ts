@@ -3,11 +3,9 @@ import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/utils/essence';
 import {fillCircle, fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
-import {getAvailableToolCount, inventoryLabels, toolTypeLabels} from 'app/utils/inventory';
+import {getAvailableToolCount, getItemLabel, toolTypeLabels} from 'app/utils/inventory';
 import {millisecondsToTime} from 'app/utils/time';
-import {HeroPanel} from 'app/ui/heroPanel';
 
-const heroPanel = new HeroPanel();
 
 export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
     renderEssenceBar(context, state, {x:10, y: 10, w: 500, h: 40});
@@ -26,16 +24,10 @@ export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
     const inventorySize = {w: 200, h: 300};
     renderInventory(context, state, {...inventorySize, x: canvas.width - inventorySize.w, y: 70});
 
-    if (state.mouse.mouseHoverTarget === state.selectedHero) {
-        /*heroPanel.x = state.mouse.currentPosition.x + 30;
-        if (heroPanel.x + heroPanel.w >= canvas.width) {
-            heroPanel.x = state.mouse.currentPosition.x - heroPanel.w - 30;
-        }*/
-        heroPanel.render(context, state);
+    if (state.hoverToolTip) {
+        state.hoverToolTip.render(context, state);
     }
 }
-
-
 
 export function renderInventory(context: CanvasRenderingContext2D, state: GameState, container: Rect) {
     fillRect(context, container, '#FFF');
@@ -72,9 +64,9 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
         y += 20;
     }
     for (const key of Object.keys(state.inventory) as InventoryKey[]) {
-        const value = state.inventory[key];
-        const previewCost = state.previewResourceCost?.[key as ResourceKey];
-        const label = inventoryLabels[key] ?? key;
+        const value = state.inventory[key] ?? 0;
+        const previewCost = state.previewResourceCost?.[key as InventoryKey];
+        const label = getItemLabel(key);
         if (value > 0 || previewCost) {
             const metrics = fillText(context, {...text, measure: !!previewCost, text: label + ': ' + value, x, y});
             if (previewCost && metrics) {
