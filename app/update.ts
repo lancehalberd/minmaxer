@@ -11,23 +11,10 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
-
-Design equipment, probably simple tiered equipment like ROTMG, weapon, armor, charm(1 or more slots)
-    Charms:
-        Ruby Ring(etc) +10 str
-        Ruby Necklace(etc) +50 str
-
-    Craft Armor:
-        1-5x material slots that add armor and raise armor cap.
-        1-10x decoration slots that add additional stats
-        (room to expand further for example 1-4 enchantment slots)
-
-Core state growth:
-    1 passive point 2-3 dex
-    1 low level accessory 2-3 dex
-    starting value vs end game value  (5-10)~2000
-    Flat damage from characters main stat
-
+Craft Armor:
+    1-5x material slots that add armor and raise armor cap.
+    1-10x decoration slots that add additional stats
+    (room to expand further for example 1-4 enchantment slots)
 
 Gear recipes with generic requirements, ingredients that give special bonuses when used.
     Leather boots requires 2 leather, but using normal leather vs cured leather vs magic leather gives different results.

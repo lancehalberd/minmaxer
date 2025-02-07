@@ -48,6 +48,7 @@ export function advanceDebugGameState(state: GameState) {
     // If there is nothing else interesting to do, destroy the next spawner.
     for (const object of state.world.objects) {
         if (object.objectType === 'spawner') {
+            object.health = 0;
             object.onDeath?.(state);
             gainEssence(state, 10 * object.essenceWorth);
             mainHero.experience += object.experienceWorth;

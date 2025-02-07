@@ -1,15 +1,17 @@
 import {canvas} from 'app/gameConstants';
 import {TextButton} from 'app/ui/textButton';
-import {fillRect, fillText} from 'app/utils/draw';
-import {showArmorTooltip, showCharmTooltip, showWeaponTooltip} from 'app/ui/tooltip';
+import {fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
+import {getHeroSkill, getSkillExperienceForNextLevel} from 'app/utils/hero';
+import {showArmorTooltip, showCharmTooltip, showWeaponTooltip} from 'app/ui/tooltip';
+import {typedKeys} from 'app/utils/types';
 
 
 export class HeroPanel implements UIContainer {
     objectType = <const>'uiContainer';
     hero?: Hero
     w = 250;
-    h = 400;
+    h = 500;
     x = 0;
     y = (canvas.height - this.h) / 2;
     weaponButton = new TextButton({
@@ -93,6 +95,15 @@ export class HeroPanel implements UIContainer {
         fillText(context, {text: 'Armor', x: this.x + 80, y, size: 15, textAlign: 'right', textBaseline: 'top', color: '#FFF'});
         y += 30;
         fillText(context, {text: 'Charm', x: this.x + 80, y, size: 15, textAlign: 'right', textBaseline: 'top', color: '#FFF'});
+        y += 30;
+        fillText(context, {text: 'Skills:', x: this.x + 5, y, size: 15, textAlign: 'left', textBaseline: 'top', color: '#FFF'});
+        y += 20;
+        for (const key of typedKeys(hero.skills)) {
+            const skill = getHeroSkill(state, hero, key);
+            fillText(context, {text: 'Lv ' + skill.level + ' ' + key, x: this.x + 5, y, size: 15, textAlign: 'left', textBaseline: 'top', color: '#FFF'});
+            renderLifeBar(context, {x: this.x + 20, y: y + 18, w: this.w - 40, h: 5}, skill.experience, getSkillExperienceForNextLevel(state, skill), '#FFF', '#F80');
+            y += 30;
+        }
 
         const children = this.getChildren?.(state) ?? [];
         for (const child of children) {

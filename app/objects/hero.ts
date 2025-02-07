@@ -17,6 +17,7 @@ class HeroObject implements Hero {
     definition = heroDefinitions[this.heroType]!;
     level = this.definition.startingLevel;
     skills = {};
+    totalSkillLevels = 0;
     x = 0;
     y = 0;
     r = this.definition.radius;

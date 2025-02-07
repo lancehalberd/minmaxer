@@ -14,14 +14,19 @@ export function getHeroSkill(state: GameState, hero: Hero, skillType: HeroSkillT
 
 export function gainSkillExperience(state: GameState, hero: Hero, skillType: HeroSkillType, experience: number) {
     const skill = getHeroSkill(state, hero, skillType);
-    skill.experience += experience;
-    let experienceForLevel = 10 * Math.pow(1.2, skill.level);
+    skill.experience += experience * Math.pow(0.98, hero.totalSkillLevels);
+    let experienceForLevel = getSkillExperienceForNextLevel(state, skill);
     while (skill.experience >= experienceForLevel) {
         skill.level++;
+        hero.totalSkillLevels++;
         // console.log(skillType + ' is now level ' + skill.level);
         skill.experience -= experienceForLevel;
-        experienceForLevel = 10 * Math.pow(1.2, skill.level);
+        experienceForLevel = getSkillExperienceForNextLevel(state, skill);
     }
+}
+
+export function getSkillExperienceForNextLevel(state: GameState, skill: HeroSkill) {
+    return 10 * Math.pow(1.2, skill.level);
 }
 
 export function summonHero(state: GameState, hero: Hero): boolean {

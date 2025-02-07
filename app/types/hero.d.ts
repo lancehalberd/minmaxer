@@ -46,6 +46,9 @@ interface Hero extends Circle {
     skills: {
         [key in HeroSkillType]?: HeroSkill
     }
+    // The number of skill levels gained by this hero.
+    // Each level reduces skill experience gained by 2%.
+    totalSkillLevels: number
     // Net amount of experience the hero has accumulated
     experience: number
     health: number

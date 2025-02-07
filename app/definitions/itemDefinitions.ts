@@ -176,6 +176,58 @@ addItemDefinition({
     extraCharmModifiers: [int(1)],
 });
 
+addItemDefinition({
+    key: 'emeraldRing',
+    name: 'Emerald Ring',
+    charmStats: {modifiers: [dex(10)]},
+    extraArmorModifiers: [dex(3)],
+    extraWeaponModifiers: [dex(3)],
+});
+addItemDefinition({
+    key: 'rubyRing',
+    name: 'Ruby Ring',
+    charmStats: {modifiers: [str(10)]},
+    extraArmorModifiers: [str(3)],
+    extraWeaponModifiers: [str(3)],
+});
+addItemDefinition({
+    key: 'sapphireRing',
+    name: 'Sapphire Ring',
+    charmStats: {modifiers: [int(10)]},
+    extraArmorModifiers: [int(3)],
+    extraWeaponModifiers: [int(3)],
+});
+addItemDefinition({
+    key: 'emeraldBracelet',
+    name: 'Emerald Bracelet',
+    charmStats: {modifiers: [dex(20)]},
+});
+addItemDefinition({
+    key: 'rubyBracelet',
+    name: 'Ruby Bracelet',
+    charmStats: {modifiers: [str(20)]},
+});
+addItemDefinition({
+    key: 'sapphireBracelet',
+    name: 'Sapphire Bracelet',
+    charmStats: {modifiers: [int(20)]},
+});
+addItemDefinition({
+    key: 'emeraldNecklace',
+    name: 'Emerald Necklace',
+    charmStats: {modifiers: [dex(50)]},
+});
+addItemDefinition({
+    key: 'rubyNecklace',
+    name: 'Ruby Necklace',
+    charmStats: {modifiers: [str(50)]},
+});
+addItemDefinition({
+    key: 'sapphireNecklace',
+    name: 'Sapphire Necklace',
+    charmStats: {modifiers: [int(50)]},
+});
+
 // TODO: stop using this once item definitions are added for each of these.
 export const inventoryLabels: {[key in InventoryKey]?: string} = {
     wood: 'Wood',

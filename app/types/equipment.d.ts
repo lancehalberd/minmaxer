@@ -17,12 +17,18 @@ type MaterialType =
     | 'bronze'
     | 'silver' | 'gold'
     | 'steel'
-    | 'chippedRuby' | 'chippedSapphire' | 'chippedEmerald'
+    | 'chippedEmerald' | 'chippedRuby' | 'chippedSapphire'
+
+type CharmType =
+    'emeraldRing' | 'emeraldBracelet' | 'emeraldNecklace'
+    | 'rubyRing' | 'rubyBracelet' | 'rubyNecklace'
+    | 'sapphireRing' | 'sapphireBracelet' | 'sapphireNecklace'
 
 type InventoryKey =
     MaterialType
     | AxeType | HammerType | PickaxeType
     | BowType | StaffType
+    | CharmType
     | ArrowType;
 
 type Inventory = {

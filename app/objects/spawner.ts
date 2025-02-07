@@ -12,7 +12,7 @@ class EnemySpawner implements Spawner {
     r = 30;
     delay = 0;
     color = 'purple';
-    spawnCooldown = 5000;
+    spawnCooldown = 10000;
     spawnLimit = 3;
     spawnCount = 1;
     spawnedEnemies: Enemy[] = [];
@@ -82,6 +82,10 @@ class EnemySpawner implements Spawner {
     }
     onHit(state: GameState, attacker: Hero) {
         this.delay = 0;
+        // On hit, reduce the delay for spawning the next batch of monsters by 1s.
+        if (this.lastSpawnTime) {
+            this.lastSpawnTime -= 1000;
+        }
         // The spawner summons any nearby enemies to protect it.
         for (const enemy of this.spawnedEnemies) {
             if (isPointInCircle({x: this.x, y: this.y, r: 150}, enemy)) {
