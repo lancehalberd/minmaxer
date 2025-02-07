@@ -537,7 +537,7 @@ function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbi
             continue;
         }
         // Use the ability on the target if it is in range.
-        if (getDistance(hero, object) < hero.r + object.r + targetingInfo.range) {
+        if (getDistance(hero, object) < hero.r + object.r + targetingInfo.range + (targetingInfo.hitRadius ?? 0)) {
             ability.definition.onActivate(state, hero, ability, object);
             ability.cooldown = ability.definition.getCooldown(state, hero, ability);
             return;
