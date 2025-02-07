@@ -286,6 +286,9 @@ class HeroObject implements Hero {
     }
 
     update(state: GameState) {
+        // Prevent health from exceeding max health.
+        const maxHealth = this.getMaxHealth(state);
+        this.health = Math.min(this.health, maxHealth);
         // Calculate Hero level increase
         const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
         if (newHeroLevel > this.level) {

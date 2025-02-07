@@ -121,7 +121,7 @@ export function renderLifeBar(context: CanvasRenderingContext2D, bar: Rect, heal
     // Draw a colored box over the black box to indicate percent life left.
     fillRect(context, {
         ...bar,
-        w: bar.w * health / maxHealth,
+        w: bar.w * Math.min(1, health / maxHealth),
     }, fillColor ?? (health >= maxHealth / 2 ? '#080' : '#F80'));
 }
 
