@@ -11,6 +11,34 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
+Add instance events for farming certain enemy types and resource points/loot drops/chests
+
+Add first boss encounter
+    Lots of health
+    Aggros at X minutes or when attacked?
+    Only autoattacks nexus
+    Slow movement speeds
+    Maybe AOE attacks with warnings on 10s cooldown. (hurts heroe(s))
+
+Training grounds:
+    Break increasingly challenging waves of targets to get +1 core stat per wave
+    Different variations for int/dex/str that are designed around the abilities of that hero.
+
+Change spawners to have events you must complete to disable the spawner
+    Some spwaners unlock repetable events after disabling them.
+
+
+Add a way to farm materials from enemies/content:
+    Add drop pools to enemies + more enemy types?
+    Include rare resources
+    Add rare drop chance for harvesting actions:
+        1% chance to get hardwood instead of wood
+        Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
+
+
+Add crafting
+
+
 Craft Armor:
     1-5x material slots that add armor and raise armor cap.
     1-10x decoration slots that add additional stats

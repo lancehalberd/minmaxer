@@ -93,18 +93,18 @@ export function getJobMultiplierFromTools(state: GameState, workerCount: number,
     return never as never;
 }
 
-export function removeItemFromInventory(state: GameState, item?: InventoryItem) {
+export function addItemToInventory(state: GameState, item?: InventoryItem) {
     if (!item) {
         return;
     }
     if (item.key && itemDefinitions[item.key]){
         state.inventory[item.key] = (state.inventory[item.key] ?? 0) + 1;
     } else {
-        // TODO: add item back to crafted items array.
+        // TODO: add item to crafted items array.
     }
 }
 
-export function addItemToInventory(state: GameState, item?: InventoryItem) {
+export function removeItemFromInventory(state: GameState, item?: InventoryItem) {
     if (!item) {
         return;
     }
@@ -114,6 +114,7 @@ export function addItemToInventory(state: GameState, item?: InventoryItem) {
         // TODO: remove item from crafted items array.
     }
 }
+
 
 export function getModifierLines(state: GameState, modifiers?: StatModifier[]): (string|number)[] {
     const lines: (string|number)[] = [];
