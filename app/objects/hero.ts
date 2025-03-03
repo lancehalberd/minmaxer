@@ -532,7 +532,12 @@ function moveHeroTowardsTarget(state: GameState, hero: Hero, target: AbilityTarg
 // Automatically use ability if there is a target in range.
 function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbility) {
     const targetingInfo = ability.definition.getTargetingInfo(state, hero, ability);
-    for (const object of state.world.objects) {
+    // prioritize the current attack target over other targets.
+    // TODO: prioritize the closest target out of other targets.
+    for (const object of [hero.attackTarget, ...state.world.objects]) {
+        if (!object) {
+            continue;
+        }
         // Skip this object if the ability doesn't target this type of object.
         if (!isAbilityTargetValid(state, targetingInfo, object)) {
             continue;

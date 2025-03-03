@@ -8,7 +8,7 @@ type AllyTarget = Hero | Nexus;
 type EnemyTarget = Enemy | Spawner;
 
 // Any target on the field.
-type FieldTarget = LocationTarget | Hero | Enemy | Spawner | Nexus | Loot | Structure;
+type FieldTarget = LocationTarget | Hero | Enemy | Spawner | WaveSpawner | Nexus | Loot | Structure;
 
 // Any target that an ability could theoretically target.
 type AbilityTarget = FieldTarget;
@@ -17,4 +17,4 @@ type AbilityTarget = FieldTarget;
 type AttackTarget = AllyTarget | EnemyTarget;
 
 // This will eventually include clickable targets like buttons or interactive objects.
-type MouseTarget = UIButton | FieldTarget;
+type MouseTarget = UIElement | FieldTarget;

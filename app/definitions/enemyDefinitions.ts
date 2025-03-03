@@ -24,7 +24,22 @@ enemyDefinitions.snake = {
             attacksPerSecond: baseStats.attacksPerSecond * 1.2,
         };
     },
-    aggroRadius: 200,
+    aggroRadius: 150,
+};
+
+enemyDefinitions.cobra = {
+    name: 'Cobra',
+    color: '#0F0',
+    r: 6,
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            attacksPerSecond: baseStats.attacksPerSecond * 1.2,
+            attackRange: 30,
+        };
+    },
+    aggroRadius: 150,
 };
 
 enemyDefinitions.kobold = {
@@ -32,7 +47,7 @@ enemyDefinitions.kobold = {
     color: 'red',
     r: 10,
     getStatsForLevel: getBasicEnemyStatsForLevel,
-    aggroRadius: 200,
+    aggroRadius: 150,
 };
 
 enemyDefinitions.mummy = {
@@ -43,12 +58,18 @@ enemyDefinitions.mummy = {
         const baseStats = getBasicEnemyStatsForLevel(level);
         return {
             ...baseStats,
-            maxHealth: (10 * baseStats.maxHealth) | 0,
-            damage: (4 * baseStats.damage) | 0,
+            maxHealth: (100 * baseStats.maxHealth) | 0,
+            damage: (10 * baseStats.damage) | 0,
             attacksPerSecond: 0.5 * baseStats.attacksPerSecond,
             attackRange: 10,
-            movementSpeed: 30,
+            movementSpeed: 5,
         };
     },
     aggroRadius: 200,
+    isBoss: true,
 };
+
+/*
+Add first boss encounter
+    Maybe AOE attacks with warnings on 10s cooldown. (hurts heroe(s))
+*/

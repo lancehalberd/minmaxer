@@ -46,7 +46,7 @@ function getMouseElementAtPoint(state: GameState, point: Point, elements: UIElem
                 return target;
             }
         }
-        if (element.objectType === 'uiButton' && isPointInRect(element, point)) {
+        if (isPointInRect(element, point)) {
             return element;
         }
     }
@@ -88,7 +88,7 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
 // This could probably cause undesirable results in some situations.
 function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
     const worldPoint = convertToWorldPosition(state, screenPoint);
-    if (target.objectType === 'uiButton') {
+    if (target.objectType === 'uiButton' || target.objectType === 'uiContainer') {
         return isPointInRect(target, worldPoint) || isPointInRect(target, screenPoint);
     }
     if (target.objectType === 'point') {
@@ -139,7 +139,7 @@ export function updateMouseActions(state: GameState) {
             const target = getTargetAtScreenPoint(state, state.mouse.mouseDownPosition);
             state.mouse.mouseDownTarget = target;
             // Trigger the effect of a button.
-            if (target?.objectType === 'uiButton') {
+            if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
                 target.onPress?.(state);
             } else if (state.selectedHero) {
                 if (target === state.selectedHero) {

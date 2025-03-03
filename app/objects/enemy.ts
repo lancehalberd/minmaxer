@@ -9,6 +9,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point):
     const derivedStats = definition.getStatsForLevel(level);
     const enemy: Enemy = {
         objectType: 'enemy',
+        isBoss: definition.isBoss,
         level,
         color: definition.color,
         r: definition.r,
@@ -25,6 +26,10 @@ export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point):
 }
 
 function onHitEnemy(this: Enemy, state: GameState, attacker: Hero) {
+    // Bosses ignore attacks from heroes.
+    if (this.isBoss) {
+        return;
+    }
     // Heroes will prioritize attacking a hero over other targets.
     if (this.attackTarget?.objectType !== 'hero') {
         this.attackTarget = attacker;
@@ -35,6 +40,9 @@ export function updateEnemy(this: Enemy, state: GameState) {
     // Remove the current attack target if it is becomes invalid (it dies, for example).
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
         delete this.attackTarget;
+    }
+    if (this.isBoss) {
+        this.attackTarget = state.nexus;
     }
     // Check to choose a new attack target.
     if (!this.attackTarget) {

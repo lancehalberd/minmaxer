@@ -39,7 +39,7 @@ interface Projectile extends Circle {
 }
 
 type FieldEffect = FieldAnimationEffect | Projectile;
-type FieldObject = Hero | Nexus | Enemy | Spawner | Loot | Structure;
+type FieldObject = Hero | Nexus | Enemy | Spawner | WaveSpawner | Loot | Structure;
 
 
 interface Camera extends Point {

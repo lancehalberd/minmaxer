@@ -12,6 +12,9 @@ interface BaseUIElement extends Rect {
 
 interface UIContainer extends BaseUIElement {
     objectType: 'uiContainer'
+    onHover?: (state: GameState) => boolean
+    onPress?: (state: GameState) => boolean
+    onClick?: (state: GameState) => boolean
 }
 
 interface UIButton extends BaseUIElement {

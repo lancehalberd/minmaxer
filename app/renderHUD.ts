@@ -6,11 +6,12 @@ import {pad} from 'app/utils/geometry';
 import {getAvailableToolCount, getItemLabel, toolTypeLabels} from 'app/utils/inventory';
 import {millisecondsToTime} from 'app/utils/time';
 
+const waveBarWidth = 40;
 
 export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
-    renderEssenceBar(context, state, {x:10, y: 10, w: 500, h: 40});
+    renderEssenceBar(context, state, {x: waveBarWidth + 10, y: 10, w: 500, h: 40});
     if (state.city.wall.maxHealth) {
-        renderLifeBar(context, {x: 30, y: 45, w: 460, h: 10}, state.city.wall.health, state.city.wall.maxHealth, '#FFF', '#888');
+        renderLifeBar(context, {x: waveBarWidth + 30, y: 45, w: 460, h: 10}, state.city.wall.health, state.city.wall.maxHealth, '#FFF', '#888');
     }
     const time = millisecondsToTime(state.world.time);
 
@@ -204,4 +205,3 @@ export function drawPillFill(context: CanvasRenderingContext2D, r: Rect, p: numb
         drawPill(context, {...r, w}, color);
     }
 }
-

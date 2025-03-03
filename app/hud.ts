@@ -4,6 +4,7 @@ import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equi
 import {getHeroButtons} from 'app/ui/heroButton';
 import {HeroPanel} from 'app/ui/heroPanel';
 import {requireFrame, drawFrame} from 'app/utils/animations';
+import {waveComponent} from 'app/ui/waveComponent';
 
 
 const heroPanel = new HeroPanel();
@@ -28,6 +29,7 @@ export function updateHudUIElements(state: GameState) {
     }
     state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
     state.hudUIElements.push(playPauseButton);
+    state.hudUIElements.push(waveComponent);
 
     for (const element of state.hudUIElements) {
         if (element.update) {

@@ -1,6 +1,6 @@
 import {canvas, frameLength} from 'app/gameConstants'
 import {reviveHero} from 'app/objects/hero';
-import {checkToAddNewSpawner} from 'app/objects/spawner';
+import {checkToAddNewSpawner, updateWaves} from 'app/objects/spawner';
 import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
@@ -11,6 +11,26 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
+Seems like we need early game progression during the first few waves?
+    * Lower first essence threshold to achieve it on ~wave 2 and unlock a choice of active nexus abilities (heal, freeze, ???)
+        * First level would unlock 1 ability slot and 3-4 choices of abilities, but you have to spend ~50 essence to unlock any of the abilities and you can only equip one per slot.
+
+Add wave visualization to left part of HUD, similar to other tower defense games.
+    By default show details for next wave over the field, including pointers to active spawners.
+    When mousing over a wave, show details for that wave instead.
+    Clicking a the next wave summons it immediately, does not change the timing of other waves.
+
+Switch to more discrete waves:
+    Waves occur at regular intervals by default, increasing over the course of the game (30s, 1min, 2min, 5min, 10min...)
+    Individual waves can be summoned immediately without changing the timing of future waves to build up time to act outside of waves.
+    Spawners may have an instance event to clear the spawner and prevent all feature spawns and unlock any associated resource.
+    Spawners may have an action to summon all remaining spawns immediately to clear them once all spawned enemies are defeated.
+    There would be a way to see the time before the next spawn and details of all spawned enemies for the next wave.
+        Spawns from undiscovered spawners would show up as ???, but still be visible to indicate something new is coming.
+    Individual spawners will show a preview of what they spawn during the next wave, as well as how many waves away the spawn is if not in the next wave
+
+
+
 Add instance events for farming certain enemy types and resource points/loot drops/chests
 
 Add first boss encounter
@@ -43,9 +63,6 @@ Craft Armor:
     1-5x material slots that add armor and raise armor cap.
     1-10x decoration slots that add additional stats
     (room to expand further for example 1-4 enchantment slots)
-
-Gear recipes with generic requirements, ingredients that give special bonuses when used.
-    Leather boots requires 2 leather, but using normal leather vs cured leather vs magic leather gives different results.
 
 Make assignments based on total tool power instead of population.
     Total tool power for a job is the sum of the best N tools used by N people where N is min(number of tools, population).
@@ -117,6 +134,7 @@ function update() {
         for (let i = 0; i < frameCount; i++) {
             computeIdlePopulation(state);
             checkToAddNewSpawner(state);
+            updateWaves(state);
             // Currently we update effects before objects so that new effects created by objects
             // do not update the frame they are created.
             for (const hero of state.heroSlots) {

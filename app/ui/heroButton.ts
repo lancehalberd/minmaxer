@@ -2,6 +2,7 @@ import {getReviveCost, reviveHero} from 'app/objects/hero';
 import {spendEssence} from 'app/utils/essence';
 import {fillArc, fillCircle, renderCooldownCircle} from 'app/utils/draw';
 
+const offset = 40;
 const padding = 15;
 const heroButtonSize = {
     w: 40,
@@ -15,7 +16,7 @@ export function getHeroButtons(state: GameState): UIButton[] {
         const heroButton: UIButton = {
             objectType: 'uiButton',
             uniqueId: `hero-${y}`,
-            x: padding,
+            x: offset + padding,
             y,
             ...heroButtonSize,
             render(context: CanvasRenderingContext2D, state: GameState) {

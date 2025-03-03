@@ -26,6 +26,10 @@ interface GameState {
     heroSlots: (Hero | null)[]
     hudUIElements: UIElement[]
     world: World
+    nextWaveIndex: number
+    // How many pixels are drawn per second for the wave bar currently.
+    // The larger this number becomes, the smaller wave stones are drawn and the more waves can bee seen.
+    waveScale: number
     isPaused: boolean
     lastTimeRendered: number
     time: number

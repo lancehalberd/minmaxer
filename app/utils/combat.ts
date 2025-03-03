@@ -1,6 +1,7 @@
 import {addDamageNumber} from 'app/effects/damageNumber';
 import {loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
+import {removeFieldObject} from 'app/utils/world';
 
 export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source}: AttackHit) {
     if (damage < 0) {
@@ -8,9 +9,10 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
     }
     if (target.objectType === 'nexus') {
         if (state.city.wall.health > 0) {
-            const tempDamage = damage;
-            damage -= state.city.wall.health;
-            state.city.wall.health -= tempDamage;
+            // Wall cannot take more damage than its current health.
+            const damageToWall = Math.min(state.city.wall.health, damage);
+            state.city.wall.health -= damageToWall;
+            damage -= damageToWall;
             if (source && state.city.wall.returnDamage) {
                 damageTarget(state, source, {damage: state.city.wall.returnDamage});
             }
@@ -35,10 +37,7 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
     addDamageNumber(state, {target, damage, isCrit});
     if (target.health <= 0) {
         // remove the object from the state, if not a 'nexus' when it dies.
-        const objectIndex = state.world.objects.indexOf(target);
-        if (objectIndex >= 0) {
-            state.world.objects.splice(objectIndex, 1);
-        }
+        removeFieldObject(state, target);
         if ((target.objectType === 'enemy' || target.objectType === 'spawner') && target.onDeath) {
             target.onDeath(state);
         }
@@ -52,8 +51,11 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
     }
 }
 
-// Returns whether a target is still available to attack.
+// Returns whether a target is still available to target with an ability.
 export function isTargetAvailable(state: GameState, target: AbilityTarget): boolean {
+    if (target.objectType === 'waveSpawner') {
+        return true;
+    }
     if (target.objectType === 'nexus') {
         return true;
     }
@@ -105,7 +107,7 @@ export function isAbilityMouseTargetValid(state: GameState, targetingInfo: Abili
     if (mouseTarget.objectType === 'point') {
         return !!targetingInfo.canTargetLocation;
     }
-    if (mouseTarget.objectType === 'uiButton') {
+    if (mouseTarget.objectType === 'uiButton' || mouseTarget.objectType === 'uiContainer') {
         return false;
     }
     return isAbilityTargetValid(state, targetingInfo, mouseTarget);

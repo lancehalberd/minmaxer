@@ -1,5 +1,7 @@
 
-type EnemyType = 'kobold'|'snake'|'mummy';
+type EnemyType = 'kobold'
+    |'snake'|'cobra'
+    |'mummy';
 
 interface EnemyLevelDerivedStats {
     // Max life of the enemy
@@ -24,6 +26,7 @@ interface EnemyDefinition {
     color: string
     getStatsForLevel: (level: number) => EnemyLevelDerivedStats
     aggroRadius: number
+    isBoss?: boolean
 }
 
 interface Enemy extends Circle, EnemyLevelDerivedStats {
@@ -41,6 +44,7 @@ interface Enemy extends Circle, EnemyLevelDerivedStats {
     lastAttackTime?: number
     movementTarget?: Point
     attackTarget?: AllyTarget
+    isBoss?: boolean
 }
 
 interface Spawner extends Circle {
@@ -73,4 +77,45 @@ interface Spawner extends Circle {
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Hero) => void
     onDeath?: (state: GameState) => void
+}
+
+
+
+interface ScheduledSpawn {
+    enemyType: EnemyType
+    level: number
+    // In seconds after wave start time.
+    spawnTime: number
+}
+interface WaveSpawner extends Circle {
+    objectType: 'waveSpawner'
+    // The time the last wave started, scheduled spawns occur relative to this time.
+    waveStartTime?: number
+    // Spawns scheduled for the current wave.
+    scheduledSpawns: ScheduledSpawn[]
+    // The structure left behind when this spawner is defeated.
+    structure?: Structure
+    spawnedEnemies: Enemy[]
+    // The spawner will be removed when this flag is true and the last spawned enemy is defeated.
+    isFinalWave: boolean
+    startNewWave: (state: GameState, schedule: WaveSpawnerSchedule) => void
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
+    update: (state: GameState) => void
+    getChildren?: (state: GameState) => UIElement[]
+}
+interface WaveSpawnerSchedule {
+    spawner: WaveSpawner
+    spawns: ScheduledSpawn[]
+    isFinalWave?: boolean
+}
+interface WaveDefinition {
+    duration: number
+    spawners: WaveSpawnerSchedule[]
+}
+interface Wave {
+    scheduledStartTime: number
+    actualStartTime: number
+    summonEarlySpeed?: number
+    duration: number
+    spawners: WaveSpawnerSchedule[]
 }

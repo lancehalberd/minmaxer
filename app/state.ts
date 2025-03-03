@@ -38,6 +38,8 @@ export const state: GameState = {
     lastTimeRendered: 0,
     time : 0,
     isPaused: true,
+    nextWaveIndex: 0,
+    waveScale: 1/3,
     world: {
         time: 20,
         camera: {
