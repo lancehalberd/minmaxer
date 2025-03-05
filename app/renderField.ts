@@ -14,7 +14,7 @@ export function renderFieldElements(context: CanvasRenderingContext2D, state: Ga
 }
 
 export function renderField(context: CanvasRenderingContext2D, state: GameState) {
-    context.fillStyle = '#CC4';
+    context.fillStyle = '#309A51';
     context.fillRect(0, 0, canvas.width, canvas.height)
 
     const scale = state.world.camera.scale;

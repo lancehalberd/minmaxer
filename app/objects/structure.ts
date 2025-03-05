@@ -1,4 +1,5 @@
 import {frameLength, uiSize} from 'app/gameConstants';
+import {drawFrame, requireFrame} from 'app/utils/animations';
 import {fillCircle, fillText} from 'app/utils/draw';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {applyHeroToJob, progressJob} from 'app/utils/job'
@@ -27,6 +28,8 @@ const loggingJobDefinition: JobDefinition = {
     },
 };
 
+const treeFrame = requireFrame('gfx/world/tree.png', {x: 0, y: 0, w: 80, h: 76});
+
 interface ForestProps extends Partial<Structure> {
     wood: number
 }
@@ -50,7 +53,8 @@ export class Forest implements Structure {
         applyHeroToJob(state, loggingJobDefinition, hero);
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
-        fillCircle(context, this);
+        //fillCircle(context, this);
+        drawFrame(context, treeFrame, {...treeFrame, x: this.x - treeFrame.w / 2, y: this.y - treeFrame.h / 2})
         // Currently all forests let you harvest all wood, so when they are freed we show all avaiable wood,
         // but before they are freed it is interesting to see how much wood will be added on freeing them.
         const value = state.world.objects.includes(this) ? state.availableResources.wood : this.wood;

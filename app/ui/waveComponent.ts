@@ -75,10 +75,10 @@ class WaveStone implements UIButton {
         fillRect(context, this, '#FFF');
         fillRect(context, pad(this, -2), '#888');
         context.save();
-            context.translate(this.x + this.w / 2, this.y + this.h - this.w / 2);
+            context.translate(this.x + this.w / 2, this.y + 10);
             context.rotate(-Math.PI / 2);
             fillText(context, {
-                size: 20, color:'#FFF', textAlign: 'left',
+                size: 20, color:'#FFF', textAlign: 'right',
                 x: 0, y: 0, text: millisecondsToTime(this.wave.actualStartTime),
             });
         context.restore();

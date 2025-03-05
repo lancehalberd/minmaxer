@@ -27,10 +27,12 @@ interface EnemyDefinition {
     getStatsForLevel: (level: number) => EnemyLevelDerivedStats
     aggroRadius: number
     isBoss?: boolean
+    render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy) => void
 }
 
 interface Enemy extends Circle, EnemyLevelDerivedStats {
     objectType: 'enemy'
+    enemyType: EnemyType
     level: number
     // Current life of the enemy
     health: number

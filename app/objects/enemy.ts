@@ -9,6 +9,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point):
     const derivedStats = definition.getStatsForLevel(level);
     const enemy: Enemy = {
         objectType: 'enemy',
+        enemyType,
         isBoss: definition.isBoss,
         level,
         color: definition.color,
@@ -107,6 +108,11 @@ export function updateEnemy(this: Enemy, state: GameState) {
 }
 
 export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, state: GameState) {
+    const definition = enemyDefinitions[this.enemyType];
+    if (definition?.render) {
+        definition.render(context, state, this);
+        return;
+    }
     fillCircle(context, this);
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
 }

@@ -18,27 +18,15 @@ Seems like we need early game progression during the first few waves?
 Add wave visualization to left part of HUD, similar to other tower defense games.
     By default show details for next wave over the field, including pointers to active spawners.
     When mousing over a wave, show details for that wave instead.
-    Clicking a the next wave summons it immediately, does not change the timing of other waves.
 
 Switch to more discrete waves:
-    Waves occur at regular intervals by default, increasing over the course of the game (30s, 1min, 2min, 5min, 10min...)
-    Individual waves can be summoned immediately without changing the timing of future waves to build up time to act outside of waves.
-    Spawners may have an instance event to clear the spawner and prevent all feature spawns and unlock any associated resource.
+    Spawners may have an instance event to clear the spawner and prevent all future spawns and unlock any associated resource.
     Spawners may have an action to summon all remaining spawns immediately to clear them once all spawned enemies are defeated.
     There would be a way to see the time before the next spawn and details of all spawned enemies for the next wave.
         Spawns from undiscovered spawners would show up as ???, but still be visible to indicate something new is coming.
     Individual spawners will show a preview of what they spawn during the next wave, as well as how many waves away the spawn is if not in the next wave
 
-
-
 Add instance events for farming certain enemy types and resource points/loot drops/chests
-
-Add first boss encounter
-    Lots of health
-    Aggros at X minutes or when attacked?
-    Only autoattacks nexus
-    Slow movement speeds
-    Maybe AOE attacks with warnings on 10s cooldown. (hurts heroe(s))
 
 Training grounds:
     Break increasingly challenging waves of targets to get +1 core stat per wave
@@ -47,7 +35,6 @@ Training grounds:
 Change spawners to have events you must complete to disable the spawner
     Some spwaners unlock repetable events after disabling them.
 
-
 Add a way to farm materials from enemies/content:
     Add drop pools to enemies + more enemy types?
     Include rare resources
@@ -55,9 +42,7 @@ Add a way to farm materials from enemies/content:
         1% chance to get hardwood instead of wood
         Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
 
-
 Add crafting
-
 
 Craft Armor:
     1-5x material slots that add armor and raise armor cap.

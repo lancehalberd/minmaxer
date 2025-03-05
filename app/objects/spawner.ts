@@ -1,12 +1,10 @@
 import {frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
 import {Forest, Quary, Village} from 'app/objects/structure';
-import {fillCircle, fillRing, fillText, renderCooldownCircle, renderLifeBarOverCircle} from 'app/utils/draw';
-import {isPointInCircle} from 'app/utils/geometry';
-import {millisecondsToTime} from 'app/utils/time';
+import {fillCircle, fillRing} from 'app/utils/draw';
 import {removeFieldObject} from 'app/utils/world';
 
-class EnemySpawner implements Spawner {
+/*class EnemySpawner implements Spawner {
     objectType = 'spawner' as const;
     x = 0;
     y = 0;
@@ -102,9 +100,11 @@ class EnemySpawner implements Spawner {
             this.structure.onDiscover?.(state);
         }
     }
-}
+}*/
 
 
+const spawnAngleDelta = Math.PI / 6;
+const spawnAngleResetTime = 500;
 
 class EnemyWaveSpawner implements WaveSpawner {
     objectType = 'waveSpawner' as const;
@@ -113,10 +113,10 @@ class EnemyWaveSpawner implements WaveSpawner {
     r = 30;
     color = 'purple';
     structure?: Structure;
-    waveStartTime: number = 0;
     scheduledSpawns: ScheduledSpawn[] = [];
     spawnedEnemies: Enemy[] = [];
     isFinalWave = false;
+    spawnAngle = 0;
 
     constructor(props: Partial<WaveSpawner> = {}) {
         // Set any properties from props onto this instance.
@@ -129,9 +129,12 @@ class EnemyWaveSpawner implements WaveSpawner {
     }
 
     startNewWave(state: GameState, schedule: WaveSpawnerSchedule) {
-        // TODO: Figure out what to do with any remaining scheduled spawns.
-        this.waveStartTime = state.world.time;
-        this.scheduledSpawns = [...schedule.spawns];
+        for (const newSpawn of schedule.spawns) {
+            this.scheduledSpawns.push({
+                ...newSpawn,
+                spawnTime: state.world.time + newSpawn.spawnTime * 1000,
+            })
+        }
         this.isFinalWave = !!schedule.isFinalWave;
     }
 
@@ -144,9 +147,12 @@ class EnemyWaveSpawner implements WaveSpawner {
                 fillRing(context, {...this, r2: this.r - 10});
             context.restore();
         }
+        // This is debug code for drawing where the next enemy spawn will be.
+        //const spawnAngle = Math.atan2(-this.y, -this.x) + this.spawnAngle;
+        //fillCircle(context, {x: this.x + this.r * Math.cos(spawnAngle), y: this.y + this.r * Math.sin(spawnAngle), r: 5, color: 'red'});
         // Render a cooldown circle over the spawner while it is on cooldown.
         // TODO: This should be the next wave schedule for *this* spawner.
-        const nextWave = waves[state.nextWaveIndex];
+        /*const nextWave = waves[state.nextWaveIndex];
         if (!this.spawnedEnemies.length && !this.scheduledSpawns.length && nextWave) {
             const spawnDuration = (nextWave.scheduledStartTime - this.waveStartTime);
             const p = (state.world.time - this.waveStartTime) / spawnDuration;
@@ -155,11 +161,16 @@ class EnemyWaveSpawner implements WaveSpawner {
             const isNextWaveImportant = false;
             const color = isNextWaveImportant ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.3)';
             renderCooldownCircle(context, {x: this.x, y: this.y, r: this.r - 4}, p, color);
-        }
+        }*/
     }
     update(state: GameState) {
         // Remove any dead enemies from the array of spawned enemies this spawner is tracking.
         this.spawnedEnemies = this.spawnedEnemies.filter(enemy => enemy.health > 0);
+        if (this.spawnAngle > 0) {
+            this.spawnAngle = Math.max(0, this.spawnAngle - spawnAngleDelta * frameLength / spawnAngleResetTime);
+        } else if (this.spawnAngle < 0) {
+            this.spawnAngle = Math.min(0, this.spawnAngle + spawnAngleDelta * frameLength / spawnAngleResetTime);
+        }
 
         // Remove this spawner when all enemies from it are defeated (replace with contained structure if necessary).
         if (this.isFinalWave && !this.spawnedEnemies.length && !this.scheduledSpawns.length) {
@@ -173,39 +184,30 @@ class EnemyWaveSpawner implements WaveSpawner {
         // Spawn any scheduled enemies.
         for (let i = 0; i < this.scheduledSpawns.length; i++) {
             const scheduledSpawn = this.scheduledSpawns[i];
-            if (this.waveStartTime + scheduledSpawn.spawnTime * 1000 > state.world.time) {
+            if (scheduledSpawn.spawnTime > state.world.time) {
                 continue;
             }
             this.scheduledSpawns.splice(i--, 1);
-            let theta = Math.atan2(-this.y, -this.x);
+            let theta = Math.atan2(-this.y, -this.x) + this.spawnAngle;
             const enemy: Enemy = createEnemy(scheduledSpawn.enemyType, scheduledSpawn.level, this);
             enemy.x = this.x + this.r * Math.cos(theta);
             enemy.y = this.y + this.r * Math.sin(theta);
             this.spawnedEnemies.push(enemy);
             state.world.objects.push(enemy);
-            theta += Math.PI / 6;
+            // The spawn angle increases in magnitude and swaps signs between spawnings
+            if (this.spawnAngle >= spawnAngleDelta / 2) {
+                this.spawnAngle = -this.spawnAngle;
+            } else {
+                this.spawnAngle = Math.abs(this.spawnAngle) + spawnAngleDelta;
+            }
         }
     }
 }
 
 
-
-const spawnInterval = 5 * 60 * 1000;
-const normalDelay =  60 * 1000;
-
-const koboldTargetTime = 2 * 60 * 1000;
-
-const smallVillage = new Village({population: 20, x: -200, y: 200});
-const koboldSpawner: Spawner = new EnemySpawner('kobold', 2, {delay: koboldTargetTime, structure: smallVillage});
-
-
-const mummyTargetTime = 10 * 60 * 1000;
-// TODO: Make this a bridge or something that allows seeing more of the map when completed.
-const town = new Village({population: 50, x: 200, y: -200});
-const mummySpawner: Spawner = new EnemySpawner('mummy', 4, {delay: mummyTargetTime, spawnLimit: 1, structure: town});
-
-
-const enemyTypes: EnemyType[] = ['snake', 'kobold'];
+const easyEnemyTypes: EnemyType[] = ['snake', 'kobold'];
+const advancedEnemyTypes: EnemyType[] = ['cobra', 'kobold'];
+const bossEnemyTypes: EnemyType[] = ['mummy'];
 export function checkToAddNewSpawner(state: GameState) {
     // The first spawner is added immediately.
     if (state.world.nextSpawnerLevel === 1) {
@@ -219,26 +221,11 @@ export function checkToAddNewSpawner(state: GameState) {
     }
 
     // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
-    const numSpawners = state.world.objects.filter(o => o.objectType === 'spawner').length;
+    const numSpawners = state.world.objects.filter(o => o.objectType === 'waveSpawner').length;
 
-    // The second spawner will become active at 2 minutes and is spawned with a standard delay before it becomes active.
-    // It will spawn earlier if the first spawner is destroyed, but will still become active at the 2 minute mark.
-
-    /*if (state.world.nextSpawnerLevel === 2) {
-        if (state.world.time >= koboldTargetTime - normalDelay || numSpawners === 0) {
-            state.world.objects.push(koboldSpawner);
-            koboldSpawner.delay = koboldTargetTime - state.world.time;
-            state.world.nextSpawnerLevel++;
-        }
-        return;
-    }*/
-
-    // All future spawners become active every 5 minutes and are spawned with a standard delay before they become active.
-    // They will spawn earlier if the previous spawner are all destroyed, but will still become active at the target time.
-    const nextTargetTime = spawnInterval * (state.world.nextSpawnerLevel - 2);
-    if (state.world.time >= nextTargetTime - normalDelay || numSpawners === 0) {
+    // Add additional spawners/waves as necessary for now.
+    if (numSpawners === 0 || !waves[state.nextWaveIndex + 5]) {
         const level = state.world.nextSpawnerLevel;
-        const enemyType = enemyTypes[(Math.random() * enemyTypes.length) | 0];
         const theta = 2 * Math.PI * level / 8;
         const spawnRadius = 300 + 20 * level;
         const x = state.nexus.x + spawnRadius * Math.cos(theta);
@@ -251,12 +238,51 @@ export function checkToAddNewSpawner(state: GameState) {
         } else {
             structure = new Village({population: 5, x, y});
         }
-        state.world.objects.push(new EnemySpawner(enemyType, level, {
-            structure,
-            delay: nextTargetTime - state.world.time,
-            spawnCount: enemyType === 'snake' ? 2 : 1,
-        }));
+        const newSpawner = new EnemyWaveSpawner({structure});
+        state.world.objects.push(newSpawner);
         state.world.nextSpawnerLevel++;
+        const easyEnemyType = easyEnemyTypes[(Math.random() * easyEnemyTypes.length) | 0];
+        const easyEnemy: SpacedSpawnProps = {type: easyEnemyType, level: Math.floor(3 + level / 3), count: 3};
+        const advancedEnemyType = advancedEnemyTypes[(Math.random() * advancedEnemyTypes.length) | 0];
+        const advancedEnemy: SpacedSpawnProps = {type: advancedEnemyType, level: Math.floor(3 + level / 3), count: 3};
+        const bossEnemyType = bossEnemyTypes[(Math.random() * bossEnemyTypes.length) | 0];
+        const bossEnemy: SpacedSpawnProps = {type: bossEnemyType, level: Math.floor(3 + level / 3), count: 3, offset: 20 + level * 2};
+        processWaveDefinitions([
+            {
+                duration: 60 + level * 5,
+                spawners: [
+                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(3 + level / 3)})},
+                ],
+            },
+            {
+                duration: 60 + level * 5,
+                spawners: [
+                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(5 + level)})},
+                ],
+            },
+            {
+                duration: 60 + level * 5,
+                spawners: [
+                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(5 + level)})},
+                    {spawner: newSpawner, spawns: spacedSpawns({...advancedEnemy, count: Math.floor(1 + level / 3)})},
+                ],
+            },
+            {
+                duration: 60 + level * 5,
+                spawners: [
+                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(5 + level)})},
+                    {spawner: newSpawner, spawns: spacedSpawns({...advancedEnemy, count: Math.floor(1 + 2 * level / 3)})},
+                ],
+            },
+            {
+                duration: 60 + level * 5,
+                spawners: [
+                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(8 + level)})},
+                    {spawner: newSpawner, spawns: spacedSpawns({...advancedEnemy, count: Math.floor(3 + 2 * level / 3)})},
+                    {spawner: newSpawner, spawns: spacedSpawns({...bossEnemy, count: 1})},
+                ],
+            },
+        ])
     }
 }
 
@@ -283,10 +309,19 @@ function spacedSpawns({type, level, count, spacing = 1, offset = 1}: SpacedSpawn
 const snakeForest = new Forest({wood: 1000, x: 200, y: 200});
 const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({structure: snakeForest});
 
+const smallVillage = new Village({population: 20, x: -200, y: 200});
+const koboldSpawner: WaveSpawner = new EnemyWaveSpawner({structure: smallVillage});
+
+
+// TODO: Make this a bridge or something that allows seeing more of the map when completed.
+const town = new Village({population: 50, x: 200, y: -200});
+const mummySpawner: WaveSpawner = new EnemyWaveSpawner({structure: town});
+
 export const waves: Wave[] = [];
 window.waves = waves;
 function processWaveDefinitions(waveDefinitions: WaveDefinition[]) {
-    let nextStartTime = (waves[0]?.scheduledStartTime ?? 0) + (waves[0]?.duration ?? 5000);
+    const lastWave = waves[waves.length - 1];
+    let nextStartTime = (lastWave?.scheduledStartTime ?? 0) + (lastWave?.duration ?? 5000);
     for (const waveDefinition of waveDefinitions) {
         const newWave: Wave = {
             ...waveDefinition,
@@ -302,6 +337,8 @@ function processWaveDefinitions(waveDefinitions: WaveDefinition[]) {
 
 const snake: SpacedSpawnProps = {type: 'snake', level: 1, count: 3};
 const cobra: SpacedSpawnProps = <const>{type: 'cobra', level: 4, count: 1, offset: 5, spacing: 2};
+const kobold: SpacedSpawnProps = {type: 'kobold', level: 3, count: 2, spacing: 3};
+const koboldMage: SpacedSpawnProps = {type: 'kobold', level: 5, count: 1, offset: 2, spacing: 5};
 const waveDefinitions: WaveDefinition[] = [
     {
         duration: 25,
@@ -337,8 +374,10 @@ const waveDefinitions: WaveDefinition[] = [
         duration: 30,
         spawners: [
             {spawner: snakeSpawner, spawns: [
-                ...spacedSpawns({...snake, count: 3}),
-                ...spacedSpawns({...cobra, count: 2}),
+                ...spacedSpawns({...snake, count: 5}),
+            ]},
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 2}),
             ]},
         ],
     },
@@ -349,6 +388,9 @@ const waveDefinitions: WaveDefinition[] = [
                 ...spacedSpawns({...snake, count: 4}),
                 ...spacedSpawns({...cobra, count: 2})
             ]},
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 2}),
+            ]},
         ],
     },
     {
@@ -357,6 +399,9 @@ const waveDefinitions: WaveDefinition[] = [
             {spawner: snakeSpawner, spawns: [
                 ...spacedSpawns({...snake, count: 3}),
                 ...spacedSpawns({...cobra, count: 3})
+            ]},
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 3}),
             ]},
         ],
     },
@@ -367,6 +412,10 @@ const waveDefinitions: WaveDefinition[] = [
                 ...spacedSpawns({...snake, count: 4}),
                 ...spacedSpawns({...cobra, count: 3})
             ]},
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 3}),
+                ...spacedSpawns({...koboldMage, count: 1}),
+            ]},
         ],
     },
     {
@@ -375,6 +424,10 @@ const waveDefinitions: WaveDefinition[] = [
             {spawner: snakeSpawner, spawns: [
                 ...spacedSpawns({...snake, count: 5}),
                 ...spacedSpawns({...cobra, count: 3})
+            ]},
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 3}),
+                ...spacedSpawns({...koboldMage, count: 2}),
             ]},
         ],
     },
@@ -386,6 +439,77 @@ const waveDefinitions: WaveDefinition[] = [
                 ...spacedSpawns({...cobra, count: 3}),
                 ...spacedSpawns({type: 'snake', level: 7, count: 1, offset: 15}),
             ]},
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 3}),
+                ...spacedSpawns({...koboldMage, count: 2}),
+            ]},
+        ],
+    },
+    {
+        duration: 45,
+        spawners: [
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 8}),
+                ...spacedSpawns({...koboldMage, count: 3}),
+            ]},
+        ],
+    },
+    {
+        duration: 45,
+        spawners: [
+            {spawner: koboldSpawner, spawns: [
+                ...spacedSpawns({...kobold, count: 10}),
+                ...spacedSpawns({...koboldMage, count: 3}),
+            ]},
+        ],
+    },
+    {
+        duration: 90,
+        spawners: [
+            {spawner: koboldSpawner, isFinalWave: true, spawns: [
+                ...spacedSpawns({...kobold, count: 10}),
+                ...spacedSpawns({...koboldMage, count: 3}),
+                ...spacedSpawns({...kobold, level: 9, count: 1}),
+            ]},
+        ],
+    },
+    {
+        duration: 60,
+        spawners: [
+            {spawner: mummySpawner, spawns: [
+                ...spacedSpawns({...snake, count: 10}),
+                ...spacedSpawns({...cobra, count: 2}),
+                ...spacedSpawns({...kobold, count: 10}),
+                ...spacedSpawns({...koboldMage, count: 1}),
+            ]},
+        ],
+    },
+    {
+        duration: 60,
+        spawners: [
+            {spawner: mummySpawner, spawns: [
+                ...spacedSpawns({...snake, count: 10}),
+                ...spacedSpawns({...cobra, count: 4}),
+                ...spacedSpawns({...kobold, count: 10}),
+                ...spacedSpawns({...koboldMage, count: 2}),
+            ]},
+        ],
+    },
+    {
+        duration: 60,
+        spawners: [
+            {spawner: mummySpawner, spawns: [
+                ...spacedSpawns({...snake, count: 10}),
+                ...spacedSpawns({...cobra, count: 6}),
+                ...spacedSpawns({...kobold, count: 10}),
+                ...spacedSpawns({...koboldMage, count: 3}),
+            ]},
+        ],
+    },
+    {
+        duration: 120,
+        spawners: [
+            {spawner: mummySpawner, isFinalWave: true, spawns: [{enemyType: 'mummy', level: 5, spawnTime: 0}]},
         ],
     },
 ];

@@ -1,3 +1,5 @@
+import {createAnimation, drawFrame} from 'app/utils/animations';
+
 export const enemyDefinitions: {[key in EnemyType]?: EnemyDefinition} = {};
 
 function getBasicEnemyStatsForLevel(level: number): EnemyLevelDerivedStats {
@@ -12,6 +14,14 @@ function getBasicEnemyStatsForLevel(level: number): EnemyLevelDerivedStats {
     };
 }
 
+function renderSimpleEnemy(context: CanvasRenderingContext2D, enemy: Enemy, frame: Frame) {
+    drawFrame(context, frame, {...frame, x: enemy.x - frame.w / 2, y: enemy.y - frame.h / 2});
+}
+
+
+const [/*snakeGreenLeftFrame*/, /*snakeGreenDownFrame*/, snakeGreenUpFrame] = createAnimation('gfx/enemies/snek.png', {w: 18, h: 18}, {cols: 3}).frames;
+const [/*snakeYellowLeftFrame*/, /*snakeYellowDownFrame*/, snakeYellowUpFrame] = createAnimation('gfx/enemies/snekStorm.png', {w: 18, h: 18}, {cols: 3}).frames;
+
 enemyDefinitions.snake = {
     name: 'Snake',
     color: 'green',
@@ -23,6 +33,9 @@ enemyDefinitions.snake = {
             maxHealth: (baseStats.maxHealth * 0.8) | 0,
             attacksPerSecond: baseStats.attacksPerSecond * 1.2,
         };
+    },
+    render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
+        renderSimpleEnemy(context, enemy, snakeGreenUpFrame);
     },
     aggroRadius: 150,
 };
@@ -36,8 +49,11 @@ enemyDefinitions.cobra = {
         return {
             ...baseStats,
             attacksPerSecond: baseStats.attacksPerSecond * 1.2,
-            attackRange: 30,
+            attackRange: 20,
         };
+    },
+    render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
+        renderSimpleEnemy(context, enemy, snakeYellowUpFrame);
     },
     aggroRadius: 150,
 };

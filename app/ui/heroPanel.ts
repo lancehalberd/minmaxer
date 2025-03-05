@@ -12,7 +12,7 @@ export class HeroPanel implements UIContainer {
     hero?: Hero
     w = 250;
     h = 500;
-    x = 0;
+    x = 40;
     y = (canvas.height - this.h) / 2;
     weaponButton = new TextButton({
         x: this.x + 90,
