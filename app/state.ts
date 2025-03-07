@@ -1,9 +1,15 @@
+import {healingWind, createNexusAbility} from 'app/definitions/nexusAbilities';
 import {ranger, warrior, wizard} from 'app/objects/hero';
 import {nexus} from 'app/objects/nexus';
 
+const tempAbility = createNexusAbility(healingWind);
+tempAbility.level = 1;
+
 export const state: GameState = {
     nexus,
-    heroSlots: [null],
+    heroSlots: [undefined],
+    nexusAbilities: [tempAbility],
+    nexusAbilitySlots: [tempAbility],
     city: {
         maxPopulation: 5,
         population: 0,

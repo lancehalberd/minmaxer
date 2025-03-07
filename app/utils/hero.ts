@@ -30,7 +30,7 @@ export function getSkillExperienceForNextLevel(state: GameState, skill: HeroSkil
 }
 
 export function summonHero(state: GameState, hero: Hero): boolean {
-    const firstEmptyIndex = state.heroSlots.indexOf(null);
+    const firstEmptyIndex = state.heroSlots.indexOf(undefined);
     if (firstEmptyIndex < 0) {
         // No room to summon a new hero.
         return false;
@@ -79,5 +79,28 @@ export function activateHeroAbility(state: GameState, hero: Hero, ability: Abili
         // If the ability does not target, it is activated immediately.
         definition.onActivate(state, hero, ability, undefined)
         ability.cooldown = definition.getCooldown(state, hero, ability);
+    }
+}
+
+export function activateNexusAbility(state: GameState, ability: NexusAbility<any>) {
+    if (ability.level <= 0 || ability.cooldown > 0) {
+        return;
+    }
+    const definition = ability.definition;
+    if (definition.canActivate && !definition.canActivate(state, ability)) {
+        return;
+    }
+    const targetingInfo = definition.getTargetingInfo(state, ability);
+    if (targetingInfo.canTargetEnemy || targetingInfo.canTargetAlly || targetingInfo.canTargetLocation) {
+        // If the ability can target, we selected it to allow the user to choose the target.
+        if (state.selectedAbility === ability) {
+            delete state.selectedAbility;
+        } else {
+            state.selectedAbility = ability;
+        }
+    } else {
+        // If the ability does not target, it is activated immediately.
+        definition.onActivate(state, ability, undefined)
+        ability.cooldown = definition.getCooldown(state, ability);
     }
 }

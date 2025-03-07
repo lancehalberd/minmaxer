@@ -16,7 +16,7 @@ export class HeroPanel implements UIContainer {
     y = (canvas.height - this.h) / 2;
     weaponButton = new TextButton({
         x: this.x + 90,
-        y: this.y + 170,
+        y: this.y + 190,
         text(state: GameState) {
             return state.selectedHero?.equipment.weapon?.name ?? 'None';
         },
@@ -33,7 +33,7 @@ export class HeroPanel implements UIContainer {
     });
     armorButton = new TextButton({
         x: this.x + 90,
-        y: this.y + 200,
+        y: this.y + 220,
         text(state: GameState) {
             return state.selectedHero?.equipment.armor?.name ?? 'None';
         },
@@ -50,7 +50,7 @@ export class HeroPanel implements UIContainer {
     });
     charmButtons = [0,1,2].map(index => new TextButton({
         x: this.x + 90,
-        y: this.y + 230 + 30 * index,
+        y: this.y + 250 + 30 * index,
         text(state: GameState) {
             return state.selectedHero?.equipment.charms[index]?.name ?? 'None';
         },
@@ -77,8 +77,9 @@ export class HeroPanel implements UIContainer {
             'Lv ' + hero.level + '. ' + hero.definition.name,
             'Max health ' + hero.getMaxHealth(state),
             'Dex ' + hero.getDex(state) + ' Int ' + hero.getInt(state) + ' Str ' + hero.getStr(state),
-            'Damage ' + hero.getDamage(state),
+            'Damage ' + (hero.getDamage(state) * (1 + hero.getStr(state) / 100) | 0),
             'Critical ' + (hero.getCriticalChance(state) * 100).toFixed(1) + '% x' + (1 + hero.getCriticalMultipler(state)).toFixed(2),
+            'Extra Hit ' + (hero.getExtraHitChance(state) * 100).toFixed(1) + '%',
             'Armor Class ' + hero.getArmorClass(state),
             'Max Damage Reduction ' + (hero.getMaxDamageReduction(state) * 100).toFixed(1) + '%',
             'Equipment:',

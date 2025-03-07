@@ -28,10 +28,10 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
         damage *= target.getIncomingDamageMultiplier(state);
         const armorClass = target.getArmorClass(state);
         const maxDamageReduction = target.getMaxDamageReduction(state);
-        damage = Math.max(
+        damage = Math.ceil(Math.max(
             damage - armorClass,
-            Math.ceil(damage * (1 - maxDamageReduction)),
-        );
+            damage * (1 - maxDamageReduction),
+        ));
     }
     target.health = Math.max(0, target.health - damage);
     addDamageNumber(state, {target, damage, isCrit});
@@ -141,6 +141,22 @@ export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTar
         return !!targetingInfo.canTargetAlly;
     }
     return false;
+}
+
+
+export function getValidAbilityTargets(state: GameState, targetingInfo: AbilityTargetingInfo): AttackTarget[] {
+    const validTargets: AttackTarget[] = [];
+    for (const object of state.world.objects) {
+        if (!object || object.objectType === 'waveSpawner' || object.objectType === 'loot' || object.objectType === 'structure') {
+            continue;
+        }
+        // Skip this object if the ability doesn't target this type of object.
+        if (!isAbilityTargetValid(state, targetingInfo, object)) {
+            continue;
+        }
+        validTargets.push(object);
+    }
+    return validTargets;
 }
 
 export function getEnemyTargets(state: GameState) {

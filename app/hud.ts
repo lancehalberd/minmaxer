@@ -1,5 +1,5 @@
 import {canvas} from 'app/gameConstants';
-import {getHeroAbilityButtons} from 'app/ui/abilityButton';
+import {getHeroAbilityButtons, getNexusAbilityButtons} from 'app/ui/abilityButton';
 import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equipmentPanels';
 import {getHeroButtons} from 'app/ui/heroButton';
 import {HeroPanel} from 'app/ui/heroPanel';
@@ -11,7 +11,7 @@ const heroPanel = new HeroPanel();
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
 export function updateHudUIElements(state: GameState) {
-    state.hudUIElements = [];
+    state.hudUIElements = getNexusAbilityButtons(state);
     if (state.selectedHero) {
         state.hudUIElements = [...state.hudUIElements, ...getHeroAbilityButtons(state, state.selectedHero)];
     }

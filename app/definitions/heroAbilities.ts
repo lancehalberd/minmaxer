@@ -22,7 +22,9 @@ export const spinStrike: ActiveAbilityDefinition = {
         const hitCircle = {x: hero.x, y: hero.y, r: targetingInfo.hitRadius || 0};
         const targets = getTargetsInCircle(state, getEnemyTargets(state), hitCircle);
         // This attack does 25/35/45/55/65% increased base damage.
-        const damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.getDamage(state);
+        let damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.getDamage(state);
+        // TODO: this should apply extra hit, crit chance + strength damage bonus.
+        damage = damage | 0;
         for (const target of targets) {
             damageTarget(state, target, {damage, source: hero});
         }
@@ -99,6 +101,7 @@ export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
         const mag = Math.sqrt(dx*dx + dy*dy);
         // This attack 1.5/1.7/1.9/2.1/2.3x base damage.
         const damage = ([1.5, 1.7, 1.9, 2.1, 2.3][ability.level - 1] * hero.getDamageForTarget(state, target)) | 0;
+        // TODO: this should apply extra hit, crit chance + strength damage bonus.
         const targetingInfo = this.getTargetingInfo(state, hero, ability);
         addProjectile(state, {
             x: hero.x + dx * hero.r / mag,

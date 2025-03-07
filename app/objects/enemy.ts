@@ -16,6 +16,9 @@ export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point):
         r: definition.r,
         aggroRadius: definition.aggroRadius,
         health: derivedStats.maxHealth,
+        getMaxHealth(state: GameState) {
+            return derivedStats.maxHealth;
+        },
         ...derivedStats,
         x,
         y,
@@ -111,8 +114,8 @@ export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, stat
     const definition = enemyDefinitions[this.enemyType];
     if (definition?.render) {
         definition.render(context, state, this);
-        return;
+    } else {
+        fillCircle(context, this);
     }
-    fillCircle(context, this);
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
 }

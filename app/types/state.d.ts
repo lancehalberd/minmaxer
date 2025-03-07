@@ -22,8 +22,10 @@ interface GameState {
     selectedCharmIndex?: number
     hoveredAbility?: Ability
     hoverToolTip?: UIElement
-    selectedAbility?: ActiveAbility
-    heroSlots: (Hero | null)[]
+    selectedAbility?: ActiveAbility | NexusAbility<any>
+    heroSlots: (Hero | undefined)[]
+    nexusAbilities: NexusAbility<any>[]
+    nexusAbilitySlots: (NexusAbility<any> | undefined)[]
     hudUIElements: UIElement[]
     world: World
     nextWaveIndex: number

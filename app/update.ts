@@ -80,7 +80,12 @@ function update() {
     // Show the "pointer" cursor when the mouse is over uiButtons.
     // This is often a hand with a pointing index finger that appears over buttons and links
     // in webpages.
-    if (state.mouse.mouseHoverTarget?.objectType === 'uiButton') {
+    if (state.mouse.mouseHoverTarget?.objectType === 'uiButton' ||
+        (
+            state.mouse.mouseHoverTarget?.objectType === 'uiContainer'
+            && (state.mouse.mouseHoverTarget.onPress || state.mouse.mouseHoverTarget.onClick)
+        )
+    ) {
         canvas.style.cursor = 'pointer';
     } else {
         canvas.style.cursor = 'default';
@@ -120,6 +125,14 @@ function update() {
             computeIdlePopulation(state);
             checkToAddNewSpawner(state);
             updateWaves(state);
+            for (let ability of state.nexusAbilitySlots) {
+                if (!ability) {
+                    continue;
+                }
+                if (ability.cooldown > 0) {
+                    ability.cooldown -= frameLength;
+                }
+            }
             // Currently we update effects before objects so that new effects created by objects
             // do not update the frame they are created.
             for (const hero of state.heroSlots) {

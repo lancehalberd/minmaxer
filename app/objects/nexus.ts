@@ -80,7 +80,7 @@ export const nexus: Nexus = {
 
 function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     const elements: UIElement[] = [];
-    if (state.heroSlots.includes(null)) {
+    if (state.heroSlots.includes(undefined)) {
         for (const hero of state.availableHeroes) {
             for (const heroElement of (hero.getChildren?.(state) ?? [])) {
                 elements.push(heroElement);

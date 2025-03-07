@@ -58,6 +58,11 @@ export function strokeX(context: CanvasRenderingContext2D, {x, y}: Point, size: 
     context.stroke();
 }
 
+export function fillPlus(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, color: CanvasFill) {
+    fillRect(context, {x: x + w / 3, y, w: w / 3, h}, color);
+    fillRect(context, {x, y: y + h / 3, w: w, h: h / 3}, color);
+}
+
 export function fillText(context: CanvasRenderingContext2D, props: FillTextProperties): TextMetrics|null {
     const {
         x, y, text,

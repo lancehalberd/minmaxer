@@ -106,7 +106,7 @@ export function isMouseOverTarget(state: GameState, target: MouseTarget): boolea
         return true;
     }
     if (target.objectType === 'uiButton' && hoverTarget.objectType === 'uiButton') {
-        return hoverTarget.uniqueId === target.uniqueId;
+        return !!target.uniqueId && hoverTarget.uniqueId === target.uniqueId;
     }
     return false;
 }
@@ -141,9 +141,18 @@ export function updateMouseActions(state: GameState) {
             // Trigger the effect of a button.
             if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
                 target.onPress?.(state);
+            } else if (state.selectedAbility?.abilityType === 'activeNexusAbility') {
+                const definition = state.selectedAbility.definition;
+                const targetingInfo = definition.getTargetingInfo(state, state.selectedAbility);
+                if (isAbilityMouseTargetValid(state, targetingInfo)) {
+                    definition.onActivate(state, state.selectedAbility, target);
+                    state.selectedAbility.cooldown = definition.getCooldown(state, state.selectedAbility);
+                    delete state.selectedAbility;
+                    state.mouse.pressHandled = true;
+                }
             } else if (state.selectedHero) {
                 if (target === state.selectedHero) {
-                    state.openCharacterPanel = true;
+                    state.openCharacterPanel = !state.openCharacterPanel;
                 } else {
                     state.openCharacterPanel = false;
                     state.openChooseArmorPanel = false;
@@ -151,8 +160,8 @@ export function updateMouseActions(state: GameState) {
                     state.openChooseCharmPanel = false;
                 }
                 if (state.selectedAbility) {
-                    const definition = state.selectedAbility.definition;
-                    if (definition.abilityType === 'activeAbility') {
+                    if (state.selectedAbility.abilityType === 'activeAbility') {
+                        const definition = state.selectedAbility.definition;
                         const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
                         if (isAbilityMouseTargetValid(state, targetingInfo)) {
                             if (targetingInfo.moveToTarget) {

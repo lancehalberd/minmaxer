@@ -72,7 +72,7 @@ export class RepeatToggle extends IconButton {
             fillColor: (state.mouse.mouseHoverTarget === this || isActive) ? this.hoverBackgroundColor : this.backgroundColor,
         });
         const iconColor = isActive ? this.color : '#888';
-        const circle = {x: this.x + this.w / 2, y: this.y + this.h / 2, r: uiSize / 2 - 3};
+        const circle = {x: this.x + this.w / 2, y: this.y + this.h / 2, r: Math.min(this.w, this.h) / 2 - 4};
 
         context.beginPath();
         context.arc(circle.x, circle.y, circle.r, -Math.PI / 3, 4 * Math.PI / 3);
@@ -80,7 +80,7 @@ export class RepeatToggle extends IconButton {
         context.strokeStyle = iconColor;
         context.stroke();
         context.beginPath();
-        const size = 3;
+        const size = circle.r;
         const dx = Math.cos(-Math.PI / 3), dy = Math.sin(-Math.PI / 3);
         const x = circle.x + dx * circle.r, y = circle.y + dy * circle.r;
         const h = size * Math.sqrt(3) / 2;

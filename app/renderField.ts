@@ -40,9 +40,21 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
             }
         }
         // Render targeting graphics for abilities.
-        if (state.selectedHero && state.selectedAbility) {
+        if (state.selectedAbility?.abilityType === 'activeNexusAbility') {
             const definition = state.selectedAbility.definition;
-            if (definition.abilityType === 'activeAbility') {
+            const targetingInfo = definition.getTargetingInfo(state, state.selectedAbility);
+            const isTargetValid = isAbilityMouseTargetValid(state, targetingInfo);
+            const target: Point = state.mouse.mouseHoverTarget || convertToWorldPosition(state, state.mouse.currentPosition);;
+            if (isTargetValid) {
+                if (targetingInfo.hitRadius) {
+                    fillCircle(context, {...target, r: targetingInfo.hitRadius || 5, color: 'rgba(0, 0, 255, 0.5)'});
+                }
+            } else {
+                strokeX(context, target, 10, '#F00');
+            }
+        } else if (state.selectedHero && state.selectedAbility) {
+            if (state.selectedAbility.abilityType === 'activeAbility') {
+                const definition = state.selectedAbility.definition;
                 const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
                 const isTargetValid = isAbilityMouseTargetValid(state, targetingInfo);
                 const target: Point = state.mouse.mouseHoverTarget || convertToWorldPosition(state, state.mouse.currentPosition);;

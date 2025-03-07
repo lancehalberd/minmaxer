@@ -161,7 +161,7 @@ interface AbilityTargetingInfo {
     projectileRadius?: number
     // Set if this ability has a circular AoE
     hitRadius?: number
-    // Range of the ability. Should default to the hero's range.
+    // Range of the ability. Should default to the user's range.
     range: number
     // Whether the hero should move to put the target into range before activating this skill.
     moveToTarget?: boolean
@@ -229,4 +229,21 @@ interface AttackHit {
     damage: number
     isCrit?: boolean
     source?: AttackTarget
+}
+
+
+interface NexusAbilityDefinition<T extends AbilityTarget|undefined> {
+    abilityType: 'activeNexusAbility'
+    name: string
+    canActivate?: (state: GameState, ability: NexusAbility<T>) => boolean
+    getTargetingInfo: (state: GameState, ability: NexusAbility<T>) => AbilityTargetingInfo
+    onActivate: (state: GameState, ability: NexusAbility<T>, target: T) => void
+    getCooldown: (state: GameState, ability: NexusAbility<T>) => number
+    renderIcon: (context: CanvasRenderingContext2D, r: Rect) => void
+}
+interface NexusAbility<T extends AbilityTarget|undefined> {
+    abilityType: 'activeNexusAbility'
+    definition: NexusAbilityDefinition<T>
+    level: number
+    cooldown: number
 }

@@ -36,6 +36,7 @@ interface Enemy extends Circle, EnemyLevelDerivedStats {
     level: number
     // Current life of the enemy
     health: number
+    getMaxHealth: (state: GameState) => number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
@@ -66,7 +67,7 @@ interface Spawner extends Circle {
     spawnedEnemies: Enemy[]
     // Current and max life of the spawner.
     health: number
-    maxHealth: number
+    getMaxHealth: (state: GameState) => number
     // How much experience the enemy grants when defeated.
     experienceWorth: number
     // How much essence the enemy grants when defeated.

@@ -201,7 +201,7 @@ class HeroObject implements Hero {
         str: createModifiableStat<Hero>((state: GameState) => {
             return (this.definition.coreState === 'str') ? (2 * this.level) : this.level;
         }),
-        maxHealth: createModifiableStat<Hero>((state: GameState) => 5 + this.level * 5 + 2 * this.getStr(state)),
+        maxHealth: createModifiableStat<Hero>((state: GameState) => 15 + this.level * 5 + 2 * this.getStr(state)),
         movementSpeed: createModifiableStat<Hero>((state: GameState) => this.level * 2.5 + 97.5),
         damage: createModifiableStat<Hero>((state: GameState) => {
             const weaponDamage = this.equipment.weapon?.weaponStats.damage ?? 0;
@@ -374,21 +374,31 @@ class HeroObject implements Hero {
                 // Attack the target if the enemy's attack is not on cooldown.
                 const attackCooldown = 1000 / this.getAttacksPerSecond(state);
                 if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
-                    let damage = this.getDamageForTarget(state, this.attackTarget);
-                    // TODO: Support multiple hits here.
-                    // TODO: Replace with this.rollCriticalMultiplier that supports multi crit.
-                    const critChance = this.getCriticalChance(state);
-                    const isCrit = Math.random() < critChance;
-                    if (isCrit) {
-                        damage = (damage * (1 + this.getCriticalMultipler(state))) | 0;
+                    let hitCount = 1;
+                    const strengthDamageBonus = 1 + this.getStr(state) / 100;
+                    const extraHitChance = this.getExtraHitChance(state);
+                    while (Math.random() < extraHitChance / hitCount) {
+                        hitCount++;
                     }
-                    damageTarget(state, this.attackTarget, {damage, isCrit, source: this});
+                    for (let i = 0; i < hitCount; i++) {
+                        let damage = this.getDamageForTarget(state, this.attackTarget);
+                        damage *= strengthDamageBonus;
+                        // TODO: Replace with this.rollCriticalMultiplier that supports multi crit.
+                        const critChance = this.getCriticalChance(state);
+                        const isCrit = Math.random() < critChance;
+                        if (isCrit) {
+                            damage *= (1 + this.getCriticalMultipler(state));
+                        }
+                        // floor damage value.
+                        damage = damage | 0;
+                        damageTarget(state, this.attackTarget, {damage, isCrit, source: this});
+                        checkForOnHitTargetAbilities(state, this, this.attackTarget);
+                    }
                     this.attackTarget.onHit?.(state, this);
                     this.lastAttackTime = state.world.time;
                     if (this.attackTarget.objectType === 'enemy') {
                         this.attackTarget.attackTarget = this;
                     }
-                    checkForOnHitTargetAbilities(state, this, this.attackTarget);
                 }
 
                 // Remove the attack target when it is dead.
@@ -418,7 +428,8 @@ class HeroObject implements Hero {
             }
         }
         if (this.movementTarget) {
-            if (moveHeroTowardsTarget(state, this, this.movementTarget, this.r + this.movementTarget.r)) {
+            const distance = this.movementTarget.objectType === 'point' ? 0 : this.r + this.movementTarget.r;
+            if (moveHeroTowardsTarget(state, this, this.movementTarget, distance)) {
                 if (this.movementTarget.objectType === 'structure' || this.movementTarget.objectType === 'nexus') {
                     this.movementTarget.onHeroInteraction?.(state, this);
                 } else {
@@ -492,7 +503,7 @@ function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
 
 function getHeroFieldButtons(this: Hero, state: GameState): UIButton[] {
     const buttons: UIButton[] = [];
-    const firstEmptyIndex = state.heroSlots.indexOf(null);
+    const firstEmptyIndex = state.heroSlots.indexOf(undefined);
     // If we can choose this hero as a champion, add a button for selecting them.
     if (firstEmptyIndex >= 0 && !state.heroSlots.includes(this)) {
         const button = createPointerButtonForTarget(this);

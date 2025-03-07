@@ -25,7 +25,7 @@ const nexusLevels = [
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
             // Gain an extra hero slot.
-            state.heroSlots.push(null);
+            state.heroSlots.push(undefined);
         }
     },
 ];
