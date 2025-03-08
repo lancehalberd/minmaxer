@@ -1,9 +1,26 @@
 import {healingWind, createNexusAbility} from 'app/definitions/nexusAbilities';
-import {ranger, warrior, wizard} from 'app/objects/hero';
-import {nexus} from 'app/objects/nexus';
+import {snakePit} from 'app/definitions/zones/snakePit';
+import {Cave} from 'app/objects/structure';
+import {addBasicHeroes} from 'app/objects/hero';
+import {createNexus} from 'app/objects/nexus';
+import {initializeSpawners} from 'app/objects/spawner';
+
 
 const tempAbility = createNexusAbility(healingWind);
 tempAbility.level = 1;
+
+const world: World = {
+    name: 'World',
+    floorColor: '#309A51',
+    time: 20,
+    nextSpawnerLevel: 1,
+    effects: [],
+    objects: [],
+}
+const nexus = createNexus(world);
+const snakePitCave = new Cave({zone: world, zoneDefinition: snakePit, x: -200, y: 0});
+world.objects.push(nexus);
+world.objects.push(snakePitCave);
 
 export const state: GameState = {
     nexus,
@@ -23,37 +40,23 @@ export const state: GameState = {
             returnDamage: 0,
         },
     },
-    inventory: {
-        hideScraps: 5,
-        hide: 3,
-        largeHide: 2,
-        fur: 2,
-        lionPelt: 1,
-        bearSkin: 1,
-        wood: 20,
-        stone: 1,
-        iron: 1,
-        steel: 1,
-    },
+    inventory: {},
     discoveredItems: new Set(),
-    availableHeroes: [ranger, warrior, wizard],
+    availableHeroes: [],
     lastTimeRendered: 0,
     time : 0,
     isPaused: true,
     nextWaveIndex: 0,
+    waves: [],
     waveScale: 1/3,
-    world: {
-        time: 20,
-        camera: {
-            scale: 2,
-            x: nexus.x,
-            y: nexus.y,
-            speed: 200,
-            target: {x: nexus.x, y: nexus.y},
-        },
-        nextSpawnerLevel: 1,
-        effects: [],
-        objects: [nexus],
+    world,
+    camera: {
+        zone: world,
+        scale: 2,
+        x: 0,
+        y: 0,
+        speed: 200,
+        target: {x: 0, y: 0},
     },
     hudUIElements: [],
     mouse: {
@@ -67,5 +70,8 @@ export const state: GameState = {
         mostRecentKeysPressed: new Set(),
     },
 };
+
+addBasicHeroes(state);
+initializeSpawners(state);
 
 window.state = state;

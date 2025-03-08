@@ -1,7 +1,8 @@
 // import {context} from 'app/gameConstants';
 import {fillRect} from 'app/utils/draw';
-import {convertToWorldPosition, isPointInRect, pad} from 'app/utils/geometry';
+import {isPointInRect, pad} from 'app/utils/geometry';
 import {createAnimation, drawFrameContentAt} from 'app/utils/animations';
+import {convertToZoneLocation} from 'app/utils/world';
 
 
 export function createFieldButtonForTarget(target: Circle, callback: (state: GameState) => boolean): UIButton {
@@ -18,7 +19,7 @@ export function createFieldButtonForTarget(target: Circle, callback: (state: Gam
 }
 
 function renderFieldButton(this: UIButton, context: CanvasRenderingContext2D, state: GameState) {
-    const mouseWorldPoint = convertToWorldPosition(state, state.mouse.currentPosition)
+    const mouseWorldPoint = convertToZoneLocation(state, state.mouse.currentPosition)
     if (!state.mouse.mouseDownTarget && isPointInRect(this, mouseWorldPoint)) {
         fillRect(context, this, '#0F0');
     } else {
@@ -74,12 +75,12 @@ export function createPointerButtonForTarget(target: Circle): UIButton {
             if (this.disabled) {
                 frame = downPointerDisabled;
             } else if (state.mouse.mouseDownPosition) {
-                const mouseWorldPoint = convertToWorldPosition(state, state.mouse.mouseDownPosition);
+                const mouseWorldPoint = convertToZoneLocation(state, state.mouse.mouseDownPosition);
                 if (isPointInRect(this, mouseWorldPoint)) {
                     frame = downPointerPress;
                 }
             } else {
-                const mouseWorldPoint = convertToWorldPosition(state, state.mouse.currentPosition);
+                const mouseWorldPoint = convertToZoneLocation(state, state.mouse.currentPosition);
                 if (isPointInRect(this, mouseWorldPoint)) {
                     frame = downPointerHover;
                 }

@@ -70,13 +70,15 @@ export function getHeroButtons(state: GameState): UIButton[] {
                 }
                 if (hero) {
                     state.selectedHero = hero;
-                    state.world.camera.target.x = state.selectedHero.x;
-                    state.world.camera.target.y = state.selectedHero.y;
-                    state.world.camera.speed = 800;
+                    state.camera.zone = state.selectedHero.zone;
+                    state.camera.target.x = state.selectedHero.x;
+                    state.camera.target.y = state.selectedHero.y;
+                    state.camera.speed = 800;
                 } else {
-                    state.world.camera.target.x = state.nexus.x;
-                    state.world.camera.target.y = state.nexus.y;
-                    state.world.camera.speed = 800;
+                    state.camera.zone = state.nexus.zone;
+                    state.camera.target.x = state.nexus.x;
+                    state.camera.target.y = state.nexus.y;
+                    state.camera.speed = 800;
                 }
                 return true;
             },

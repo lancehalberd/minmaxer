@@ -2,7 +2,11 @@ import {damageTarget, getEnemyTargets, getTargetsInCircle} from 'app/utils/comba
 import {removeEffect} from 'app/utils/effect';
 import {frameLength} from 'app/gameConstants';
 
-export function createProjectile(props: Partial<Projectile>): Projectile {
+interface ProjectileProps extends Partial<Projectile> {
+    zone: ZoneInstance
+}
+
+export function createProjectile(props: ProjectileProps): Projectile {
     const projectile: Projectile = {
         objectType: 'projectile',
         x: 0, y: 0,
@@ -17,9 +21,9 @@ export function createProjectile(props: Partial<Projectile>): Projectile {
     };
     return projectile;
 }
-export function addProjectile(state: GameState, props: Partial<Projectile>): Projectile {
+export function addProjectile(state: GameState, props: ProjectileProps): Projectile {
     const projectile = createProjectile(props);
-    state.world.effects.push(projectile);
+    projectile.zone.effects.push(projectile);
     return projectile;
 }
 
@@ -32,7 +36,7 @@ function updateProjectile(this: Projectile, state: GameState) {
     this.x += this.vx * frameLength / 1000;
     this.y += this.vy * frameLength  / 1000;
     if (this.hitsEnemies) {
-        for (const target of getTargetsInCircle(state, getEnemyTargets(state), this)) {
+        for (const target of getTargetsInCircle(state, getEnemyTargets(state, this.zone), this)) {
             if (this.hitTargets.has(target)) {
                 continue;
             }

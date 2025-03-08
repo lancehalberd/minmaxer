@@ -88,6 +88,11 @@ addItemDefinition({
 });
 
 addItemDefinition({
+    key: 'wood',
+    name: 'Wood',
+    weaponStats: {damage: 1},
+});
+addItemDefinition({
     key: 'stone',
     name: 'Stone',
     weaponStats: {damage: 3},
@@ -228,14 +233,32 @@ addItemDefinition({
     charmStats: {modifiers: [int(50)]},
 });
 
+addItemDefinition({
+    key: 'woodHatchet',
+    name: 'Hatchet',
+    weaponStats: {damage: 5, modifiers: [str(1), dex(1)]},
+});
+addItemDefinition({
+    key: 'woodHammer',
+    name: 'Mallet',
+    weaponStats: {damage: 5, modifiers: [str(2)]},
+});
+addItemDefinition({
+    key: 'shortBow',
+    name: 'Short Bow',
+    weaponStats: {damage: 5, modifiers: [dex(2)]},
+});
+addItemDefinition({
+    key: 'woodStaff',
+    name: 'Wood Staff',
+    weaponStats: {damage: 5, modifiers: [int(2)]},
+});
+
 // TODO: stop using this once item definitions are added for each of these.
 export const inventoryLabels: {[key in InventoryKey]?: string} = {
-    wood: 'Wood',
     hardwood: 'Hardwood',
-    stone: 'Stone',
     ironOre: 'Iron Ore',
     // Wood chopping tools
-    woodHatchet: 'Hatchet',
     stoneAxe: 'Stone Axe',
     ironHatchet: 'Iron Hatchet',
     steelAxe: 'Steel Axe',
@@ -244,12 +267,10 @@ export const inventoryLabels: {[key in InventoryKey]?: string} = {
     ironPickaxe: 'Iron Pickaxe',
     steelPickaxe: 'Steel Pickaxe',
     // Building tools
-    woodHammer: 'Mallet',
     stoneHammer: 'Stone Hammer',
     ironHammer: 'Iron Hammer',
     steelHammer: 'Steel Hammer',
     // Archery weapons
-    shortBow: 'Short Bow',
     longBow: 'Long Bow',
     crossBow: 'Crossbow',
     // Archery ammunition
@@ -258,7 +279,6 @@ export const inventoryLabels: {[key in InventoryKey]?: string} = {
     ironArrow: 'Iron Arrow',
     steelArrow: 'Steel Arrow',
     // Staff weapons
-    woodStaff: 'Wood Staff',
     bronzeStaff: 'Bronze Staff',
     steelStaff: 'Steel Staff',
 };

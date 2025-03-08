@@ -37,7 +37,7 @@ interface HeroDefinition {
 
 type ModifiableHeroStats = {[key in ModifiableHeroStat]: ModifiableStat<Hero>}
 
-interface Hero extends Circle {
+interface Hero extends Circle, ZoneLocation {
     objectType: 'hero'
     definition: HeroDefinition
     stats: ModifiableHeroStats

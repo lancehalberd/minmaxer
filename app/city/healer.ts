@@ -1,4 +1,4 @@
-import {addHealEffect} from 'app/effects/healAnimation';
+import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {uiSize} from 'app/gameConstants';
 import {isTargetAvailable} from 'app/utils/combat';
 import {getDistance} from 'app/utils/geometry';
@@ -24,7 +24,7 @@ const healerJobDefinition: JobDefinition = {
         }
         if (!lastTarget) {
             let closestDistance = state.nexus.r + healerRange;
-            for (const object of state.world.objects) {
+            for (const object of state.nexus.zone.objects) {
                 if (object.objectType === 'hero' && object.health < object.getMaxHealth(state)) {
                     const distance = getDistance(state.nexus, object);
                     if (distance < closestDistance) {
@@ -39,7 +39,7 @@ const healerJobDefinition: JobDefinition = {
     onComplete(state: GameState) {
         if (lastTarget) {
             lastTarget.health = Math.min(lastTarget.getMaxHealth(state), lastTarget.health + 20);
-            addHealEffect(state, {target: lastTarget});
+            addHealEffectToTarget(state, lastTarget);
         }
     }
 };

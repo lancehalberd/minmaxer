@@ -1,5 +1,3 @@
-import {canvas} from 'app/gameConstants';
-
 export function getDistance(p1: Point, p2: Point): number {
     const dx = p1.x - p2.x, dy = p1.y - p2.y;
     return Math.sqrt(dx * dx + dy * dy);
@@ -32,11 +30,4 @@ export function doCirclesIntersect(c1: Circle, c2: Circle) {
 
 export function isPointInRect(rect: Rect, {x, y}: Point) {
     return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
-}
-
-export function convertToWorldPosition(state: GameState, canvasPoint: Point): Point {
-    return {
-        x: (canvasPoint.x - canvas.width / 2) / state.world.camera.scale + state.world.camera.x,
-        y: (canvasPoint.y - canvas.height / 2) / state.world.camera.scale + state.world.camera.y,
-    }
 }

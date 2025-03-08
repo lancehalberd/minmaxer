@@ -10,6 +10,7 @@ interface DamageNumberEffectProps {
 }
 class DamageNumberEffect implements FieldAnimationEffect {
     objectType = <const>'animation';
+    zone = this.props.target.zone;
     x = Math.random() * 16 - 8;
     y = 0;
     damage = this.props.damage;
@@ -45,6 +46,6 @@ class DamageNumberEffect implements FieldAnimationEffect {
 }
 export function addDamageNumber(state: GameState, props: DamageNumberEffectProps): FieldAnimationEffect {
     const damageNumberEffect = new DamageNumberEffect(props);
-    state.world.effects.push(damageNumberEffect);
+    damageNumberEffect.zone.effects.push(damageNumberEffect);
     return damageNumberEffect;
 }

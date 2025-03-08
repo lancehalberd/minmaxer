@@ -1,12 +1,13 @@
 import {lootDefinitions} from 'app/definitions/lootDefinitions';
 import {fillCircle} from 'app/utils/draw';
 
-export function createLoot(lootType: LootType, {x, y}: Point): Loot {
+export function createLoot(lootType: LootType, {zone, x, y}: ZoneLocation): Loot {
     const definition = lootDefinitions[lootType]!;
     const loot: Loot = {
         objectType: 'loot',
         color: definition.color,
         r: definition.r,
+        zone,
         x,
         y,
         update: updateLoot,

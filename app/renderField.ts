@@ -1,7 +1,7 @@
 import {canvas} from 'app/gameConstants';
 import {isAbilityMouseTargetValid} from 'app/utils/combat';
 import {fillCircle, strokeX} from 'app/utils/draw';
-import {convertToWorldPosition} from 'app/utils/geometry';
+import {convertToZoneLocation} from 'app/utils/world';
 
 export function renderFieldElements(context: CanvasRenderingContext2D, state: GameState, elements: UIElement[]) {
     for (const element of elements) {
@@ -14,25 +14,27 @@ export function renderFieldElements(context: CanvasRenderingContext2D, state: Ga
 }
 
 export function renderField(context: CanvasRenderingContext2D, state: GameState) {
-    context.fillStyle = '#309A51';
-    context.fillRect(0, 0, canvas.width, canvas.height)
 
-    const scale = state.world.camera.scale;
+    const scale = state.camera.scale;
+
+    const renderedZone = state.camera.zone;
+    context.fillStyle = renderedZone.floorColor;
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
     context.save();
         // Adjust the context to match the camera scale and render camera.x/camera.y in the center of the canvas.
         context.scale(scale, scale);
         context.translate(
-            -state.world.camera.x + canvas.width / 2 / scale,
-            -state.world.camera.y + canvas.height / 2 / scale
+            -state.camera.x + canvas.width / 2 / scale,
+            -state.camera.y + canvas.height / 2 / scale
         );
         // Draw all base objects first.
-        const sortedObjects = [...state.world.objects];
+        const sortedObjects = [...renderedZone.objects];
         sortedObjects.sort((A, B) => A.y - B.y);
         for (const object of sortedObjects) {
             object.render(context, state);
         }
-        for (const effect of state.world.effects) {
+        for (const effect of renderedZone.effects) {
             effect.render(context, state);
         }
         // If any objects have buttons associated with them, draw those on top next.
@@ -46,7 +48,7 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
             const definition = state.selectedAbility.definition;
             const targetingInfo = definition.getTargetingInfo(state, state.selectedAbility);
             const isTargetValid = isAbilityMouseTargetValid(state, targetingInfo);
-            const target: Point = state.mouse.mouseHoverTarget || convertToWorldPosition(state, state.mouse.currentPosition);;
+            const target: Point = state.mouse.mouseHoverTarget || convertToZoneLocation(state, state.mouse.currentPosition);;
             if (isTargetValid) {
                 if (targetingInfo.hitRadius) {
                     fillCircle(context, {...target, r: targetingInfo.hitRadius || 5, color: 'rgba(0, 0, 255, 0.5)'});
@@ -59,7 +61,7 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
                 const definition = state.selectedAbility.definition;
                 const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
                 const isTargetValid = isAbilityMouseTargetValid(state, targetingInfo);
-                const target: Point = state.mouse.mouseHoverTarget || convertToWorldPosition(state, state.mouse.currentPosition);;
+                const target: Point = state.mouse.mouseHoverTarget || convertToZoneLocation(state, state.mouse.currentPosition);;
                 if (isTargetValid) {
                     if (targetingInfo.hitRadius) {
                         fillCircle(context, {...target, r: targetingInfo.hitRadius || 5, color: 'rgba(0, 0, 255, 0.5)'});
@@ -96,4 +98,12 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
         fillCircle(context, {...worldPosition, r: 2, color:'blue'});*/
 
     context.restore();
+    // Render grey over the screen if the selected hero is dead.
+    if (state.nexus.essence <= 0 || state.selectedHero?.reviveCooldown) {
+        context.save();
+            context.globalCompositeOperation = 'hue';
+            context.fillStyle = '#888';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        context.restore();
+    }
 }

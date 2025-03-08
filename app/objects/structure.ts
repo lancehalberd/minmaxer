@@ -1,20 +1,30 @@
+import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {frameLength, uiSize} from 'app/gameConstants';
+import {createJobComponent} from 'app/ui/jobComponent';
 import {drawFrame, requireFrame} from 'app/utils/animations';
 import {fillCircle, fillText} from 'app/utils/draw';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {applyHeroToJob, progressJob} from 'app/utils/job'
-import {createJobComponent} from 'app/ui/jobComponent';
+import {followCameraTarget, removeFieldObject} from 'app/utils/world';
+
 
 const treeFrame = requireFrame('gfx/world/tree.png', {x: 0, y: 0, w: 80, h: 76});
 
-interface ForestProps extends Partial<Structure> {
+interface StructureProps extends Partial<Structure> {
+    x: number
+    y: number
+    zone: ZoneInstance
+}
+
+interface ForestProps extends StructureProps {
     jobKey: string
     wood: number
 }
 export class Forest implements Structure {
     objectType = <const>'structure';
-    x = this.props.x ?? 0;
-    y = this.props.y ?? 0;
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
     r = this.props.r ?? 40;
     color = this.props.color ?? '#080';
     wood = this.props.wood;
@@ -69,14 +79,15 @@ export class Forest implements Structure {
     }
 }
 
-interface QuaryProps extends Partial<Structure> {
+interface QuaryProps extends StructureProps {
     jobKey: string
     stone: number
 }
 export class Quary implements Structure {
     objectType = <const>'structure';
-    x = this.props.x ?? 0;
-    y = this.props.y ?? 0;
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
     r = this.props.r ?? 40;
     jobKey = this.props.jobKey;
     color = this.props.color ?? '#888';
@@ -106,9 +117,7 @@ export class Quary implements Structure {
     harvestJobElement = createJobComponent(this.jobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
 
     constructor(public props: QuaryProps) {}
-    update(state: GameState) {
-
-    }
+    update(state: GameState) {}
     onHeroInteraction(state: GameState, hero: Hero) {
         applyHeroToJob(state, this.jobDefinition, hero);
     }
@@ -120,13 +129,14 @@ export class Quary implements Structure {
     }
 }
 
-interface VillageProps extends Partial<Structure> {
+interface VillageProps extends StructureProps {
     population: number
 }
 export class Village implements Structure {
     objectType = <const>'structure';
-    x = this.props.x ?? 0;
-    y = this.props.y ?? 0;
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
     r = this.props.r ?? 30;
     color = this.props.color ?? '#860';
     originalPopulation = this.props.population;
@@ -146,5 +156,96 @@ export class Village implements Structure {
     render(context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);
         fillText(context, {x: this.x, y: this.y - uiSize, size: 16, text: this.population, color: '#FFF'});
+    }
+}
+
+interface CaveProps extends StructureProps {
+    // If this is not set it functions as an exit, returning the
+    // hero to the containing zone/overworld.
+    zoneDefinition?: ZoneDefinition
+}
+export class Cave implements Structure {
+    objectType = <const>'structure';
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
+    r = this.props.r ?? 20;
+    color = this.props.color ?? '#999';
+    zoneDefinition = this.props.zoneDefinition;
+
+    constructor(public props: CaveProps) {}
+    onHeroInteraction(state: GameState, hero: Hero) {
+       if (!this.zoneDefinition && hero.zone.exit) {
+            enterZone(state, hero.zone.exit, hero);
+       } else if (this.zoneDefinition) {
+           enterNewZoneInstance(state, this.zoneDefinition, this, hero);
+       }
+    }
+    update(state: GameState) {}
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        fillCircle(context, this);
+        fillCircle(context, {...this, r: this.r -5, color: '#000'});
+        const text = this.zoneDefinition?.name ?? 'Exit';
+        fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text, color: '#FFF'});
+    }
+}
+
+function enterNewZoneInstance(state: GameState, definition: ZoneDefinition, exit: ZoneLocation, hero: Hero) {
+    const newZone: ZoneInstance = {
+        name: definition.name,
+        floorColor: definition.floorColor,
+        definition,
+        time: 0,
+        effects: [],
+        objects: [],
+        exit,
+    };
+    definition.initialize(state, newZone);
+    enterZone(state, {x: 0, y: 25, zone: newZone}, hero);
+}
+
+function enterZone(state: GameState, {zone, x, y}: ZoneLocation, hero: Hero) {
+    removeFieldObject(state, hero);
+    hero.zone = zone;
+    hero.x = x;
+    hero.y = y;
+    hero.zone.objects.push(hero);
+    delete hero.movementTarget;
+    delete hero.attackTarget;
+    // Each zone has its own timer so make sure lastAttackTime is set to a reasonable value for the zone.
+    hero.lastAttackTime = zone.time;
+    if (hero === state.selectedHero) {
+        followCameraTarget(state, hero);
+    }
+}
+
+export class HealingPool implements Structure {
+    objectType = <const>'structure';
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
+    r = this.props.r ?? 20;
+    zoneDefinition = this.props.zoneDefinition;
+    cooldown = 0;
+
+    constructor(public props: CaveProps) {}
+    onHeroInteraction(state: GameState, hero: Hero) {
+       if (this.cooldown <= 0 && hero.health < hero.getMaxHealth(state)) {
+           hero.health = hero.getMaxHealth(state);
+           addHealEffectToTarget(state, hero);
+           this.cooldown = 30000;
+       }
+    }
+    update(state: GameState) {
+        if (this.cooldown > 0) {
+            this.cooldown -= frameLength;
+        }
+    }
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        fillCircle(context, this);
+        if (this.cooldown <= 0) {
+            fillCircle(context, {...this, r: this.r -5, color: '#08F'});
+            fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text: 'Heal', color: '#FFF'});
+        }
     }
 }

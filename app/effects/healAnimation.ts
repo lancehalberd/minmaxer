@@ -3,13 +3,14 @@ import {fillRect} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
 
 
-interface HealEffectProps extends Partial<Point> {
+interface HealEffectProps extends ZoneLocation {
     target?: FieldTarget
 }
 class HealEffect implements FieldAnimationEffect {
     objectType = <const>'animation';
-    x = this.props.x ?? 0;
-    y = this.props.y ?? 0;
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
     target = this.props.target;
     duration = 500;
     time = 0;
@@ -37,8 +38,13 @@ class HealEffect implements FieldAnimationEffect {
     }
     
 }
+export function addHealEffectToTarget(state: GameState, target: FieldTarget, props?: HealEffectProps): FieldAnimationEffect {
+    const healEffect = new HealEffect({target, x: 0, y: 0, zone: target.zone, ...props});
+    healEffect.zone.effects.push(healEffect);
+    return healEffect;
+}
 export function addHealEffect(state: GameState, props: HealEffectProps): FieldAnimationEffect {
     const healEffect = new HealEffect(props);
-    state.world.effects.push(healEffect);
+    healEffect.zone.effects.push(healEffect);
     return healEffect;
 }

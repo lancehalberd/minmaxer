@@ -30,7 +30,7 @@ interface EnemyDefinition {
     render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy) => void
 }
 
-interface Enemy extends Circle, EnemyLevelDerivedStats {
+interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
     objectType: 'enemy'
     enemyType: EnemyType
     level: number
@@ -47,10 +47,12 @@ interface Enemy extends Circle, EnemyLevelDerivedStats {
     lastAttackTime?: number
     movementTarget?: Point
     attackTarget?: AllyTarget
+    // If set the enemy will attack this target when idle.
+    defaultTarget?: AllyTarget
     isBoss?: boolean
 }
 
-interface Spawner extends Circle {
+interface Spawner extends Circle, ZoneLocation {
     objectType: 'spawner'
     enemyType: EnemyType
     // How often the spawner can create an enemy in milliseconds.
@@ -90,7 +92,7 @@ interface ScheduledSpawn {
     // In seconds after wave start time.
     spawnTime: number
 }
-interface WaveSpawner extends Circle {
+interface WaveSpawner extends Circle, ZoneLocation {
     objectType: 'waveSpawner'
     // The time the last wave started, scheduled spawns occur relative to this time.
     waveStartTime?: number

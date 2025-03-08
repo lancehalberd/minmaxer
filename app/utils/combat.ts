@@ -144,9 +144,9 @@ export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTar
 }
 
 
-export function getValidAbilityTargets(state: GameState, targetingInfo: AbilityTargetingInfo): AttackTarget[] {
+export function getValidAbilityTargets(state: GameState, zone: ZoneInstance, targetingInfo: AbilityTargetingInfo): AttackTarget[] {
     const validTargets: AttackTarget[] = [];
-    for (const object of state.world.objects) {
+    for (const object of zone.objects) {
         if (!object || object.objectType === 'waveSpawner' || object.objectType === 'loot' || object.objectType === 'structure') {
             continue;
         }
@@ -159,9 +159,9 @@ export function getValidAbilityTargets(state: GameState, targetingInfo: AbilityT
     return validTargets;
 }
 
-export function getEnemyTargets(state: GameState) {
+export function getEnemyTargets(state: GameState, zone: ZoneInstance) {
     const enemies: EnemyTarget[] = [];
-    for (const object of state.world.objects) {
+    for (const object of zone.objects) {
         if (object.objectType === 'enemy' || object.objectType === 'spawner') {
             enemies.push(object);
         }

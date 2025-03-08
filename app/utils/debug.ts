@@ -1,7 +1,5 @@
 import {gainWallLevel} from 'app/city/cityWall';
 import {createEnemy} from 'app/objects/enemy';
-import {ranger, warrior, wizard} from 'app/objects/hero';
-import {waves} from 'app/objects/spawner';
 import {gainEssence} from 'app/utils/essence';
 import {gainSkillExperience} from 'app/utils/hero';
 import {summonHero} from 'app/utils/hero';
@@ -10,7 +8,7 @@ export function advanceDebugGameState(state: GameState) {
     const mainHero = state.heroSlots[0];
     // If there is no summoned hero, summon one at random.
     if (!mainHero) {
-        summonHero(state, [ranger, warrior, wizard][Math.floor(Math.random() * 3)]);
+        summonHero(state, state.availableHeroes[Math.floor(Math.random() * state.availableHeroes.length)]);
         state.isPaused = false;
         return;
     }
@@ -46,14 +44,14 @@ export function advanceDebugGameState(state: GameState) {
     }
 
     // If there is nothing else interesting to do, destroy the next spawner.
-    const nextWave = waves[state.nextWaveIndex];
+    const nextWave = state.waves[state.nextWaveIndex];
     if (nextWave) {
         nextWave.actualStartTime = state.world.time;
         for (const spawnerSchedule of nextWave.spawners) {
             const spawner = spawnerSchedule.spawner;
             spawner.startNewWave(state, spawnerSchedule);
             for (const spawn of spawner.scheduledSpawns) {
-                const enemy = createEnemy(spawn.enemyType, spawn.level, {x: 0 , y: 0});
+                const enemy = createEnemy(spawn.enemyType, spawn.level, {zone: state.world, x: 0, y: 0});
                 gainEssence(state, 10 * enemy.essenceWorth);
                 mainHero.experience += enemy.experienceWorth;
             }

@@ -4,7 +4,7 @@ import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
 
-export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point): Enemy {
+export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: ZoneLocation): Enemy {
     const definition = enemyDefinitions[enemyType]!;
     const derivedStats = definition.getStatsForLevel(level);
     const enemy: Enemy = {
@@ -20,6 +20,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {x, y}: Point):
             return derivedStats.maxHealth;
         },
         ...derivedStats,
+        zone,
         x,
         y,
         update: updateEnemy,
@@ -52,7 +53,7 @@ export function updateEnemy(this: Enemy, state: GameState) {
     if (!this.attackTarget) {
         // Choose the closest valid target within the aggro radius as an attack target.
         let closestDistance = this.aggroRadius;
-        for (const object of state.world.objects) {
+        for (const object of this.zone.objects) {
             if (object.objectType !== 'hero' && object.objectType !== 'nexus') {
                 continue;
             }
@@ -63,6 +64,10 @@ export function updateEnemy(this: Enemy, state: GameState) {
             }
         }
     }
+    // If the enemy has nothing else to do, move towards its default target.
+    if (!this.attackTarget && !this.movementTarget) {
+        this.movementTarget = this.defaultTarget;
+    }
     if (this.attackTarget) {
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;
         // Move this until it reaches the target.
@@ -72,10 +77,10 @@ export function updateEnemy(this: Enemy, state: GameState) {
         if (mag <= this.r + this.attackTarget.r + this.attackRange) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.attacksPerSecond;
-            if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
+            if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
                 damageTarget(state, this.attackTarget, {damage: this.damage, source: this});
                 this.attackTarget.onHit?.(state, this);
-                this.lastAttackTime = state.world.time;
+                this.lastAttackTime = this.zone.time;
             }
             return;
         }
@@ -88,8 +93,6 @@ export function updateEnemy(this: Enemy, state: GameState) {
         }
         return;
     }
-    // Currently enemies always move towards the nexus if they aren't attacking something.
-    this.movementTarget = state.nexus;
     if (!this.attackTarget && this.movementTarget) {
         // Move enemy until it reaches the target.
         const pixelsPerFrame = this.movementSpeed / framesPerSecond;

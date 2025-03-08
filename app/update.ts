@@ -11,36 +11,27 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
-Allow equipping basic gear
-    hatchet, mallet, staff, bow
-    Limit weapons based on character?
-    Or categorize weapons as str/dex/int damage bonus which still incentivizes using the weapon that matches their stats?
-    Could do mix weapons like 1 damage per str or dex vs 2 damage per str?
-    What about equipping tools for harvesting/crafting?
+Minigames for improving stats/experience.
 
-Seems like we need early game progression during the first few waves?
-    * Lower first essence threshold to achieve it on ~wave 2 and unlock a choice of active nexus abilities (heal, freeze, ???)
-        * First level would unlock 1 ability slot and 3-4 choices of abilities, but you have to spend ~50 essence to unlock any of the abilities and you can only equip one per slot.
+Nexus abilities:
+    Unlock first nexus ability slot at first nexus threshold
+    Add 3-4 nexus abilities to choose from.
+    Leveling an ability to level 1 costs 100 essence.
+    Equipping an ability puts it on cooldown.
 
-Add wave visualization to left part of HUD, similar to other tower defense games.
+Wave previews:
     By default show details for next wave over the field, including pointers to active spawners.
     When mousing over a wave, show details for that wave instead.
+    Show spawns as ??? for waves the player hasn't seen before.
 
-Switch to more discrete waves:
+Spawners:
     Spawners may have an instance event to clear the spawner and prevent all future spawns and unlock any associated resource.
     Spawners may have an action to summon all remaining spawns immediately to clear them once all spawned enemies are defeated.
-    There would be a way to see the time before the next spawn and details of all spawned enemies for the next wave.
-        Spawns from undiscovered spawners would show up as ???, but still be visible to indicate something new is coming.
-    Individual spawners will show a preview of what they spawn during the next wave, as well as how many waves away the spawn is if not in the next wave
 
-Add instance events for farming certain enemy types and resource points/loot drops/chests
 
 Training grounds:
     Break increasingly challenging waves of targets to get +1 core stat per wave
     Different variations for int/dex/str that are designed around the abilities of that hero.
-
-Change spawners to have events you must complete to disable the spawner
-    Some spwaners unlock repetable events after disabling them.
 
 Add a way to farm materials from enemies/content:
     Add drop pools to enemies + more enemy types?
@@ -132,6 +123,7 @@ function update() {
             computeIdlePopulation(state);
             checkToAddNewSpawner(state);
             updateWaves(state);
+            updateJobs(state);
             for (let ability of state.nexusAbilitySlots) {
                 if (!ability) {
                     continue;
@@ -149,18 +141,11 @@ function update() {
                         reviveHero(state, hero);
                     }
                 }
-            }
-            for (const effect of [...state.world.effects]) {
-                effect.update(state);
-            }
-            for (const object of state.world.objects) {
-                object.update(state);
-                for (const child of (object.getChildren?.(state) ?? [])) {
-                    child.update?.(state);
+                if (hero?.zone && hero.zone !== state.world) {
+                    updateZone(state, hero.zone);
                 }
             }
-            updateJobs(state);
-            state.world.time += 20;
+            updateZone(state, state.world);
         }
     }
 
@@ -169,6 +154,19 @@ function update() {
 
     // Advance state time, game won't render anything new if this timer isn't updated.
     state.time += 20;
+}
+
+function updateZone(state: GameState, zone: ZoneInstance) {
+    for (const effect of [...zone.effects]) {
+        effect.update(state);
+    }
+    for (const object of [...zone.objects]) {
+        object.update(state);
+        for (const child of (object.getChildren?.(state) ?? [])) {
+            child.update?.(state);
+        }
+    }
+    zone.time += 20;
 }
 
 function computeIdlePopulation(state: GameState): void {
@@ -188,7 +186,7 @@ function getScrollAmount(state: GameState, distanceFromEdge: number, gameKey: nu
     return isGameKeyDown(state, gameKey) ? 0.7 : 0;
 }
 function updateCamera(state: GameState) {
-    const camera = state.world.camera;
+    const camera = state.camera;
     // How many pixels the camera moves per frame.
     const pixelsPerFrame = camera.speed * frameLength / 1000;
     // Move the camera so the hero is in the center of the screen:

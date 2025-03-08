@@ -22,7 +22,9 @@ interface GameState {
     nexusAbilities: NexusAbility<any>[]
     nexusAbilitySlots: (NexusAbility<any> | undefined)[]
     hudUIElements: UIElement[]
+    camera: Camera
     world: World
+    waves: Wave[]
     nextWaveIndex: number
     // How many pixels are drawn per second for the wave bar currently.
     // The larger this number becomes, the smaller wave stones are drawn and the more waves can bee seen.

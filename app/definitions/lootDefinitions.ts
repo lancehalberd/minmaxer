@@ -1,5 +1,5 @@
 import {applyEffectToHero} from 'app/utils/combat';
-import {addHealEffect} from 'app/effects/healAnimation';
+import {addHealEffectToTarget} from 'app/effects/healAnimation';
 
 export const lootDefinitions: {[key in LootType]?: LootDefinition} = {};
 
@@ -11,7 +11,7 @@ lootDefinitions.potion = {
     r: 5,
     onPickup(state: GameState, hero: Hero) {
         hero.health = Math.min(hero.getMaxHealth(state), hero.health + 20);
-        addHealEffect(state, {target: hero});
+        addHealEffectToTarget(state, hero);
     }
 };
 

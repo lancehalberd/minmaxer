@@ -10,7 +10,7 @@ import {applyHeroToJob} from 'app/utils/job';
 import {getModifiableStatValue} from 'app/utils/modifiableStat';
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {createModifiableStat} from 'app/utils/modifiableStat';
-
+import {followCameraTarget} from 'app/utils/world';
 
 class HeroObject implements Hero {
     objectType = <const>'hero';
@@ -37,6 +37,7 @@ class HeroObject implements Hero {
     equipment: HeroEquipment = {
         charms: [undefined]
     };
+    zone: ZoneInstance | World
 
     equipArmor(state: GameState, armor: Armor): boolean {
         if (this.equipment.armor) {
@@ -220,7 +221,8 @@ class HeroObject implements Hero {
         incomingDamageMultiplier: createModifiableStat<Hero>(1),
     };
     // derivedStats = this.definition.getStatsForLevel(this.level);
-    constructor(public heroType: HeroType, {x, y}: Point) {
+    constructor(public heroType: HeroType, {zone, x, y}: ZoneLocation) {
+        this.zone = zone;
         this.x = x;
         this.y = y;
     }
@@ -358,7 +360,7 @@ class HeroObject implements Hero {
         if (!this.attackTarget && !this.movementTarget) {
             // Choose the closest valid target within the aggro radius as an attack target.
             let closestDistance = this.getAttackRange(state);
-            for (const object of state.world.objects) {
+            for (const object of this.zone.objects) {
                 if (object.objectType === 'enemy') {
                     const distance = getDistance(this, object);
                     if (distance < closestDistance) {
@@ -373,7 +375,7 @@ class HeroObject implements Hero {
             if (moveHeroTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.getAttackRange(state))) {
                 // Attack the target if the enemy's attack is not on cooldown.
                 const attackCooldown = 1000 / this.getAttacksPerSecond(state);
-                if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= state.world.time) {
+                if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
                     let hitCount = 1;
                     const strengthDamageBonus = 1 + this.getStr(state) / 100;
                     const extraHitChance = this.getExtraHitChance(state);
@@ -395,7 +397,7 @@ class HeroObject implements Hero {
                         checkForOnHitTargetAbilities(state, this, this.attackTarget);
                     }
                     this.attackTarget.onHit?.(state, this);
-                    this.lastAttackTime = state.world.time;
+                    this.lastAttackTime = this.zone.time;
                     if (this.attackTarget.objectType === 'enemy') {
                         this.attackTarget.attackTarget = this;
                     }
@@ -486,9 +488,15 @@ class HeroObject implements Hero {
 }
 
 
-export const warrior: Hero = new HeroObject('warrior', {x: -60, y: 45});
-export const ranger: Hero = new HeroObject('ranger', {x: 60, y: 45});
-export const wizard: Hero = new HeroObject('wizard', {x: 0, y: -75});
+
+export function addBasicHeroes(state: GameState) {
+    const warrior: Hero = new HeroObject('warrior', {zone: state.world, x: -60, y: 45});
+    const ranger: Hero = new HeroObject('ranger', {zone: state.world, x: 60, y: 45});
+    const wizard: Hero = new HeroObject('wizard', {zone: state.world, x: 0, y: -75});
+    state.availableHeroes.push(warrior);
+    state.availableHeroes.push(ranger);
+    state.availableHeroes.push(wizard);
+}
 
 function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
     // Hero will ignore being attacked if they are completing a movement command.
@@ -545,7 +553,7 @@ function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbi
     const targetingInfo = ability.definition.getTargetingInfo(state, hero, ability);
     // prioritize the current attack target over other targets.
     // TODO: prioritize the closest target out of other targets.
-    for (const object of [hero.attackTarget, ...state.world.objects]) {
+    for (const object of [hero.attackTarget, ...hero.zone.objects]) {
         if (!object) {
             continue;
         }
@@ -592,6 +600,7 @@ export function getReviveCost(state: GameState, hero: Hero): number {
 
 export function reviveHero(state: GameState, hero: Hero) {
     hero.health = hero.getMaxHealth(state);
+    hero.zone = state.nexus.zone;
     hero.x = state.nexus.x;
     hero.y = state.nexus.y;
     delete hero.reviveCooldown;
@@ -607,6 +616,7 @@ export function reviveHero(state: GameState, hero: Hero) {
     }
     if (!state.selectedHero) {
         state.selectedHero = hero;
+        followCameraTarget(state, hero);
     }
     state.world.objects.push(hero);
 }

@@ -9,7 +9,7 @@ interface LootDefinition {
     onPickup: (state: GameState, hero: Hero) => void
 }
 
-interface Loot extends Circle {
+interface Loot extends Circle, ZoneLocation {
     objectType: 'loot'
     getChildren?: (state: GameState) => UIElement[]
     update: (state: GameState) => void
@@ -17,13 +17,13 @@ interface Loot extends Circle {
     onPickup: (state: GameState, hero: Hero) => void
 }
 
-interface FieldAnimationEffect extends Point {
+interface FieldAnimationEffect extends ZoneLocation {
     objectType: 'animation'
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
 }
 
-interface Projectile extends Circle {
+interface Projectile extends Circle, ZoneLocation {
     objectType: 'projectile'
     vx: number
     vy: number
@@ -42,23 +42,15 @@ type FieldEffect = FieldAnimationEffect | Projectile;
 type FieldObject = Hero | Nexus | Enemy | Spawner | WaveSpawner | Loot | Structure;
 
 
-interface Camera extends Point {
+interface Camera extends ZoneLocation {
     scale: number
     // Pixels per second.
     speed: number
     target: Point
 }
 
-interface World {
-    time: number
-    camera: Camera
-    // The level of enemy that will be created by the next spawner.
-    nextSpawnerLevel: number
-    effects: FieldEffect[]
-    objects: FieldObject[]
-}
 
-interface Structure extends Circle {
+interface Structure extends Circle, ZoneLocation {
     objectType: 'structure'
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
@@ -69,7 +61,7 @@ interface Structure extends Circle {
     getChildren?: (state: GameState) => UIElement[]
 }
 
-interface Nexus extends Circle {
+interface Nexus extends Circle, ZoneLocation {
     objectType: 'nexus'
     essence: number
     // Essence gained per second.
@@ -95,4 +87,33 @@ interface Nexus extends Circle {
     onHit?: (state: GameState, attacker: Enemy) => void
     // Called when a hero reaches this structure as their movement target.
     onHeroInteraction?: (state: GameState, hero: Hero) => void
+}
+
+interface ZoneDefinition {
+    name: string
+    floorColor: CanvasFill
+    initialize: (state: GameState, instance: ZoneInstance) => void
+}
+
+interface ZoneInstance {
+    name: string
+    floorColor: CanvasFill
+    definition?: ZoneDefinition
+    time: number
+    effects: FieldEffect[]
+    objects: FieldObject[]
+    // Where to return heroes to when they leave the zone.
+    exit?: ZoneLocation
+}
+
+interface World extends ZoneInstance {
+    // The level of enemy that will be created by the next spawner.
+    nextSpawnerLevel: number
+}
+
+interface ZoneLocation {
+    x: number
+    y: number
+    // Unset indicates the over world.
+    zone: ZoneInstance
 }

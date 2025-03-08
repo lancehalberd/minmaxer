@@ -32,7 +32,7 @@ function updateArchers(state: GameState, archerJob: Job) {
         if (!state.city.archersTarget) {
             // Choose the closest valid target within the aggro radius as an attack target.
             let closestDistance = archerRange;
-            for (const object of state.world.objects) {
+            for (const object of state.nexus.zone.objects) {
                 if (object.objectType === 'enemy') {
                     const distance = getDistance(state.nexus, object);
                     if (distance < closestDistance) {
@@ -46,7 +46,7 @@ function updateArchers(state: GameState, archerJob: Job) {
             const attackTarget = state.city.archersTarget;
             const attacksPerSecond = archerJob.workers;
             const attackCooldown = 1000 / attacksPerSecond;
-            if (!state.city.archersLastAttackTime || state.city.archersLastAttackTime + attackCooldown <= state.world.time) {
+            if (!state.city.archersLastAttackTime || state.city.archersLastAttackTime + attackCooldown <= state.nexus.zone.time) {
                 // TODO: This should be calculated from various factors.
                 const damage = 1;
                 const speed = 100;
@@ -54,6 +54,7 @@ function updateArchers(state: GameState, archerJob: Job) {
                 const mag = Math.sqrt(dx*dx + dy*dy);
                 state.inventory.woodArrow = arrows - 1;
                 addProjectile(state, {
+                    zone: state.nexus.zone,
                     x: state.nexus.x + dx * state.nexus.r / mag,
                     y: state.nexus.y + dy * state.nexus.r / mag,
                     hitsEnemies: true,
@@ -66,7 +67,7 @@ function updateArchers(state: GameState, archerJob: Job) {
                 });
                 //damageTarget(state, attackTarget, damage, this);
                 //attackTarget.onHit?.(state, this);
-                state.city.archersLastAttackTime = state.world.time;
+                state.city.archersLastAttackTime = state.nexus.zone.time;
             }
 
             // Remove the attack target when it is dead.

@@ -1,4 +1,4 @@
-import {addHealEffect} from 'app/effects/healAnimation';
+import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {getValidAbilityTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillPlus} from 'app/utils/draw';
 
@@ -27,7 +27,7 @@ export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
         const targetingInfo = this.getTargetingInfo(state, ability);
         const hitCircle = {x: target.x, y: target.y, r: targetingInfo.hitRadius || 0};
-        const targets = getTargetsInCircle(state, getValidAbilityTargets(state, targetingInfo), hitCircle);
+        const targets = getTargetsInCircle(state, getValidAbilityTargets(state, state.camera.zone, targetingInfo), hitCircle);
         // This attack does 25/35/45/55/65% increased base damage.
         const healAmount = [30, 100, 200, 500, 1000, 2000, 5000][ability.level - 1];
         for (const target of targets) {
@@ -35,7 +35,7 @@ export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
                 continue;
             }
             target.health = Math.min(target.getMaxHealth(state), target.health + healAmount);
-            addHealEffect(state, {target});
+            addHealEffectToTarget(state, target);
         }
     },
 };

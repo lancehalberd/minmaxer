@@ -1,5 +1,4 @@
 import {canvas} from 'app/gameConstants';
-import {waves} from 'app/objects/spawner';
 import {fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';
@@ -8,7 +7,10 @@ import {millisecondsToTime} from 'app/utils/time';
 // This UI value updates independent of the world time.
 function updateWaveScale(state: GameState) {
     // We should zoom out on the wave HUD until we can see at least the next two wave stones.
-    const waveToDisplay = waves[Math.min(waves.length - 1, state.nextWaveIndex + 1)];
+    const waveToDisplay = state.waves[Math.min(state.waves.length - 1, state.nextWaveIndex + 1)];
+    if (!waveToDisplay) {
+        return;
+    }
     const endYValue = (waveToDisplay.actualStartTime + waveToDisplay.duration - state.world.time) / 1000 / state.waveScale;
     if (endYValue > canvas.height) {
         state.waveScale *= 1.01;
@@ -30,11 +32,11 @@ export const waveComponent: UIContainer = {
     },
     getChildren(state: GameState) {
         const buttons: UIButton[] = []
-        for (let i = state.nextWaveIndex - 1; i < waves.length; i++) {
-            if (!waves[i]) {
+        for (let i = state.nextWaveIndex - 1; i < state.waves.length; i++) {
+            if (!state.waves[i]) {
                 continue;
             }
-            const waveButton = new WaveStone(state, this, waves[i]);
+            const waveButton = new WaveStone(state, this, state.waves[i]);
             if (waveButton.y >= canvas.height) {
                 break;
             }

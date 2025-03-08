@@ -1,6 +1,7 @@
 import {canvas, canvasScale} from 'app/gameConstants'
 import {isAbilityMouseTargetValid} from 'app/utils/combat';
-import {convertToWorldPosition, isPointInCircle, isPointInRect} from 'app/utils/geometry';
+import {isPointInCircle, isPointInRect} from 'app/utils/geometry';
+import {convertToZoneLocation} from 'app/utils/world';
 
 let isMouseDownOnCanvas = false, lastMouseDownPosition: Point|undefined, lastMouseUpPosition: Point|undefined;
 let lastMousePosition: Point = {x: 300, y: 300}, isMouseOverCanvas = false;
@@ -31,7 +32,7 @@ export function registerMouseEventHandlers() {
 function convertToWorldTarget(state: GameState, canvasPoint: Point): LocationTarget {
     return {
         objectType: 'point',
-        ...convertToWorldPosition(state, canvasPoint),
+        ...convertToZoneLocation(state, canvasPoint),
         r: 0,
     }
 }
@@ -65,7 +66,7 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
     // Second, check for button elements in the field.
     // These use the world location of the mouse point, since these elements use world coordinates.
     const locationTarget = convertToWorldTarget(state, screenPoint);
-    for (const object of [...state.world.objects].reverse()) {
+    for (const object of [...state.camera.zone.objects].reverse()) {
         if (!object.getChildren) {
             continue;
         }
@@ -76,7 +77,7 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
     }
 
     // Last, check for clickable targets in the field.
-    for (const object of [...state.world.objects].reverse()) {
+    for (const object of [...state.camera.zone.objects].reverse()) {
         if (isPointInCircle(object, locationTarget)) {
             return object;
         }
@@ -87,7 +88,7 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
 // TODO: We don't know if the target is in world coordinates or screen coordinates so we just check both.
 // This could probably cause undesirable results in some situations.
 function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
-    const worldPoint = convertToWorldPosition(state, screenPoint);
+    const worldPoint = convertToZoneLocation(state, screenPoint);
     if (target.objectType === 'uiButton' || target.objectType === 'uiContainer') {
         return isPointInRect(target, worldPoint) || isPointInRect(target, screenPoint);
     }

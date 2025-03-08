@@ -1,5 +1,5 @@
 
-interface LocationTarget extends Point {
+interface LocationTarget extends ZoneLocation {
     objectType: 'point'
     r: 0
 }
