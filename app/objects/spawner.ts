@@ -264,25 +264,28 @@ export function checkToAddNewSpawner(state: GameState) {
             },
             {
                 duration: 60 + level * 5,
-                spawners: [
-                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(5 + level)})},
-                    {spawner: newSpawner, spawns: spacedSpawns({...advancedEnemy, count: Math.floor(1 + level / 3)})},
-                ],
+                spawners: [{spawner: newSpawner, spawns: [
+                        ...spacedSpawns({...easyEnemy, count: Math.floor(5 + level)}),
+                        ...spacedSpawns({...advancedEnemy, count: Math.floor(1 + level / 3)}),
+                    ],
+                }],
             },
             {
                 duration: 60 + level * 5,
-                spawners: [
-                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(5 + level)})},
-                    {spawner: newSpawner, spawns: spacedSpawns({...advancedEnemy, count: Math.floor(1 + 2 * level / 3)})},
-                ],
+                spawners: [{spawner: newSpawner, spawns: [
+                        ...spacedSpawns({...easyEnemy, count: Math.floor(5 + level)}),
+                        ...spacedSpawns({...advancedEnemy, count: Math.floor(1 + 2 * level / 3)}),
+                    ],
+                }],
             },
             {
                 duration: 60 + level * 5,
-                spawners: [
-                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(8 + level)})},
-                    {spawner: newSpawner, spawns: spacedSpawns({...advancedEnemy, count: Math.floor(3 + 2 * level / 3)})},
-                    {spawner: newSpawner, spawns: spacedSpawns({...bossEnemy, count: 1})},
-                ],
+                spawners: [{spawner: newSpawner, isFinalWave: true, spawns: [
+                        ...spacedSpawns({...easyEnemy, count: Math.floor(8 + level)}),
+                        ...spacedSpawns({...advancedEnemy, count: Math.floor(3 + 2 * level / 3)}),
+                        ...spacedSpawns({...bossEnemy, count: 1}),
+                    ],
+                }],
             },
         ])
     }

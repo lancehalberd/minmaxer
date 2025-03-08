@@ -13,6 +13,9 @@ import {advanceDebugGameState} from 'app/utils/debug';
 TODO:
 Minigames for improving stats/experience.
 
+Nexus button:
+    At top of hero, click to return camera to the nexus.
+
 Nexus abilities:
     Unlock first nexus ability slot at first nexus threshold
     Add 3-4 nexus abilities to choose from.

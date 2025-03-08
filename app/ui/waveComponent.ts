@@ -12,7 +12,7 @@ function updateWaveScale(state: GameState) {
         return;
     }
     const endYValue = (waveToDisplay.actualStartTime + waveToDisplay.duration - state.world.time) / 1000 / state.waveScale;
-    if (endYValue > canvas.height) {
+    if (endYValue > canvas.height && waveToDisplay.duration / 1000 / state.waveScale > 80) {
         state.waveScale *= 1.01;
     }
 }
