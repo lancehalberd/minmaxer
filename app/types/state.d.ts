@@ -4,11 +4,6 @@ interface GameState {
     inventory: Inventory
     // Which resources have been discovered this round.
     discoveredItems: Set<InventoryKey>
-    // Resources available to harvest currently.
-    availableResources: {
-        wood: number
-        stone: number
-    }
     // List of heroes available to summon.
     availableHeroes: Hero[],
     previewRequiredToolType?: ToolType

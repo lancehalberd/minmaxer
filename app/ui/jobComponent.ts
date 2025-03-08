@@ -91,7 +91,8 @@ export function createJobComponent(jobDefinition: JobDefinition, {x, y}: Point, 
         render(context: CanvasRenderingContext2D, state: GameState) {
             const job = getOrCreateJob(state, jobDefinition);
             fillRect(context, {...this, h: uiSize}, '#000');
-            fillText(context, {text: jobDefinition.label, x: this.x + this. w / 2, y: this.y + uiSize / 2 + 1, size: uiSize - 4, color: '#FFF'});
+            const label = computeValue(state, jobDefinition, jobDefinition.label, '???');
+            fillText(context, {text: label, x: this.x + this. w / 2, y: this.y + uiSize / 2 + 1, size: uiSize - 4, color: '#FFF'});
 
             // Draw population controls only once the city has a population.
             if (state.city.population > 0) {

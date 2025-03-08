@@ -11,6 +11,13 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
+Allow equipping basic gear
+    hatchet, mallet, staff, bow
+    Limit weapons based on character?
+    Or categorize weapons as str/dex/int damage bonus which still incentivizes using the weapon that matches their stats?
+    Could do mix weapons like 1 damage per str or dex vs 2 damage per str?
+    What about equipping tools for harvesting/crafting?
+
 Seems like we need early game progression during the first few waves?
     * Lower first essence threshold to achieve it on ~wave 2 and unlock a choice of active nexus abilities (heal, freeze, ???)
         * First level would unlock 1 ability slot and 3-4 choices of abilities, but you have to spend ~50 essence to unlock any of the abilities and you can only equip one per slot.

@@ -5,32 +5,10 @@ import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {applyHeroToJob, progressJob} from 'app/utils/job'
 import {createJobComponent} from 'app/ui/jobComponent';
 
-const loggingJobDefinition: JobDefinition = {
-    key: 'harvestWood',
-    label: 'Chop Wood',
-    requiredToolType: 'axe',
-    workerSeconds: 1,
-    repeat: true,
-    canProgress(state: GameState) {
-        return (state.availableResources.wood ?? 0) > 0
-    },
-    onComplete(state: GameState) {
-        state.availableResources.wood--;
-        state.discoveredItems.add('wood');
-        state.inventory.wood = (state.inventory.wood ?? 0) + 1;
-    },
-    applyHeroProgress(state: GameState, job: Job, hero: Hero) {
-        const skill = getHeroSkill(state, hero, 'logging');
-        const progress = (skill.level + 1) * frameLength / 1000;
-        if (progressJob(state, job, progress)) {
-            gainSkillExperience(state, hero, 'logging', frameLength / 1000);
-        }
-    },
-};
-
 const treeFrame = requireFrame('gfx/world/tree.png', {x: 0, y: 0, w: 80, h: 76});
 
 interface ForestProps extends Partial<Structure> {
+    jobKey: string
     wood: number
 }
 export class Forest implements Structure {
@@ -40,55 +18,59 @@ export class Forest implements Structure {
     r = this.props.r ?? 40;
     color = this.props.color ?? '#080';
     wood = this.props.wood;
-    harvestJobElement = createJobComponent(loggingJobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
+    jobDefinition: JobDefinition = {
+        key: this.props.jobKey,
+        label: () => 'Wood: ' + this.wood,
+        requiredToolType: 'axe',
+        workerSeconds: 1,
+        repeat: true,
+        canProgress: (state: GameState) => {
+            return this.wood > 0
+        },
+        isValid: (state: GameState) => {
+            return this.wood > 0
+        },
+        onComplete: (state: GameState) => {
+            this.wood--;
+            state.discoveredItems.add('wood');
+            state.inventory.wood = (state.inventory.wood ?? 0) + 1;
+        },
+        applyHeroProgress(state: GameState, job: Job, hero: Hero) {
+            const skill = getHeroSkill(state, hero, 'logging');
+            const progress = (skill.level + 1) * frameLength / 1000;
+            if (progressJob(state, job, progress)) {
+                gainSkillExperience(state, hero, 'logging', frameLength / 1000);
+            }
+        },
+    };
+    jobElement = createJobComponent(this.jobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
 
     constructor(public props: ForestProps) {}
     update(state: GameState) {
 
     }
-    onDiscover(state: GameState) {
-        state.availableResources.wood += this.wood;
-    }
     onHeroInteraction(state: GameState, hero: Hero) {
-        applyHeroToJob(state, loggingJobDefinition, hero);
+        applyHeroToJob(state, this.jobDefinition, hero);
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
         //fillCircle(context, this);
-        drawFrame(context, treeFrame, {...treeFrame, x: this.x - treeFrame.w / 2, y: this.y - treeFrame.h / 2})
-        // Currently all forests let you harvest all wood, so when they are freed we show all avaiable wood,
-        // but before they are freed it is interesting to see how much wood will be added on freeing them.
-        const value = state.world.objects.includes(this) ? state.availableResources.wood : this.wood;
-        fillText(context, {x: this.x, y: this.y - uiSize, size: 16, text: value, color: '#FFF'});
+        if (2 * this.r > treeFrame.w) {
+            const scale = Math.floor(2 * this.r / treeFrame.w)
+            const w = scale * treeFrame.w, h = scale * treeFrame.h;
+            drawFrame(context, treeFrame, {w, h, x: this.x - w / 2, y: this.y - h / 2});
+        } else {
+            const scale = Math.ceil(treeFrame.w / 2 / this.r);
+            const w = treeFrame.w / scale, h = treeFrame.h / scale;
+            drawFrame(context, treeFrame, {w, h, x: this.x - w / 2, y: this.y - h / 2});
+        }
     }
     getChildren(state: GameState): UIElement[] {
-        return [this.harvestJobElement];
+        return this.wood > 0 ? [this.jobElement] : [];
     }
 }
 
-const quaryJobDefinition: JobDefinition = {
-    key: 'harvestStone',
-    label: 'Mine Stone',
-    requiredToolType: 'pickaxe',
-    workerSeconds: 5,
-    repeat: true,
-    canProgress(state: GameState) {
-        return state.availableResources.stone > 0;
-    },
-    onComplete(state: GameState) {
-        state.availableResources.stone--;
-        state.discoveredItems.add('stone');
-        state.inventory.stone = (state.inventory.stone ?? 0) + 1;
-    },
-    applyHeroProgress(state: GameState, job: Job, hero: Hero) {
-        const skill = getHeroSkill(state, hero, 'mining');
-        const progress = (skill.level + 1) * frameLength / 1000;
-        if (progressJob(state, job, progress)) {
-            gainSkillExperience(state, hero, 'mining', frameLength / 1000);
-        }
-    },
-};
-
 interface QuaryProps extends Partial<Structure> {
+    jobKey: string
     stone: number
 }
 export class Quary implements Structure {
@@ -96,29 +78,45 @@ export class Quary implements Structure {
     x = this.props.x ?? 0;
     y = this.props.y ?? 0;
     r = this.props.r ?? 40;
+    jobKey = this.props.jobKey;
     color = this.props.color ?? '#888';
     stone = this.props.stone;
-    harvestJobElement = createJobComponent(quaryJobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
+    jobDefinition: JobDefinition = {
+        key: this.jobKey,
+        label: () => 'Stone: ' + this.stone,
+        requiredToolType: 'pickaxe',
+        workerSeconds: 5,
+        repeat: true,
+        canProgress: (state: GameState) => {
+            return this.stone > 0;
+        },
+        onComplete: (state: GameState) => {
+            this.stone--;
+            state.discoveredItems.add('stone');
+            state.inventory.stone = (state.inventory.stone ?? 0) + 1;
+        },
+        applyHeroProgress(state: GameState, job: Job, hero: Hero) {
+            const skill = getHeroSkill(state, hero, 'mining');
+            const progress = (skill.level + 1) * frameLength / 1000;
+            if (progressJob(state, job, progress)) {
+                gainSkillExperience(state, hero, 'mining', frameLength / 1000);
+            }
+        },
+    };
+    harvestJobElement = createJobComponent(this.jobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
 
     constructor(public props: QuaryProps) {}
     update(state: GameState) {
 
     }
-    onDiscover(state: GameState) {
-        state.availableResources.stone += this.stone;
-    }
     onHeroInteraction(state: GameState, hero: Hero) {
-        applyHeroToJob(state, quaryJobDefinition, hero);
+        applyHeroToJob(state, this.jobDefinition, hero);
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);
-        // Currently all forests let you harvest all wood, so when they are freed we show all avaiable wood,
-        // but before they are freed it is interesting to see how much wood will be added on freeing them.
-        const value = state.world.objects.includes(this) ? state.availableResources.stone : this.stone;
-        fillText(context, {x: this.x, y: this.y - uiSize, size: 16, text: value, color: '#FFF'});
     }
     getChildren(state: GameState): UIElement[] {
-        return [this.harvestJobElement];
+        return this.stone > 0 ? [this.harvestJobElement] : [];
     }
 }
 

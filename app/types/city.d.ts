@@ -9,7 +9,7 @@ type ComputedResourceCost = {
 
 interface JobDefinition {
     key: JobKey
-    label: string
+    label: Computed<string, JobDefinition>
     // The level of the job for job's with multiple levels.
     level?: number
     // Which resources must be consumed in order to start this job.

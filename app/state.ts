@@ -36,10 +36,6 @@ export const state: GameState = {
         steel: 1,
     },
     discoveredItems: new Set(),
-    availableResources: {
-        wood: 0,
-        stone: 0,
-    },
     availableHeroes: [ranger, warrior, wizard],
     lastTimeRendered: 0,
     time : 0,

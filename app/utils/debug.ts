@@ -1,5 +1,7 @@
 import {gainWallLevel} from 'app/city/cityWall';
+import {createEnemy} from 'app/objects/enemy';
 import {ranger, warrior, wizard} from 'app/objects/hero';
+import {waves} from 'app/objects/spawner';
 import {gainEssence} from 'app/utils/essence';
 import {gainSkillExperience} from 'app/utils/hero';
 import {summonHero} from 'app/utils/hero';
@@ -13,18 +15,16 @@ export function advanceDebugGameState(state: GameState) {
         return;
     }
     // If wood is available, but not collected, simulate collecting 200 wood.
-    if (state.availableResources.wood && !state.discoveredItems.has('wood')) {
+    if (state.nextWaveIndex > 4 && !state.discoveredItems.has('wood')) {
         state.inventory.wood = 200;
         state.discoveredItems.add('wood');
-        state.availableResources.wood -= 200;
         gainSkillExperience(state, mainHero, 'logging', 100);
         return;
     }
     // If stone is available, but not collected, simulate collecting 200 stone.
-    if (state.availableResources.stone && !state.discoveredItems.has('stone')) {
+    if (state.nextWaveIndex > 10 && !state.discoveredItems.has('stone')) {
         state.inventory.stone = 200;
         state.discoveredItems.add('stone');
-        state.availableResources.stone -= 200;
         gainSkillExperience(state, mainHero, 'mining', 100);
         return;
     }
@@ -46,17 +46,19 @@ export function advanceDebugGameState(state: GameState) {
     }
 
     // If there is nothing else interesting to do, destroy the next spawner.
-    for (const object of state.world.objects) {
-        if (object.objectType === 'spawner') {
-            object.health = 0;
-            object.onDeath?.(state);
-            gainEssence(state, 10 * object.essenceWorth);
-            mainHero.experience += object.experienceWorth;
-            const objectIndex = state.world.objects.indexOf(object);
-            if (objectIndex >= 0) {
-                state.world.objects.splice(objectIndex, 1);
+    const nextWave = waves[state.nextWaveIndex];
+    if (nextWave) {
+        nextWave.actualStartTime = state.world.time;
+        for (const spawnerSchedule of nextWave.spawners) {
+            const spawner = spawnerSchedule.spawner;
+            spawner.startNewWave(state, spawnerSchedule);
+            for (const spawn of spawner.scheduledSpawns) {
+                const enemy = createEnemy(spawn.enemyType, spawn.level, {x: 0 , y: 0});
+                gainEssence(state, 10 * enemy.essenceWorth);
+                mainHero.experience += enemy.experienceWorth;
             }
-            return;
+            spawner.scheduledSpawns = [];
         }
+        state.nextWaveIndex++;
     }
 }

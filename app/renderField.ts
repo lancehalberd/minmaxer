@@ -27,14 +27,16 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
             -state.world.camera.y + canvas.height / 2 / scale
         );
         // Draw all base objects first.
-        for (const object of state.world.objects) {
+        const sortedObjects = [...state.world.objects];
+        sortedObjects.sort((A, B) => A.y - B.y);
+        for (const object of sortedObjects) {
             object.render(context, state);
         }
         for (const effect of state.world.effects) {
             effect.render(context, state);
         }
         // If any objects have buttons associated with them, draw those on top next.
-        for (const object of state.world.objects) {
+        for (const object of sortedObjects) {
             if (object.getChildren) {
                 renderFieldElements(context, state, object.getChildren(state));
             }

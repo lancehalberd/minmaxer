@@ -212,6 +212,7 @@ export function checkToAddNewSpawner(state: GameState) {
     // The first spawner is added immediately.
     if (state.world.nextSpawnerLevel === 1) {
         // Test forest code.
+        state.world.objects.push(smallSnakeSpawner);
         state.world.objects.push(snakeSpawner);
         state.world.objects.push(koboldSpawner);
         state.world.objects.push(mummySpawner);
@@ -232,9 +233,9 @@ export function checkToAddNewSpawner(state: GameState) {
         const y = state.nexus.y - spawnRadius * Math.sin(theta);
         let structure: Structure;
         if (level % 3 === 0) {
-            structure = new Quary({stone: level * 1000, x, y});
+            structure = new Quary({jobKey: 'quary-' + level, stone: level * 1000, x, y});
         } else if (level % 3 === 1) {
-            structure = new Forest({wood: level * 1000, x, y});
+            structure = new Forest({jobKey: 'forest-' + level, wood: level * 1000, x, y});
         } else {
             structure = new Village({population: 5, x, y});
         }
@@ -306,7 +307,10 @@ function spacedSpawns({type, level, count, spacing = 1, offset = 1}: SpacedSpawn
 }
 
 
-const snakeForest = new Forest({wood: 1000, x: 200, y: 200});
+const smallSnakeForest = new Forest({jobKey: 'smallSnakeForest', wood: 100, x: 190, y: 150, r: 20});
+const smallSnakeSpawner: WaveSpawner = new EnemyWaveSpawner({structure: smallSnakeForest});
+
+const snakeForest = new Forest({jobKey: 'snakeForest', wood: 1000, x: 200, y: 200});
 const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({structure: snakeForest});
 
 const smallVillage = new Village({population: 20, x: -200, y: 200});
@@ -343,29 +347,28 @@ const waveDefinitions: WaveDefinition[] = [
     {
         duration: 25,
         spawners: [
-            {spawner: snakeSpawner, spawns: spacedSpawns({...snake, count: 3})},
+            {spawner: smallSnakeSpawner, spawns: spacedSpawns({...snake, count: 3})},
         ],
     },
     {
         duration: 30,
         spawners: [
-            {spawner: snakeSpawner, spawns: spacedSpawns({...snake, count: 5})},
+            {spawner: smallSnakeSpawner, spawns: spacedSpawns({...snake, count: 4})},
         ],
     },
     {
         duration: 30,
         spawners: [
-            {spawner: snakeSpawner, spawns: [
-                ...spacedSpawns({...snake, count: 2}),
-                ...spacedSpawns({...cobra, count: 1}),
+            {spawner: smallSnakeSpawner, spawns: [
+                ...spacedSpawns({...snake, count: 5}),
             ]},
         ],
     },
     {
-        duration: 30,
+        duration: 60,
         spawners: [
-            {spawner: snakeSpawner, spawns: [
-                ...spacedSpawns({...snake, count: 4}),
+            {spawner: smallSnakeSpawner, isFinalWave: true, spawns: [
+                ...spacedSpawns({...snake, count: 5}),
                 ...spacedSpawns({...cobra, count: 1}),
             ]},
         ],
@@ -377,7 +380,7 @@ const waveDefinitions: WaveDefinition[] = [
                 ...spacedSpawns({...snake, count: 5}),
             ]},
             {spawner: koboldSpawner, spawns: [
-                ...spacedSpawns({...kobold, count: 2}),
+                ...spacedSpawns({...kobold, count: 1}),
             ]},
         ],
     },
@@ -386,7 +389,7 @@ const waveDefinitions: WaveDefinition[] = [
         spawners: [
             {spawner: snakeSpawner, spawns: [
                 ...spacedSpawns({...snake, count: 4}),
-                ...spacedSpawns({...cobra, count: 2})
+                ...spacedSpawns({...cobra, count: 1})
             ]},
             {spawner: koboldSpawner, spawns: [
                 ...spacedSpawns({...kobold, count: 2}),
