@@ -47,6 +47,8 @@ interface Camera extends ZoneLocation {
     // Pixels per second.
     speed: number
     target: Point
+    // If this is true the camera will follow the selected hero or nexus.
+    isLocked: boolean
 }
 
 

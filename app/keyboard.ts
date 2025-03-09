@@ -48,6 +48,8 @@ export const gameKeys = {
     right: 5,
     debug: 6,
     ability: 7,
+    characterPanel: 8,
+    cameraLock: 9,
 };
 
 const KEYBOARD_MAPPINGS = {
@@ -59,6 +61,8 @@ const KEYBOARD_MAPPINGS = {
     [gameKeys.right]: [KEY.D, KEY.RIGHT],
     [gameKeys.debug]: [KEY.K],
     [gameKeys.ability]: [KEY.R],
+    [gameKeys.characterPanel]: [KEY.C],
+    [gameKeys.cameraLock]: [KEY.Y],
 };
 
 

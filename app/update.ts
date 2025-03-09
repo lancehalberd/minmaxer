@@ -102,6 +102,22 @@ function update() {
         state.isPaused = !state.isPaused;
     }
 
+
+    if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
+        if (state.selectedHero && !state.openCharacterPanel) {
+            state.openCharacterPanel = true;
+        } else {
+            state.openCharacterPanel = false;
+            state.openChooseArmorPanel = false;
+            state.openChooseWeaponPanel = false;
+            state.openChooseCharmPanel = false;
+        }
+    }
+
+    if (wasGameKeyPressed(state, gameKeys.cameraLock)) {
+        state.camera.isLocked = !state.camera.isLocked;
+    }
+
     // Pressing the debug key[K] allows you to quickly advance your progress for testing purposes.
     if (wasGameKeyPressed(state, gameKeys.debug)) {
         advanceDebugGameState(state);
@@ -199,6 +215,13 @@ function getScrollAmount(state: GameState, distanceFromEdge: number, gameKey: nu
 }
 function updateCamera(state: GameState) {
     const camera = state.camera;
+    if (camera.isLocked) {
+        const target = state.selectedHero ?? state.nexus;
+        camera.zone = target.zone;
+        camera.x = camera.target.x = target.x;
+        camera.y = camera.target.y = target.y;
+        return;
+    }
     // How many pixels the camera moves per frame.
     const pixelsPerFrame = camera.speed * frameLength / 1000;
     // Move the camera so the hero is in the center of the screen:

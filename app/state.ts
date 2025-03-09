@@ -58,6 +58,7 @@ export const state: GameState = {
         y: 0,
         speed: 200,
         target: {x: 0, y: 0},
+        isLocked: true,
     },
     hudUIElements: [],
     mouse: {
