@@ -137,17 +137,18 @@ export function getOrCreateJob(state: GameState, definition: JobDefinition): Job
 }
 
 
-export function getMaxWorkersForJob(state: GameState, jobDefinition: JobDefinition) {
+export function getMaxWorkersForJob(state: GameState, job: Job) {
     let max = state.city.population;
-    if (jobDefinition.requiredToolType) {
-        max = Math.min(max, state.city.idleToolCounts[jobDefinition.requiredToolType]);
-    }
     return max;
 }
 
 
-function availableWorkersForJob(state: GameState, job: Job): number {
-    return state.city.idlePopulation + job.workers;
+export function availableWorkersForJob(state: GameState, job: Job): number {
+    let max = state.city.idlePopulation + job.workers;
+    if (job.definition.requiredToolType) {
+        max = Math.min(max, state.city.idleToolCounts[job.definition.requiredToolType] + job.workers);
+    }
+    return max;
 }
 
 
@@ -156,7 +157,7 @@ export function updateAssignedWorkers(state: GameState, jobDefinition: JobDefini
     const availableWorkers = availableWorkersForJob(state, job);
     if (delta > 0) {
         // Action fails if max workers is 0 (for example, if the required tools for the job are not available).
-        if (!getMaxWorkersForJob(state, jobDefinition)) {
+        if (!getMaxWorkersForJob(state, job)) {
             return;
         }
         if (!job.isPaidFor) {
@@ -167,7 +168,7 @@ export function updateAssignedWorkers(state: GameState, jobDefinition: JobDefini
         }
     }
     job.workers = Math.max(0, Math.min(job.workers + delta, availableWorkersForJob(state, job)));
-    job.workers = Math.min(job.workers, getMaxWorkersForJob(state, jobDefinition));
+    job.workers = Math.min(job.workers, getMaxWorkersForJob(state, job));
 }
 
 function payForJob(state: GameState, job: Job): boolean {

@@ -101,6 +101,9 @@ export class Quary implements Structure {
         canProgress: (state: GameState) => {
             return this.stone > 0;
         },
+        isValid: (state: GameState) => {
+            return this.stone > 0
+        },
         onComplete: (state: GameState) => {
             this.stone--;
             state.discoveredItems.add('stone');

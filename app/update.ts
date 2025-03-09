@@ -16,7 +16,7 @@ Minigames for improving stats/experience.
 
 Ranged attacks should be based on distance from edge of circles OR ability+attack range should be from center of hero to edge of player.
 
-Prevent heroes from walking over structures.
+Prevent heroes/enemies from walking over structures.
 Prevent heroes/enemies from being within 10px of each other.
 
 Nexus button:

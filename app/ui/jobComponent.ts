@@ -2,7 +2,7 @@ import {uiSize} from 'app/gameConstants';
 import {CircleIconButton, MinusIconButton, PlusIconButton, RepeatToggle} from 'app/ui/iconButton';
 import {computeResourceCost, computeValue} from 'app/utils/computed';
 import {drawNumberFillBar, fillRect, fillText} from 'app/utils/draw';
-import {getMaxWorkersForJob, getOrCreateJob, updateAssignedWorkers} from 'app/utils/job';
+import {availableWorkersForJob, getMaxWorkersForJob, getOrCreateJob, updateAssignedWorkers} from 'app/utils/job';
 
 export function createJobComponent(jobDefinition: JobDefinition, {x, y}: Point, getHeroTarget?: (state: GameState) => FieldTarget): JobUIElement {
     const w = 6 * uiSize;
@@ -96,11 +96,12 @@ export function createJobComponent(jobDefinition: JobDefinition, {x, y}: Point, 
 
             // Draw population controls only once the city has a population.
             if (state.city.population > 0) {
-                const totalSpots = getMaxWorkersForJob(state, jobDefinition);
-                // This is the number of spots that cannot be filled because workers are busy in other jobs.
+                const totalSpots = getMaxWorkersForJob(state, job);
+                const availableWorkers = availableWorkersForJob(state, job);
+                // This is the number of spots that cannot be filled because workers or tools are busy in other jobs.
                 // We display this so that it is easy to see the limit of what can be assigned based on the available population
                 // while still showing the total possible if all workers could be assigned ot this job.
-                const reservedWorkers = Math.max(0, totalSpots - state.city.idlePopulation - job.workers);
+                const reservedWorkers = Math.max(0, totalSpots - availableWorkers);
                 drawNumberFillBar(context, {
                     x: this.x + 2 * uiSize, y: this.y + uiSize, w: this.w - 4 * uiSize, h: uiSize,
                     value: job.workers,
