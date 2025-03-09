@@ -1,5 +1,5 @@
 
-type EnemyType = 'kobold'
+type EnemyType = 'kobold'|'koboldCleric'
     |'snake'|'cobra'
     |'mummy';
 
@@ -28,6 +28,7 @@ interface EnemyDefinition {
     aggroRadius: number
     isBoss?: boolean
     render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy) => void
+    abilities?: EnemyAbilityDefinition[]
 }
 
 interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
@@ -50,6 +51,8 @@ interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
     // If set the enemy will attack this target when idle.
     defaultTarget?: AllyTarget
     isBoss?: boolean
+    abilities: EnemyAbility[]
+    activeAbility?: ActiveEnemyAbility<any>;
 }
 
 interface Spawner extends Circle, ZoneLocation {
@@ -83,6 +86,50 @@ interface Spawner extends Circle, ZoneLocation {
     onHit: (state: GameState, attacker: Hero) => void
     onDeath?: (state: GameState) => void
 }
+
+
+interface ActiveEnemyAbilityDefinition<T extends AbilityTarget|undefined> {
+    abilityType: 'activeEnemyAbility'
+    name: string
+    getTargetingInfo: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>) => AbilityTargetingInfo
+    isTargetValid?: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: AbilityTarget) => boolean
+    canActivate?: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>) => boolean
+    onActivate: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) => void
+    // Returns the cooldown for this ability in milliseconds.
+    cooldown: Computed<number, ActiveEnemyAbility<T>>
+    // Zone wide cooldown on how often enemies can attempt to use this ability. Note this starts during the ability warning
+    // not on ability activiate.
+    zoneCooldown?: number
+    warningTime?: Computed<number, ActiveEnemyAbility<T>>
+    renderWarning?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) => void
+}
+
+interface PassiveEnemyAbilityDefinition {
+    abilityType: 'passiveEnemyAbility'
+    name: string
+    // Called when the ability user hits any target.
+    onHitTarget?: (state: GameState, enemy: Enemy, target: AttackTarget, ability: PassiveEnemyAbility) => void
+    modifyDamage?: (state: GameState, enemy: Enemy, target: AbilityTarget|undefined, ability: PassiveEnemyAbility, damage: number) => number
+}
+
+type EnemyAbilityDefinition = ActiveEnemyAbilityDefinition<any> | PassiveEnemyAbilityDefinition;
+
+interface PassiveEnemyAbility {
+    abilityType: 'passiveEnemyAbility'
+    definition: PassiveEnemyAbilityDefinition
+}
+interface ActiveEnemyAbility<T extends AbilityTarget|undefined> {
+    abilityType: 'activeEnemyAbility'
+    definition: ActiveEnemyAbilityDefinition<T>
+    // Cooldown in milliseconds.
+    cooldown: number
+    // Whether the hero should automatically use this ability if it is an active ability.
+    warningTime: number
+    warningDuration: number
+    target?: T
+}
+
+type EnemyAbility = PassiveEnemyAbility | ActiveEnemyAbility<any>;
 
 
 

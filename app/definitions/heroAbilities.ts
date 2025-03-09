@@ -6,7 +6,7 @@ import {addProjectile} from 'app/effects/projectile';
 export const spinStrike: ActiveAbilityDefinition = {
     abilityType: 'activeAbility',
     name: 'Spin Strike',
-    getTargetingInfo(state: GameState, hero: Hero, ability: Ability) {
+    getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
         // This skill is used immediately where the hero is standing when activated.
         return {
             // The attack radius is 1.1/1.2/1.3/1.4/1.5x of the base radius.
@@ -14,10 +14,10 @@ export const spinStrike: ActiveAbilityDefinition = {
             range: 0,
         };
     },
-    getCooldown(state: GameState, hero: Hero, ability: Ability) {
+    getCooldown(state: GameState, hero: Hero, ability: ActiveAbility) {
         return 5000;
     },
-    onActivate(state: GameState, hero: Hero, ability: Ability) {
+    onActivate(state: GameState, hero: Hero, ability: ActiveAbility) {
         const targetingInfo = this.getTargetingInfo(state, hero, ability);
         const hitCircle = {x: hero.x, y: hero.y, r: targetingInfo.hitRadius || 0};
         const targets = getTargetsInCircle(state, getEnemyTargets(state, hero.zone), hitCircle);
@@ -50,7 +50,7 @@ function removeBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, he
 export const battleRager: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Battle Rager',
-    onHitTarget(state: GameState, hero: Hero, target: AttackTarget, ability: Ability) {
+    onHitTarget(state: GameState, hero: Hero, target: AttackTarget, ability: PassiveAbility) {
         let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
         if (effect?.effectType === 'abilityEffect') {
             effect.remove(state, hero);
@@ -74,14 +74,14 @@ export const battleRager: PassiveAbilityDefinition = {
 };
 
 // Ranger skills
-function getPiercingShotRange(state: GameState, hero: Hero, ability: Ability): number {
+function getPiercingShotRange(state: GameState, hero: Hero, ability: ActiveAbility): number {
     return [80, 90, 100, 110, 120][ability.level - 1];
 }
 const piercingShotRadius = 10;
 export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeAbility',
     name: 'Piercing Shot',
-    getTargetingInfo(state: GameState, hero: Hero, ability: Ability) {
+    getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
         // This skill is used immediately where the hero is standing when activated.
         return {
             canTargetEnemy: true,
@@ -91,10 +91,10 @@ export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
             range: getPiercingShotRange(state, hero, ability),
         };
     },
-    getCooldown(state: GameState, hero: Hero, ability: Ability) {
+    getCooldown(state: GameState, hero: Hero, ability: ActiveAbility) {
         return 8000;
     },
-    onActivate(state: GameState, hero: Hero, ability: Ability, target: AbilityTarget) {
+    onActivate(state: GameState, hero: Hero, ability: ActiveAbility, target: AbilityTarget) {
         // Create a piercing projectile.
         const speed = 200;
         const dx = target.x - hero.x, dy = target.y - hero.y;

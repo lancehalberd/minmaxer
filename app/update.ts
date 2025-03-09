@@ -13,6 +13,11 @@ import {advanceDebugGameState} from 'app/utils/debug';
 TODO:
 Minigames for improving stats/experience.
 
+Ranged attacks should be based on distance from edge of circles OR ability+attack range should be from center of hero to edge of player.
+
+Prevent heroes from walking over structures.
+Prevent heroes/enemies from being within 10px of each other.
+
 Nexus button:
     At top of hero, click to return camera to the nexus.
 
@@ -160,6 +165,10 @@ function update() {
 }
 
 function updateZone(state: GameState, zone: ZoneInstance) {
+    for (const key of zone.zoneEnemyCooldowns.keys()) {
+        const value = (zone.zoneEnemyCooldowns.get(key) ?? 0) - frameLength;
+        zone.zoneEnemyCooldowns.set(key, value);
+    }
     for (const effect of [...zone.effects]) {
         effect.update(state);
     }

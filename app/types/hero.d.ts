@@ -170,19 +170,19 @@ interface AbilityTargetingInfo {
 interface ActiveAbilityDefinition<T=AbilityTarget|undefined> {
     abilityType: 'activeAbility'
     name: string
-    getTargetingInfo: (state: GameState, hero: Hero, ability: Ability) => AbilityTargetingInfo
-    canActivate?: (state: GameState, hero: Hero, ability: Ability) => boolean
-    onActivate: (state: GameState, hero: Hero, ability: Ability, target: T) => void
+    getTargetingInfo: (state: GameState, hero: Hero, ability: ActiveAbility) => AbilityTargetingInfo
+    canActivate?: (state: GameState, hero: Hero, ability: ActiveAbility) => boolean
+    onActivate: (state: GameState, hero: Hero, ability: ActiveAbility, target: T) => void
     // Returns the cooldown for this ability in milliseconds.
-    getCooldown: (state: GameState, hero: Hero, ability: Ability) => number
+    getCooldown: (state: GameState, hero: Hero, ability: ActiveAbility) => number
 }
 
 interface PassiveAbilityDefinition {
     abilityType: 'passiveAbility'
     name: string
     // Called when the ability user hits any target.
-    onHitTarget?: (state: GameState, hero: Hero, target: AttackTarget, ability: Ability) => void
-    modifyDamage?: (state: GameState, hero: Hero, target: AbilityTarget|undefined, ability: Ability, damage: number) => number
+    onHitTarget?: (state: GameState, hero: Hero, target: AttackTarget, ability: PassiveAbility) => void
+    modifyDamage?: (state: GameState, hero: Hero, target: AbilityTarget|undefined, ability: PassiveAbility, damage: number) => number
 }
 
 type AbilityDefinition = ActiveAbilityDefinition<any> | PassiveAbilityDefinition;

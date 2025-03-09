@@ -143,6 +143,25 @@ export function isAbilityTargetValid(state: GameState, targetingInfo: AbilityTar
     return false;
 }
 
+export function isEnemyAbilityTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo, target: FieldTarget): boolean {
+    if (!target) {
+        return false;
+    }
+    // Abilities that don't specify any target type are assumed to target enemies.
+    if (!targetingInfo.canTargetLocation && !targetingInfo.canTargetEnemy && !targetingInfo.canTargetAlly) {
+        return target.objectType === 'hero' || target.objectType === 'nexus';
+    }
+    if (target.objectType === 'point') {
+        return !!targetingInfo.canTargetLocation;
+    }
+    if (target.objectType === 'enemy' || target.objectType === 'spawner') {
+        return !!targetingInfo.canTargetAlly;
+    }
+    if (target.objectType === 'hero') {
+        return !!targetingInfo.canTargetEnemy;
+    }
+    return false;
+}
 
 export function getValidAbilityTargets(state: GameState, zone: ZoneInstance, targetingInfo: AbilityTargetingInfo): AttackTarget[] {
     const validTargets: AttackTarget[] = [];
@@ -159,7 +178,17 @@ export function getValidAbilityTargets(state: GameState, zone: ZoneInstance, tar
     return validTargets;
 }
 
-export function getEnemyTargets(state: GameState, zone: ZoneInstance) {
+export function getAllyTargets(state: GameState, zone: ZoneInstance): AllyTarget[] {
+    const allies: AllyTarget[] = [];
+    for (const object of zone.objects) {
+        if (object.objectType === 'hero' || object.objectType === 'nexus') {
+            allies.push(object);
+        }
+    }
+    return allies;
+}
+
+export function getEnemyTargets(state: GameState, zone: ZoneInstance): EnemyTarget[] {
     const enemies: EnemyTarget[] = [];
     for (const object of zone.objects) {
         if (object.objectType === 'enemy' || object.objectType === 'spawner') {

@@ -572,7 +572,7 @@ function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbi
 
 function checkForOnHitTargetAbilities(state: GameState, hero: Hero, target: AttackTarget) {
     for (const ability of hero.abilities) {
-        if (ability.level > 0 && ability.definition.abilityType === 'passiveAbility') {
+        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
             ability.definition.onHitTarget?.(state, hero, target, ability);
         }
     }

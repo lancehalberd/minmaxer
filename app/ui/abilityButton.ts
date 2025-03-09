@@ -167,7 +167,7 @@ class NexusAbilityButton implements UIContainer {
         }
         if (this.ability.cooldown > 0) {
             const p = 1 - this.ability.cooldown / this.ability.definition.getCooldown(state, this.ability);
-            const circle = {x: this.x + this.w / 2 + 3, y : this.y + this.h / 2, r: this.w / 2 - 6}
+            const circle = {x: this.x + this.w / 2, y : this.y + this.h / 2, r: this.w / 2 - 6}
             renderCooldownCircle(context, circle, p, 'rgba(255, 0, 0, 0.6)');
         }
         const children = this.getChildren?.(state) ?? [];

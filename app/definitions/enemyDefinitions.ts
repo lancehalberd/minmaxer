@@ -1,4 +1,5 @@
 import {createAnimation, drawFrame} from 'app/utils/animations';
+import {groupHeal, slam} from 'app/definitions/enemyAbilities';
 
 export const enemyDefinitions: {[key in EnemyType]?: EnemyDefinition} = {};
 
@@ -40,6 +41,7 @@ enemyDefinitions.snake = {
     aggroRadius: 150,
 };
 
+// Remove attack range and add acid spit ability that creates AOE DOT for 5 seconds with radius 80.
 enemyDefinitions.cobra = {
     name: 'Cobra',
     color: '#0F0',
@@ -61,8 +63,24 @@ enemyDefinitions.cobra = {
 enemyDefinitions.kobold = {
     name: 'Kobold',
     color: 'red',
-    r: 10,
+    r: 9,
     getStatsForLevel: getBasicEnemyStatsForLevel,
+    aggroRadius: 150,
+};
+
+enemyDefinitions.koboldCleric = {
+    name: 'Kobold',
+    color: 'purple',
+    r: 12,
+    abilities: [groupHeal],
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            maxHealth: (baseStats.maxHealth * 1.2) | 0,
+            attacksPerSecond: baseStats.attacksPerSecond * 0.8,
+        };
+    },
     aggroRadius: 150,
 };
 
@@ -70,12 +88,13 @@ enemyDefinitions.mummy = {
     name: 'The Mummy',
     color: 'white',
     r: 20,
+    abilities: [slam],
     getStatsForLevel(level: number): EnemyLevelDerivedStats {
         const baseStats = getBasicEnemyStatsForLevel(level);
         return {
             ...baseStats,
             maxHealth: (100 * baseStats.maxHealth) | 0,
-            damage: (10 * baseStats.damage) | 0,
+            damage: (5 * baseStats.damage) | 0,
             attacksPerSecond: 0.5 * baseStats.attacksPerSecond,
             attackRange: 10,
             movementSpeed: 5,

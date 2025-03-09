@@ -84,8 +84,8 @@ export function renderField(context: CanvasRenderingContext2D, state: GameState)
                 }
             }
         } else if (state.selectedHero && state.hoveredAbility) {
-            const definition = state.hoveredAbility.definition;
-            if (definition.abilityType === 'activeAbility') {
+            if (state.hoveredAbility.abilityType === 'activeAbility') {
+                const definition = state.hoveredAbility.definition;
                 const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.hoveredAbility);
                 if (targetingInfo.hitRadius) {
                     fillCircle(context, {...state.selectedHero, r: targetingInfo.hitRadius || 5, color: 'rgba(0, 0, 255, 0.5)'});

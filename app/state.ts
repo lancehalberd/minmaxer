@@ -16,6 +16,7 @@ const world: World = {
     nextSpawnerLevel: 1,
     effects: [],
     objects: [],
+    zoneEnemyCooldowns: new Map(),
 }
 const nexus = createNexus(world);
 const snakePitCave = new Cave({zone: world, zoneDefinition: snakePit, x: -200, y: 0});

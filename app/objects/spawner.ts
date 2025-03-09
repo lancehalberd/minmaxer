@@ -170,7 +170,7 @@ class EnemyWaveSpawner implements WaveSpawner {
             const p = 1 - (nextSpawnTime - this.zone.time) / spawnDuration;
             const isNextWaveImportant = false;
             const color = isNextWaveImportant ? 'rgba(255, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.3)';
-            renderCooldownCircle(context, {x: this.x, y: this.y, r: this.r - 4}, p, color);
+            renderCooldownCircle(context, {x: this.x, y: this.y, r: this.r / 2}, p, color);
         }
     }
     update(state: GameState) {
@@ -219,7 +219,7 @@ class EnemyWaveSpawner implements WaveSpawner {
 
 
 const easyEnemyTypes: EnemyType[] = ['snake', 'kobold'];
-const advancedEnemyTypes: EnemyType[] = ['cobra', 'kobold'];
+const advancedEnemyTypes: EnemyType[] = ['cobra', 'koboldCleric'];
 const bossEnemyTypes: EnemyType[] = ['mummy'];
 export function checkToAddNewSpawner(state: GameState) {
     // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
@@ -329,7 +329,7 @@ function processWaveDefinitions(state: GameState, waveDefinitions: WaveDefinitio
 const snake: SpacedSpawnProps = {type: 'snake', level: 1, count: 3};
 const cobra: SpacedSpawnProps = <const>{type: 'cobra', level: 4, count: 1, offset: 5, spacing: 2};
 const kobold: SpacedSpawnProps = {type: 'kobold', level: 3, count: 2, spacing: 3};
-const koboldMage: SpacedSpawnProps = {type: 'kobold', level: 5, count: 1, offset: 2, spacing: 5};
+const koboldCleric: SpacedSpawnProps = {type: 'koboldCleric', level: 5, count: 1, offset: 2, spacing: 5};
 
 export function initializeSpawners(state: GameState) {
 
@@ -427,7 +427,7 @@ export function initializeSpawners(state: GameState) {
                 ]},
                 {spawner: koboldSpawner, spawns: [
                     ...spacedSpawns({...kobold, count: 3}),
-                    ...spacedSpawns({...koboldMage, count: 1}),
+                    ...spacedSpawns({...koboldCleric, count: 1}),
                 ]},
             ],
         },
@@ -440,7 +440,7 @@ export function initializeSpawners(state: GameState) {
                 ]},
                 {spawner: koboldSpawner, spawns: [
                     ...spacedSpawns({...kobold, count: 3}),
-                    ...spacedSpawns({...koboldMage, count: 2}),
+                    ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
         },
@@ -454,7 +454,7 @@ export function initializeSpawners(state: GameState) {
                 ]},
                 {spawner: koboldSpawner, spawns: [
                     ...spacedSpawns({...kobold, count: 3}),
-                    ...spacedSpawns({...koboldMage, count: 2}),
+                    ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
         },
@@ -463,7 +463,7 @@ export function initializeSpawners(state: GameState) {
             spawners: [
                 {spawner: koboldSpawner, spawns: [
                     ...spacedSpawns({...kobold, count: 8}),
-                    ...spacedSpawns({...koboldMage, count: 3}),
+                    ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],
         },
@@ -472,7 +472,7 @@ export function initializeSpawners(state: GameState) {
             spawners: [
                 {spawner: koboldSpawner, spawns: [
                     ...spacedSpawns({...kobold, count: 10}),
-                    ...spacedSpawns({...koboldMage, count: 3}),
+                    ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],
         },
@@ -481,7 +481,7 @@ export function initializeSpawners(state: GameState) {
             spawners: [
                 {spawner: koboldSpawner, isFinalWave: true, spawns: [
                     ...spacedSpawns({...kobold, count: 10}),
-                    ...spacedSpawns({...koboldMage, count: 3}),
+                    ...spacedSpawns({...koboldCleric, count: 3}),
                     ...spacedSpawns({...kobold, level: 9, count: 1}),
                 ]},
             ],
@@ -493,7 +493,7 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...snake, count: 10}),
                     ...spacedSpawns({...cobra, count: 2}),
                     ...spacedSpawns({...kobold, count: 10}),
-                    ...spacedSpawns({...koboldMage, count: 1}),
+                    ...spacedSpawns({...koboldCleric, count: 1}),
                 ]},
             ],
         },
@@ -504,7 +504,7 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...snake, count: 10}),
                     ...spacedSpawns({...cobra, count: 4}),
                     ...spacedSpawns({...kobold, count: 10}),
-                    ...spacedSpawns({...koboldMage, count: 2}),
+                    ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
         },
@@ -515,7 +515,7 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...snake, count: 10}),
                     ...spacedSpawns({...cobra, count: 6}),
                     ...spacedSpawns({...kobold, count: 10}),
-                    ...spacedSpawns({...koboldMage, count: 3}),
+                    ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],
         },

@@ -1,6 +1,7 @@
 import {enemyDefinitions} from 'app/definitions/enemyDefinitions';
-import {framesPerSecond} from 'app/gameConstants';
-import {damageTarget, isTargetAvailable} from 'app/utils/combat';
+import {frameLength, framesPerSecond} from 'app/gameConstants';
+import {damageTarget, isEnemyAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
+import {computeValue} from 'app/utils/computed';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
 
@@ -19,6 +20,23 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         getMaxHealth(state: GameState) {
             return derivedStats.maxHealth;
         },
+        abilities: (definition.abilities ?? []).map((abilityDefinition): EnemyAbility => {
+            if (abilityDefinition.abilityType === 'activeEnemyAbility') {
+                const activeAbility: ActiveEnemyAbility<any> = {
+                    abilityType: <const>'activeEnemyAbility',
+                    definition: abilityDefinition,
+                    cooldown: 0,
+                    warningTime: 0,
+                    warningDuration: 0,
+                };
+                return activeAbility;
+            }
+            const passiveAbility: PassiveEnemyAbility = {
+                abilityType: <const>'passiveEnemyAbility',
+                definition: abilityDefinition,
+            };
+            return passiveAbility;
+        }),
         ...derivedStats,
         zone,
         x,
@@ -42,6 +60,15 @@ function onHitEnemy(this: Enemy, state: GameState, attacker: Hero) {
 }
 
 export function updateEnemy(this: Enemy, state: GameState) {
+    if (this.activeAbility) {
+        this.activeAbility.warningTime += frameLength;
+        if (this.activeAbility.warningTime > this.activeAbility.warningDuration) {
+            this.activeAbility.definition.onActivate(state, this, this.activeAbility, this.activeAbility.target);
+            this.activeAbility.cooldown = computeValue(state, this.activeAbility, this.activeAbility.definition.cooldown, 5000);
+            delete this.activeAbility;
+        }
+        return;
+    }
     // Remove the current attack target if it is becomes invalid (it dies, for example).
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
         delete this.attackTarget;
@@ -63,6 +90,19 @@ export function updateEnemy(this: Enemy, state: GameState) {
                 closestDistance = distance;
             }
         }
+    }
+    // Update ability cooldown and autocast any abilities that make sense.
+    for (const ability of this.abilities) {
+        if (ability.abilityType === 'activeEnemyAbility') {
+            if (ability.cooldown > 0) {
+                ability.cooldown -= frameLength;
+            } else if ((this.zone.zoneEnemyCooldowns.get(ability.definition) ?? 0) <= 0) {
+                checkToAutocastAbility(state, this, ability);
+            }
+        }
+    }
+    if (this.activeAbility) {
+        return;
     }
     // If the enemy has nothing else to do, move towards its default target.
     if (!this.attackTarget && !this.movementTarget) {
@@ -114,6 +154,9 @@ export function updateEnemy(this: Enemy, state: GameState) {
 }
 
 export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, state: GameState) {
+    if (this.activeAbility) {
+        renderAbilityWarning(context, state, this, this.activeAbility);
+    }
     const definition = enemyDefinitions[this.enemyType];
     if (definition?.render) {
         definition.render(context, state, this);
@@ -121,4 +164,82 @@ export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, stat
         fillCircle(context, this);
     }
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
+}
+
+
+function prepareToUseAbilityOnTarget<T extends FieldTarget|undefined>(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) {
+    enemy.activeAbility = ability;
+    ability.warningTime = 0;
+    ability.warningDuration = computeValue(state, ability, ability.definition.warningTime, 0);
+    ability.target = target;
+    if (ability.definition.zoneCooldown) {
+        enemy.zone.zoneEnemyCooldowns.set(ability.definition, ability.definition.zoneCooldown);
+    }
+}
+
+function renderAbilityWarning(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<any>) {
+    if (ability.definition.renderWarning) {
+        return ability.definition.renderWarning(context, state, enemy, ability, ability.target);
+    }
+    const p = ability.warningTime / ability.warningDuration;
+    defaultRenderWarning(context, state, p, enemy, ability.definition.getTargetingInfo(state, enemy, ability), ability.target);
+}
+
+function defaultRenderWarning(context: CanvasRenderingContext2D, state: GameState, p: number, enemy: Enemy, targetingInfo: AbilityTargetingInfo, target: ZoneLocation) {
+    // Don't show warnings for enemy skills that target their allies.
+    if (targetingInfo.canTargetAlly) {
+        return;
+    }
+    if (targetingInfo.hitRadius) {
+        // Attacks can hit units barely inside their range, so we increase the range of the warning to make
+        // it more obvious that a player might be in range when they are on the very edge of the range.
+        const drawnRadius = 10 + targetingInfo.hitRadius;
+        // const center: Point = targetingInfo.range > 0 ? {} : {x: enemy.x, y: enemy.y};
+        fillCircle(context, {x: target.x, y: target.y, r: drawnRadius});
+        context.lineWidth = 2;
+        context.strokeStyle = '#F00';
+        context.stroke();
+        fillCircle(context, {x: target.x, y: target.y, r: p * drawnRadius, color: 'rgba(255, 0, 0, 0.4)'});
+    }
+    if (targetingInfo.projectileRadius) {
+        /*context.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+        context.lineWidth = 2 * targetingInfo.projectileRadius;
+        const dx = target.x - state.selectedHero.x, dy = target.y - state.selectedHero.y;
+        const mag = Math.sqrt(dx*dx + dy*dy);
+        context.beginPath();
+        context.moveTo(state.selectedHero.x, state.selectedHero.y);
+        context.lineTo(
+            state.selectedHero.x + targetingInfo.range * dx / mag,
+            state.selectedHero.y + targetingInfo.range * dy / mag
+        );*/
+    }
+}
+
+function checkToAutocastAbility(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<any>) {
+    const targetingInfo = ability.definition.getTargetingInfo(state, enemy, ability);
+    // prioritize the current attack target over other targets.
+    // TODO: prioritize the closest target out of other targets.
+    for (const object of [enemy.attackTarget, ...enemy.zone.objects]) {
+        if (!object) {
+            continue;
+        }
+        // Skip this object if the ability doesn't target this type of object.
+        if (!isEnemyAbilityTargetValid(state, targetingInfo, object)) {
+            continue;
+        }
+        if (ability.definition.isTargetValid?.(state, enemy, ability, object) === false){
+            continue;
+        }
+        // Use the ability on the target if it is in range.
+        const dx = object.x - enemy.x, dy = object.y - enemy.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const range = targetingInfo.range;
+        if (distance < object.r + range + (targetingInfo.hitRadius ?? 0)) {
+            const target = distance < range
+                ? object
+                : {x: enemy.x + dx * range / distance, y: enemy.y + dy * range / distance};
+            prepareToUseAbilityOnTarget(state, enemy, ability, target);
+            return;
+        }
+    }
 }

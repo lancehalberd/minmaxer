@@ -198,6 +198,7 @@ function enterNewZoneInstance(state: GameState, definition: ZoneDefinition, exit
         time: 0,
         effects: [],
         objects: [],
+        zoneEnemyCooldowns: new Map(),
         exit,
     };
     definition.initialize(state, newZone);
@@ -235,6 +236,7 @@ export class HealingPool implements Structure {
            addHealEffectToTarget(state, hero);
            this.cooldown = 30000;
        }
+       delete hero.movementTarget;
     }
     update(state: GameState) {
         if (this.cooldown > 0) {
