@@ -106,7 +106,7 @@ export function isMouseOverTarget(state: GameState, target: MouseTarget): boolea
     if (hoverTarget === target) {
         return true;
     }
-    if (target.objectType === 'uiButton' && hoverTarget.objectType === 'uiButton') {
+    if (target.objectType === 'uiButton' && hoverTarget.objectType === 'uiContainer') {
         return !!target.uniqueId && hoverTarget.uniqueId === target.uniqueId;
     }
     return false;
@@ -210,7 +210,7 @@ export function updateMouseActions(state: GameState) {
     if (!state.mouse.mouseDownPosition) {
         const target = getTargetAtScreenPoint(state, state.mouse.currentPosition);
         state.mouse.mouseHoverTarget = target;
-        if (target?.objectType === 'uiButton') {
+        if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
             target.onHover?.(state);
         }
     }
@@ -222,7 +222,7 @@ function handleMouseClick(state: GameState, down: Point, up: Point) {
         return;
     }
     // Trigger the effect of a button.
-    if (target.objectType === 'uiButton') {
+    if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
         target.onClick?.(state);
     }
     // Check if the user has clicked on an object by checking if the object

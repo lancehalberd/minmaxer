@@ -98,12 +98,19 @@ export function drawFrame(
     if (image instanceof HTMLCanvasElement) {
         drawCanvas(context, image,
             {x: x | 0, y: y | 0, w: w | 0, h: h | 0},
-            {x: tx | 0, y: ty | 0, w: tw | 0, h: th | 0}
+            {x: tx, y: ty, w: tw, h: th}
         );
+        // For unaliased graphics we should always use pixel coordinates.
+        /*drawCanvas(context, image,
+            {x: x | 0, y: y | 0, w: w | 0, h: h | 0},
+            {x: tx | 0, y: ty | 0, w: tw | 0, h: th | 0}
+        );*/
         return;
     }
     // (x | 0) is faster than Math.floor(x)
-    context.drawImage(image, x | 0, y | 0, w | 0, h | 0, tx | 0, ty | 0, tw | 0, th | 0);
+    context.drawImage(image, x | 0, y | 0, w | 0, h | 0, tx, ty, tw, th);
+    // For unaliased graphics we should always use pixel coordinates.
+    //context.drawImage(image, x | 0, y | 0, w | 0, h | 0, tx | 0, ty | 0, tw | 0, th | 0);
 }
 
 export function drawFrameContentAt(
