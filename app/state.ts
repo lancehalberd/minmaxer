@@ -33,6 +33,7 @@ export const state: GameState = {
         population: 0,
         // This is computed fresh each tick, and manually updated within each tick.
         idlePopulation: 0,
+        idleToolCounts: {axe: 0, hammer: 0, pickaxe: 0, bow: 0, staff: 0},
         jobs: {},
         wall: {
             level: 0,

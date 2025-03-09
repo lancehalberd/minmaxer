@@ -1,5 +1,6 @@
 import {inventoryLabels, itemDefinitions} from 'app/definitions/itemDefinitions'
 
+export const toolTypes: ToolType[] = ['axe', 'hammer', 'pickaxe', 'bow', 'staff'];
 export const toolTypeLabels:{[key in ToolType]: string} = {
     axe: 'Axe',
     hammer: 'Hammer',
@@ -52,6 +53,30 @@ export function getAvailableToolCount(state: GameState, toolType: ToolType): num
     // This will cause a compiler failure if a toolType is not handled above.
     const never: never = toolType;
     return never;
+}
+
+export function computeIdleToolCounts(state: GameState): void {
+    for (const toolType of toolTypes) {
+        state.city.idleToolCounts[toolType] = getAvailableToolCount(state, toolType);
+    }
+    state.city.idlePopulation = state.city.population;
+    for (const job of Object.values(state.city.jobs)) {
+        // Automatically cut workers if there are not enough people left to work them.
+        // In theory this shouldn't happen unless a mechanic that reduces population is added.
+        if (state.city.idlePopulation < job.workers) {
+            job.workers = state.city.idlePopulation;
+        }
+        state.city.idlePopulation -= job.workers;
+        const requiredToolType = job.definition.requiredToolType;
+        if (requiredToolType) {
+            // Automatically cut workers if there are not enough people left to work them.
+            // This might happen if the player sells or equips a tool.
+            if (state.city.idleToolCounts[requiredToolType] < job.workers) {
+                job.workers = state.city.idleToolCounts[requiredToolType];
+            }
+            state.city.idleToolCounts[requiredToolType] -= job.workers;
+        }
+    }
 }
 
 

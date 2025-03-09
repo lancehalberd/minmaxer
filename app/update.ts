@@ -6,6 +6,7 @@ import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
 import {activateHeroAbility} from 'app/utils/hero';
+import {computeIdleToolCounts} from 'app/utils/inventory';
 import {updateJobs} from 'app/utils/job';
 import {advanceDebugGameState} from 'app/utils/debug';
 
@@ -145,6 +146,7 @@ function update() {
         const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? 10 : 1;
         for (let i = 0; i < frameCount; i++) {
             computeIdlePopulation(state);
+            computeIdleToolCounts(state);
             checkToAddNewSpawner(state);
             updateWaves(state);
             updateJobs(state);

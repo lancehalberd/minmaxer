@@ -53,6 +53,7 @@ interface CityStats {
     maxPopulation: number
     population: number
     idlePopulation: number
+    idleToolCounts: {[key in ToolType]: number}
     jobs: {
         [key in JobKey]: Job
     }

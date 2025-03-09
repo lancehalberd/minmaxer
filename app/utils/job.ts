@@ -140,7 +140,7 @@ export function getOrCreateJob(state: GameState, definition: JobDefinition): Job
 export function getMaxWorkersForJob(state: GameState, jobDefinition: JobDefinition) {
     let max = state.city.population;
     if (jobDefinition.requiredToolType) {
-        max = Math.min(max ?? 0, getAvailableToolCount(state, jobDefinition.requiredToolType));
+        max = Math.min(max, state.city.idleToolCounts[jobDefinition.requiredToolType]);
     }
     return max;
 }
