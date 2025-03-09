@@ -64,7 +64,11 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
         fillText(context, {...text, bold: true, color, text: 'Requires a ' + label, x, y});
         y += 20;
     }
-    for (const key of Object.keys(state.inventory) as InventoryKey[]) {
+    const possibleKeys = new Set([
+        ...(Object.keys(state.inventory) as InventoryKey[]),
+        ...(Object.keys(state.previewResourceCost ?? {})  as InventoryKey[]),
+    ]);
+    for (const key of possibleKeys) {
         const value = state.inventory[key] ?? 0;
         const previewCost = state.previewResourceCost?.[key as InventoryKey];
         const label = getItemLabel(key);
