@@ -5,7 +5,6 @@ type PickaxeType = 'stonePickaxe' | 'ironPickaxe' | 'steelPickaxe';
 type BowType = 'shortBow' | 'longBow' | 'crossBow';
 type StaffType = 'woodStaff' | 'bronzeStaff' | 'steelStaff';
 type AmmoType = 'arrow';
-type ArrowType = 'woodArrow' | 'flintArrow' | 'ironArrow' | 'steelArrow';
 
 type MaterialType =
     'hideScraps' | 'hide' | 'largeHide'
@@ -28,8 +27,7 @@ type InventoryKey =
     MaterialType
     | AxeType | HammerType | PickaxeType
     | BowType | StaffType
-    | CharmType
-    | ArrowType;
+    | CharmType;
 
 type Inventory = {
     [key in InventoryKey]?: number

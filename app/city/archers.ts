@@ -16,11 +16,9 @@ const archerJobDefinition: JobDefinition = {
 export const archerJobElement = createJobComponent(archerJobDefinition, { x: -11 * uiSize, y: -uiSize});
 
 function updateArchers(state: GameState, archerJob: Job) {
-    // Update archers
-    const arrows = state.inventory.woodArrow ?? 0; // + flintArrows etc.
     // Distance is measured from the center of the nexus, so add the radius of the nexus.
     const archerRange = state.nexus.r + 40;
-    if (archerJob.workers > 0 && arrows > 0) {
+    if (archerJob.workers > 0) {
         if (state.city.archersTarget && !isTargetAvailable(state, state.city.archersTarget)) {
             delete state.city.archersTarget
         }
@@ -47,12 +45,11 @@ function updateArchers(state: GameState, archerJob: Job) {
             const attacksPerSecond = archerJob.workers;
             const attackCooldown = 1000 / attacksPerSecond;
             if (!state.city.archersLastAttackTime || state.city.archersLastAttackTime + attackCooldown <= state.nexus.zone.time) {
-                // TODO: This should be calculated from various factors.
-                const damage = 1;
+                // TODO: It should be possible to upgrade this.
+                const damage = 5;
                 const speed = 100;
                 const dx = attackTarget.x - state.nexus.x, dy = attackTarget.y - state.nexus.y;
                 const mag = Math.sqrt(dx*dx + dy*dy);
-                state.inventory.woodArrow = arrows - 1;
                 addProjectile(state, {
                     zone: state.nexus.zone,
                     x: state.nexus.x + dx * state.nexus.r / mag,

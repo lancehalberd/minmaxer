@@ -32,7 +32,6 @@ export function advanceDebugGameState(state: GameState) {
         state.inventory.woodHatchet = (state.inventory.woodHatchet ?? 0) + 1;
         state.inventory.shortBow = (state.inventory.shortBow ?? 0) + 1;
         state.inventory.woodStaff = (state.inventory.woodStaff ?? 0) + 1;
-        state.inventory.woodArrow = (state.inventory.woodArrow ?? 0) + 10;
         gainSkillExperience(state, mainHero, 'crafting', 100);
         return;
     }

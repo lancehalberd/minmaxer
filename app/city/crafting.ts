@@ -38,14 +38,15 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
         resourceCost: {wood: 5},
         workerSeconds: 10,
     },
-    {
+    // We used to have arrows in the game, but it didn't really add much beyond toil.
+    /*{
         item: 'woodArrow',
         // TODO: Add upgrades to eventually increase this to 100.
         amount: 10,
         resourceCost: {wood: 1},
         workerSeconds: 10,
         repeat: true,
-    },
+    },*/
     {
         item: 'stonePickaxe',
         resourceCost: {stone: 2},
@@ -60,14 +61,6 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
         item: 'stoneHammer',
         resourceCost: {stone: 2},
         workerSeconds: 60,
-    },
-    {
-        item: 'flintArrow',
-        // TODO: Add upgrades to eventually increase this to 100.
-        amount: 10,
-        resourceCost: {stone: 1, wood: 2},
-        workerSeconds: 20,
-        repeat: true,
     },
 ];
 
