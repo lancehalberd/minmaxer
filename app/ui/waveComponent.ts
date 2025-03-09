@@ -1,8 +1,10 @@
 import {canvas} from 'app/gameConstants';
+import {drawFrame, requireFrame} from 'app/utils/animations';
 import {fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {millisecondsToTime} from 'app/utils/time';
 
+const skullFrame = requireFrame('gfx/militaryIcons.png', {x: 120, y: 23, w: 14, h: 16});
 
 // This UI value updates independent of the world time.
 function updateWaveScale(state: GameState) {
@@ -54,12 +56,14 @@ class WaveStone implements UIButton {
     w: number;
     h: number;
     wave: Wave;
+    isFinalWave: boolean;
     constructor(state: GameState, container: Rect, wave: Wave) {
         this.wave = wave;
         this.x = container.x;
         this.y = (wave.actualStartTime - state.world.time) / 1000 / state.waveScale;
         this.w = container.w;
         this.h = wave.duration / 1000 / state.waveScale;
+        this.isFinalWave = !!wave.spawners.find(spawner => spawner.isFinalWave);
     }
     onClick(state: GameState): boolean {
         if (this.wave.summonEarlySpeed) {
@@ -76,6 +80,10 @@ class WaveStone implements UIButton {
         }
         fillRect(context, this, '#FFF');
         fillRect(context, pad(this, -2), '#888');
+        if (this.isFinalWave) {
+            const w = 2 * skullFrame.w, h = 2 * skullFrame.h;
+            drawFrame(context, skullFrame, {x: this.x + (this.w - w) / 2, y: this.y + this.h - h - 10, w, h});
+        }
         context.save();
             context.translate(this.x + this.w / 2, this.y + 10);
             context.rotate(-Math.PI / 2);

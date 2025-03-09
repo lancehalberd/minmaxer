@@ -63,6 +63,7 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
         if (job.definition.onComplete) {
             job.definition.onComplete(state, job);
         }
+        job.isPaidFor = false;
         // Check if a job is invalid after completing it
         if (job.definition.isValid && !job.definition.isValid(state)) {
             stopJob(state, job);
