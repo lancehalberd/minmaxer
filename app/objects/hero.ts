@@ -1,15 +1,15 @@
+import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createLoot, pickupLoot} from 'app/objects/loot';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {gainEssence} from 'app/utils/essence';
 import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
+import {computeValue} from 'app/utils/computed';
+import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
+import {gainEssence} from 'app/utils/essence';
 import {getDistance} from 'app/utils/geometry';
-import {fillCircle, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
 import {summonHero} from 'app/utils/hero';
 import {applyHeroToJob} from 'app/utils/job';
-import {getModifiableStatValue} from 'app/utils/modifiableStat';
-import {heroDefinitions} from 'app/definitions/heroDefinitions';
-import {createModifiableStat} from 'app/utils/modifiableStat';
+import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
 import {followCameraTarget} from 'app/utils/world';
 
 class HeroObject implements Hero {
@@ -481,6 +481,16 @@ class HeroObject implements Hero {
         if (state.heroSlots.includes(this)) {
             const isInvincible = this.getIncomingDamageMultiplier(state) === 0;
             renderLifeBarOverCircle(context, this, this.health, this.getMaxHealth(state), isInvincible ? '#FF0' : undefined);
+        }
+        if (this.assignedJob) {
+            const job = this.assignedJob;
+            const totalSeconds = computeValue(state, job.definition, job.definition.workerSeconds, 0);
+            // If the job doesn't have a completiong time, just render the bar filling up so we can still see the
+            // hero is assigned a job.
+            const p = totalSeconds ? job.workerSecondsCompleted / totalSeconds : (this.zone.time % 1000) / 1000;
+            const r = {x: this.x - this.r, y: this.y - this.r, w: Math.floor(2 * this.r * p), h: 2};
+            fillRect(context, r, '#0AF');
+            fillRect(context, {...r, x: r.x + r.w - 1, w: 1}, '#8FF');
         }
         // Draw hero level
         fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});

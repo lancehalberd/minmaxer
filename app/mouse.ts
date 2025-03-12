@@ -42,7 +42,8 @@ function getMouseElementAtPoint(state: GameState, point: Point, elements: UIElem
     // const locationTarget = convertToWorldTarget(state, screenPoint);
     for (const element of [...elements].reverse()) {
         if (element.getChildren) {
-            const target = getMouseElementAtPoint(state, point, element.getChildren(state));
+            const childPoint = {x: point.x - element.x, y: point.y - element.y};
+            const target = getMouseElementAtPoint(state, childPoint, element.getChildren(state));
             if (target){
                 return target;
             }
@@ -87,16 +88,42 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
 }
 // TODO: We don't know if the target is in world coordinates or screen coordinates so we just check both.
 // This could probably cause undesirable results in some situations.
-function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
+/*function isScreenPointOverTarget(state: GameState, screenPoint: Point, target: MouseTarget): boolean {
     const worldPoint = convertToZoneLocation(state, screenPoint);
+    if (target.zone && target.zone !== state.camera.zone) {
+        return false;
+    }
     if (target.objectType === 'uiButton' || target.objectType === 'uiContainer') {
-        return isPointInRect(target, worldPoint) || isPointInRect(target, screenPoint);
+        const localPoint = convertToLocalPoint(state, target, screenPoint);
+        if (!localPoint) {
+            return false;
+        }
+        return isPointInRect(target, localPoint);
     }
     if (target.objectType === 'point') {
         return false;
     }
     return isPointInCircle(target, worldPoint);
-}
+}*/
+/*
+function convertToLocalPoint(state: GameState, target: UIElement, point: Point): Point|false {
+    if (target.zone) {
+        if (target.zone !== state.camera.zone) {
+            return false;
+        }
+        return convertToZoneLocation(state, point);
+    }
+    if (target.parent) {
+        const localPoint = convertToLocalPoint(state, target.parent, point);
+        if (!localPoint) {
+            return false;
+        }
+        localPoint.x -= target.parent.x;
+        localPoint.y -= target.parent.y;
+        return localPoint;
+    }
+    return {...point};
+}*/
 
 export function isMouseOverTarget(state: GameState, target: MouseTarget): boolean {
     const hoverTarget = state.mouse.mouseHoverTarget;
@@ -106,7 +133,10 @@ export function isMouseOverTarget(state: GameState, target: MouseTarget): boolea
     if (hoverTarget === target) {
         return true;
     }
-    if (target.objectType === 'uiButton' && hoverTarget.objectType === 'uiContainer') {
+    if (target.objectType === 'uiButton' || target.objectType === 'uiContainer') {
+        if (hoverTarget.objectType !== target.objectType) {
+            return false;
+        }
         return !!target.uniqueId && hoverTarget.uniqueId === target.uniqueId;
     }
     return false;
@@ -217,13 +247,24 @@ export function updateMouseActions(state: GameState) {
 }
 
 function handleMouseClick(state: GameState, down: Point, up: Point) {
-    const target = getTargetAtScreenPoint(state, down);
+    /*const target = getTargetAtScreenPoint(state, down);
     if (!target || !isScreenPointOverTarget(state, up, target)) {
+        return;
+    }*/
+    const downTarget = getTargetAtScreenPoint(state, down);
+    const upTarget = getTargetAtScreenPoint(state, up);
+    if (!downTarget || downTarget.objectType === 'point' || upTarget.objectType === 'point'){
         return;
     }
     // Trigger the effect of a button.
-    if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
-        target.onClick?.(state);
+    if (downTarget?.objectType === 'uiButton' || downTarget?.objectType === 'uiContainer') {
+        if (upTarget.objectType === downTarget.objectType) {
+            if (downTarget !== upTarget && (!downTarget.uniqueId || downTarget.uniqueId !== upTarget.uniqueId)) {
+                return;
+            }
+            downTarget.onClick?.(state);
+        }
+        return;
     }
     // Check if the user has clicked on an object by checking if the object
     // intersects both with where the user pressed and released the mouse.

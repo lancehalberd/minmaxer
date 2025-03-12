@@ -59,7 +59,7 @@ export class ToolTip implements UIButton {
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {
         fillBorderedRect(context, this, {
             borderColor: this.color,
-            fillColor: state.mouse.mouseHoverTarget === this ? this.hoverBackgroundColor : this.backgroundColor,
+            fillColor: this.backgroundColor,
         });
     }
     render(context: CanvasRenderingContext2D, state: GameState) {

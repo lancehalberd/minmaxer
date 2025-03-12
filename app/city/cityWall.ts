@@ -72,7 +72,11 @@ const buildWallJobDefinition: JobDefinition = {
     },
 };
 
-export const buildWallElement = createJobComponent(buildWallJobDefinition, {x: -3 * uiSize, y: -uiSize}, (state: GameState) => state.nexus);
+export const buildWallElement = createJobComponent({
+    x: -3 * uiSize, y: -uiSize,
+    jobDefinition: buildWallJobDefinition,
+    getHeroTarget: (state: GameState) => state.nexus
+});
 
 // Job to repair wall. Initially this takes 1 wood + 1 second to repair 1% of health (1)
 // But as the max health of the wall increases the cost in wood+time increase proportional to sqrt(maxWallHealth)
@@ -107,7 +111,11 @@ const repairWallJobDefinition: JobDefinition = {
     },
 };
 
-export const repairWallElement = createJobComponent(repairWallJobDefinition, {x: -3 * uiSize, y: 1.5 * uiSize}, (state: GameState) => state.nexus);
+export const repairWallElement = createJobComponent({
+    x: -3 * uiSize, y: 1.5 * uiSize,
+    jobDefinition: repairWallJobDefinition,
+    getHeroTarget: (state: GameState) => state.nexus
+});
 
 const upgradeWallJobDefinition: JobDefinition = {
     key: 'upgradeWall',
@@ -130,4 +138,9 @@ const upgradeWallJobDefinition: JobDefinition = {
     },
 };
 
-export const upgradeWallElement = createJobComponent(upgradeWallJobDefinition, {x: -3 * uiSize, y: -uiSize}, (state: GameState) => state.nexus);
+export const upgradeWallElement = createJobComponent({
+    x: -3 * uiSize, y: -uiSize,
+    jobDefinition: upgradeWallJobDefinition,
+    getHeroTarget: (state: GameState) => state.nexus
+});
+

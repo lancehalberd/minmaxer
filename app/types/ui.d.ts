@@ -8,6 +8,12 @@ interface BaseUIElement extends Rect {
     disabled?: boolean
     update?: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
+    // Set this when an element is rendered as a child of another element and uses the parent
+    // elements x/y as its origin.
+    parent?: UIElement
+    // If this is set, this element will only be rendered as part of a particular zone and will
+    // only trigger events when the camera is viewing that zone.
+    zone?: ZoneInstance
 }
 
 interface UIContainer extends BaseUIElement {

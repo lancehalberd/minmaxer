@@ -1,5 +1,6 @@
 import {canvas} from 'app/gameConstants';
 import {getHeroAbilityButtons, getNexusAbilityButtons} from 'app/ui/abilityButton';
+import {CraftingPanel} from 'app/ui/craftingPanel';
 import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equipmentPanels';
 import {getHeroButtons} from 'app/ui/heroButton';
 import {HeroPanel} from 'app/ui/heroPanel';
@@ -8,6 +9,7 @@ import {waveComponent} from 'app/ui/waveComponent';
 
 
 const heroPanel = new HeroPanel();
+const craftingPanel = new CraftingPanel();
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
 export function updateHudUIElements(state: GameState) {
@@ -17,6 +19,9 @@ export function updateHudUIElements(state: GameState) {
     }
     if (state.openCharacterPanel) {
         state.hudUIElements.push(heroPanel);
+    }
+    if (state.openCraftingPanel) {
+        state.hudUIElements.push(craftingPanel);
     }
     if (state.openChooseWeaponPanel) {
         state.hudUIElements.push(chooseWeaponPanel);

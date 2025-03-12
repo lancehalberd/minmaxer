@@ -52,10 +52,13 @@ class HeroAbilityButton implements UIContainer {
             const circle = {x: this.x + this.w / 2 + 3, y : this.y + this.h / 2, r: this.w / 2 - 6}
             renderCooldownCircle(context, circle, p, 'rgba(255, 0, 0, 0.6)');
         }
-        const children = this.getChildren?.(state) ?? [];
-        for (const child of children) {
-            child.render(context, state);
-        }
+        context.save();
+            context.translate(this.x, this.y);
+            const children = this.getChildren?.(state) ?? [];
+            for (const child of children) {
+                child.render(context, state);
+            }
+        context.restore();
     }
     onPress(state: GameState) {
         activateHeroAbility(state, this.hero, this.ability);
@@ -75,8 +78,8 @@ class HeroAbilityButton implements UIContainer {
         const ability = this.ability;
         if (ability.level < 5 && this.hero.totalSkillPoints > this.hero.spentSkillPoints) {
             const abilityLevelUpButton = new PlusButton({
-                x: this.x + this.w - 3/4 * abilityLevelButtonSize,
-                y: this.y + this.h - 3/4 * abilityLevelButtonSize,
+                x: this.w - 3/4 * abilityLevelButtonSize,
+                y: this.h - 3/4 * abilityLevelButtonSize,
                 uniqueId: `skill-level-${this.x}`,
                 onPress: (state: GameState) => {
                     if (ability.level < 5 && this.hero.totalSkillPoints > this.hero.spentSkillPoints) {
@@ -91,8 +94,8 @@ class HeroAbilityButton implements UIContainer {
         if (ability.level && ability.abilityType === 'activeAbility') {
             const autoCastToggle = new RepeatToggle({
                 uniqueId: `skill-autocast-${this.x}`,
-                x: this.x + this.w - 3/4 * abilityLevelButtonSize,
-                y: this.y - 1/4 * abilityLevelButtonSize,
+                x: this.w - 3/4 * abilityLevelButtonSize,
+                y: -1/4 * abilityLevelButtonSize,
                 w: abilityLevelButtonSize, h: abilityLevelButtonSize,
                 isActive: (state: GameState) => {
                     return ability.autocast;
@@ -143,6 +146,7 @@ interface NexusAbilityButtonProps extends UIContainer {
 class NexusAbilityButton implements UIContainer {
     objectType = <const>'uiContainer';
     ability = this.props.ability;
+    uniqueId = this.props.uniqueId ?? 'nexus-ability-?';
     x = this.props.x ?? canvas.width - 100;
     y = this.props.y ?? canvas.height - padding - abilityButtonSize;
     w = this.props.w ?? abilityButtonSize;
@@ -170,10 +174,13 @@ class NexusAbilityButton implements UIContainer {
             const circle = {x: this.x + this.w / 2, y : this.y + this.h / 2, r: this.w / 2 - 6}
             renderCooldownCircle(context, circle, p, 'rgba(255, 0, 0, 0.6)');
         }
-        const children = this.getChildren?.(state) ?? [];
-        for (const child of children) {
-            child.render(context, state);
-        }
+        context.save();
+            context.translate(this.x, this.y);
+            const children = this.getChildren?.(state) ?? [];
+            for (const child of children) {
+                child.render(context, state);
+            }
+        context.restore();
     }
     onPress(state: GameState) {
         if (this.ability) {
@@ -192,8 +199,9 @@ class NexusAbilityButton implements UIContainer {
     }*/
     getChildren(state: GameState) {
         const selectSkillButton = new PlusButton({
-            x: this.x + this.w - 3/4 * abilityLevelButtonSize,
-            y: this.y + this.h - 3/4 * abilityLevelButtonSize,
+            uniqueId: this.uniqueId + '-change-skill',
+            x: this.w - 3/4 * abilityLevelButtonSize,
+            y: this.h - 3/4 * abilityLevelButtonSize,
             onPress(state: GameState) {
                 // TODO: Open select skill panel.
                 return true;
@@ -206,8 +214,9 @@ class NexusAbilityButton implements UIContainer {
 export function getNexusAbilityButtons(state: GameState): UIContainer[] {
     const buttons: UIContainer[] = [];
     let x = canvas.width - 100;
-    for (const ability of state.nexusAbilitySlots) {
-        const newButton = new NexusAbilityButton({ability, x});
+    for (let i = 0; i < state.nexusAbilitySlots.length; i++) {
+        const ability = state.nexusAbilitySlots[i];
+        const newButton = new NexusAbilityButton({ability, uniqueId: 'nexus-ability-' + i, x});
         buttons.push(newButton);
         x += newButton.w + padding;
     }

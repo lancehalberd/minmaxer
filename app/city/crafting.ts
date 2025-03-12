@@ -65,7 +65,7 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
 ];
 
 
-let y = -4 * uiSize, x = 5 * uiSize;
+let y = -4 * uiSize, x = 5 * uiSize, scale = 2;
 for (const craftingJobDefinition of craftingJobDefinitions) {
     const label = getItemLabel(craftingJobDefinition.item);
     const jobDefinition: JobDefinition = {
@@ -88,11 +88,11 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
         },
     }
     craftingJobDefinition.jobDefinition = jobDefinition;
-    craftingJobDefinition.element = createJobComponent(jobDefinition, {x, y});
-    y += 2.5 * uiSize;
-    if (y >= 8 * uiSize) {
-        y = -4 * uiSize;
-        x += 8 * uiSize
+    craftingJobDefinition.element = createJobComponent({jobDefinition, scale, x, y});
+    y += 2.5 * uiSize * scale;
+    if (y >= 8 * uiSize * scale) {
+        y = -4 * uiSize * scale;
+        x += 8 * uiSize * scale;
     }
 };
 

@@ -113,6 +113,10 @@ export function applyHeroToJob(state: GameState, definition: JobDefinition, hero
         return;
     }
     const job = getOrCreateJob(state, definition);
+    // Make sure the hero is assigned the job if they aren't.
+    // This can happen when a hero clicks on a structure that applies a job on interaction,
+    // like a forest or quary.
+    hero.assignedJob = job;
     if (!job.isPaidFor) {
         if (!payForJob(state, job)) {
             return;

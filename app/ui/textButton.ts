@@ -1,4 +1,5 @@
 import {uiSize} from 'app/gameConstants';
+import {isMouseOverTarget} from 'app/mouse';
 import {computeValue} from 'app/utils/computed';
 import {fillBorderedRect, fillText} from 'app/utils/draw';
 
@@ -29,7 +30,7 @@ export class TextButton implements UIButton {
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {
         fillBorderedRect(context, this, {
             borderColor: this.color,
-            fillColor: state.mouse.mouseHoverTarget === this ? this.hoverBackgroundColor : this.backgroundColor,
+            fillColor: isMouseOverTarget(state, this) ? this.hoverBackgroundColor : this.backgroundColor,
         });
     }
     render(context: CanvasRenderingContext2D, state: GameState) {

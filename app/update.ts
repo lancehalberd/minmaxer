@@ -14,10 +14,27 @@ import {advanceDebugGameState} from 'app/utils/debug';
 TODO:
 Minigames for improving stats/experience.
 
+Add a way to farm materials from enemies/content:
+    Add drop pools to enemies + more enemy types?
+    Include rare resources
+    Add rare drop chance for harvesting actions:
+        1% chance to get hardwood instead of wood
+        Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
+
 Ranged attacks should be based on distance from edge of circles OR ability+attack range should be from center of hero to edge of player.
 
 Prevent heroes/enemies from walking over structures.
 Prevent heroes/enemies from being within 10px of each other.
+
+Basic Crafting Improvements
+    Add HUD button for opening crafting panel.
+    Add crafting bench structure to open crafting panel on interaction.
+    Allow viewing but not using crafting panel when away from the crafting bench.
+    Later add job to build crafting bench for 10 wood (revealed on obtaining 1 wood)
+    Upgrade crafting bench with 50 wood to unlock some behavior
+    Upgrade the crafting bench with 5 stone to unlock stone crafting, etc.
+
+Make sure CDR is working and add overcharge mechanic to abilities
 
 Nexus button:
     At top of hero, click to return camera to the nexus.
@@ -37,17 +54,10 @@ Spawners:
     Spawners may have an instance event to clear the spawner and prevent all future spawns and unlock any associated resource.
     Spawners may have an action to summon all remaining spawns immediately to clear them once all spawned enemies are defeated.
 
-
 Training grounds:
     Break increasingly challenging waves of targets to get +1 core stat per wave
     Different variations for int/dex/str that are designed around the abilities of that hero.
 
-Add a way to farm materials from enemies/content:
-    Add drop pools to enemies + more enemy types?
-    Include rare resources
-    Add rare drop chance for harvesting actions:
-        1% chance to get hardwood instead of wood
-        Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
 
 Add crafting
 
@@ -73,6 +83,14 @@ Population jobs:
         Workshops (crafting  other tools)
         Refinery (convert raw resources into refined resources like lumber -> planks, ore -> ingots)
 */
+
+function closeAllPanels(state: GameState) {
+    state.openCharacterPanel = false;
+    state.openChooseArmorPanel = false;
+    state.openChooseWeaponPanel = false;
+    state.openChooseCharmPanel = false;
+    state.openCraftingPanel = false;
+}
 
 function update() {
     // Reset the essence preview every frame so it doesn't get stale.
@@ -106,12 +124,18 @@ function update() {
 
     if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
         if (state.selectedHero && !state.openCharacterPanel) {
+            closeAllPanels(state);
             state.openCharacterPanel = true;
         } else {
-            state.openCharacterPanel = false;
-            state.openChooseArmorPanel = false;
-            state.openChooseWeaponPanel = false;
-            state.openChooseCharmPanel = false;
+            closeAllPanels(state);
+        }
+    }
+    if (wasGameKeyPressed(state, gameKeys.craftingPanel)) {
+        if (!state.openCraftingPanel) {
+            closeAllPanels(state);
+            state.openCraftingPanel = true;
+        } else {
+            closeAllPanels(state);
         }
     }
 

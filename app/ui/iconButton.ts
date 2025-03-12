@@ -1,4 +1,5 @@
 import {fillBorderedRect, fillCircle, fillRect} from 'app/utils/draw';
+import {isMouseOverTarget} from 'app/mouse';
 import {uiSize} from 'app/gameConstants';
 
 interface IconButtonProps extends Partial<UIButton> {
@@ -25,7 +26,7 @@ export class IconButton implements UIButton {
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {
         fillBorderedRect(context, this, {
             borderColor: this.color,
-            fillColor: state.mouse.mouseHoverTarget === this ? this.hoverBackgroundColor : this.backgroundColor,
+            fillColor: isMouseOverTarget(state, this) ? this.hoverBackgroundColor : this.backgroundColor,
         });
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -69,7 +70,7 @@ export class RepeatToggle extends IconButton {
         const isActive = this.isActive(state);
         fillBorderedRect(context, this, {
             borderColor: this.color,
-            fillColor: (state.mouse.mouseHoverTarget === this || isActive) ? this.hoverBackgroundColor : this.backgroundColor,
+            fillColor: (isMouseOverTarget(state, this) || isActive) ? this.hoverBackgroundColor : this.backgroundColor,
         });
         const iconColor = isActive ? this.color : '#888';
         const circle = {x: this.x + this.w / 2, y: this.y + this.h / 2, r: Math.min(this.w, this.h) / 2 - 4};

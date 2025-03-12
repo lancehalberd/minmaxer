@@ -43,5 +43,5 @@ const healerJobDefinition: JobDefinition = {
         }
     }
 };
-export const healerJobElement = createJobComponent(healerJobDefinition, { x: -11 * uiSize, y: -3.5 * uiSize});
+export const healerJobElement = createJobComponent({jobDefinition: healerJobDefinition, x: -11 * uiSize, y: -3.5 * uiSize});
 

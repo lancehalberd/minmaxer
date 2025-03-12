@@ -53,11 +53,12 @@ export class Forest implements Structure {
             }
         },
     };
-    jobElement = createJobComponent(this.jobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
+    jobElement = createJobComponent({jobDefinition: this.jobDefinition, x: this.x - 2 * uiSize, y: this.y, getHeroTarget: () => this});
+
 
     constructor(public props: ForestProps) {}
     update(state: GameState) {
-
+        this.jobElement.zone = this.zone;
     }
     onHeroInteraction(state: GameState, hero: Hero) {
         applyHeroToJob(state, this.jobDefinition, hero);
@@ -117,7 +118,7 @@ export class Quary implements Structure {
             }
         },
     };
-    harvestJobElement = createJobComponent(this.jobDefinition, { x: this.x -2 * uiSize, y: this.y}, () => this);
+    jobElement = createJobComponent({jobDefinition: this.jobDefinition, x: this.x - 2 * uiSize, y: this.y, getHeroTarget: () => this});
 
     constructor(public props: QuaryProps) {}
     update(state: GameState) {}
@@ -128,7 +129,7 @@ export class Quary implements Structure {
         fillCircle(context, this);
     }
     getChildren(state: GameState): UIElement[] {
-        return this.stone > 0 ? [this.harvestJobElement] : [];
+        return this.stone > 0 ? [this.jobElement] : [];
     }
 }
 

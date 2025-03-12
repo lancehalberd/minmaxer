@@ -1,7 +1,6 @@
 import {archerJobElement} from 'app/city/archers';
 import {healerJobElement} from 'app/city/healer';
 import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
-import {craftingJobDefinitions} from 'app/city/crafting';
 import {frameLength} from 'app/gameConstants';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
@@ -103,14 +102,6 @@ function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     if (state.city.wall.level && isJobDiscovered(state, healerJobElement.jobDefinition)) {
         elements.push(healerJobElement);
     }
-
-    for (const craftingJobDefinition of craftingJobDefinitions) {
-        if (!craftingJobDefinition.jobDefinition || !craftingJobDefinition.element || !isJobDiscovered(state, craftingJobDefinition.jobDefinition)) {
-            continue;
-        }
-        elements.push(craftingJobDefinition.element);
-    }
-
     return elements;
 }
 

@@ -10,6 +10,7 @@ const noCharm: Charm = {name: 'None', charmStats: {}};
 
 
 export const chooseArmorPanel = new ChooseItemPanel<Armor>({
+    title: 'Choose Armor',
     items(state: GameState) {
         const armor: Armor[] = [noArmor];
         for (const key of typedKeys(state.inventory)) {
@@ -44,6 +45,7 @@ export const chooseArmorPanel = new ChooseItemPanel<Armor>({
     },
 });
 export const chooseWeaponPanel = new ChooseItemPanel<Weapon>({
+    title: 'Choose Weapon',
     items(state: GameState) {
         const weapons: Weapon[] = [noWeapon];
         for (const key of typedKeys(state.inventory)) {
@@ -78,6 +80,7 @@ export const chooseWeaponPanel = new ChooseItemPanel<Weapon>({
     },
 });
 export const chooseCharmPanel = new ChooseItemPanel<Charm>({
+    title: 'Choose Charm',
     items(state: GameState) {
         const charms: Charm[] = [noCharm];
         for (const key of typedKeys(state.inventory)) {
