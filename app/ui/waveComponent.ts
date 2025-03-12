@@ -19,9 +19,10 @@ function updateWaveScale(state: GameState) {
     }
 }
 
-export const waveComponent: UIContainer = {
+export const waveComponent: UIContainer & {waveStones: WaveStone[]} = {
     objectType: 'uiContainer',
     w: 40, h: canvas.height, x: 0, y: 0,
+    waveStones: [],
     update(state: GameState) {
         updateWaveScale(state);
     },
@@ -38,7 +39,11 @@ export const waveComponent: UIContainer = {
             if (!state.waves[i]) {
                 continue;
             }
-            const waveButton = new WaveStone(state, this, state.waves[i]);
+            if (!this.waveStones[i]) {
+                this.waveStones[i] = new WaveStone(state, this, state.waves[i]);
+            }
+            const waveButton = this.waveStones[i];
+            waveButton.updatePosition(state);
             if (waveButton.y >= canvas.height) {
                 break;
             }
@@ -51,19 +56,20 @@ export const waveComponent: UIContainer = {
 const fadeDuration = 500;
 class WaveStone implements UIButton {
     objectType = <const>'uiButton';
-    x: number;
-    y: number;
+    x: number = 0;
+    y: number = 0;
     w: number;
     h: number;
     wave: Wave;
     isFinalWave: boolean;
     constructor(state: GameState, container: Rect, wave: Wave) {
         this.wave = wave;
-        this.x = container.x;
-        this.y = (wave.actualStartTime - state.world.time) / 1000 / state.waveScale;
         this.w = container.w;
-        this.h = wave.duration / 1000 / state.waveScale;
-        this.isFinalWave = !!wave.spawners.find(spawner => spawner.isFinalWave);
+        this.h = this.wave.duration / 1000 / state.waveScale;
+        this.isFinalWave = !!this.wave.spawners.find(spawner => spawner.isFinalWave);
+    }
+    updatePosition(state: GameState) {
+        this.y = (this.wave.actualStartTime - state.world.time) / 1000 / state.waveScale;
     }
     onClick(state: GameState): boolean {
         if (this.wave.summonEarlySpeed) {

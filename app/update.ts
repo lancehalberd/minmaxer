@@ -21,8 +21,6 @@ Add a way to farm materials from enemies/content:
         1% chance to get hardwood instead of wood
         Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
 
-Ranged attacks should be based on distance from edge of circles OR ability+attack range should be from center of hero to edge of player.
-
 Prevent heroes/enemies from walking over structures.
 Prevent heroes/enemies from being within 10px of each other.
 
