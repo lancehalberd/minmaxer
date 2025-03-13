@@ -229,6 +229,7 @@ interface AttackHit {
     damage: number
     isCrit?: boolean
     source?: AttackTarget
+    showDamageNumber?: boolean
 }
 
 

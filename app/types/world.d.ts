@@ -17,12 +17,22 @@ interface Loot extends Circle, ZoneLocation {
     onPickup: (state: GameState, hero: Hero) => void
 }
 
+// Generic effect for anything we don't have more specific effects for.
+interface GenericEffect extends ZoneLocation {
+    objectType: 'effect'
+    update: (state: GameState) => void
+    render: (context: CanvasRenderingContext2D, state: GameState) => void
+}
+
+// Used for simple animations the don't have complex interactions.
 interface FieldAnimationEffect extends ZoneLocation {
     objectType: 'animation'
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
 }
 
+
+// Effects representing projectiles from attacks or skills.
 interface Projectile extends Circle, ZoneLocation {
     objectType: 'projectile'
     vx: number
@@ -36,9 +46,13 @@ interface Projectile extends Circle, ZoneLocation {
     hitTargets: Set<AbilityTarget>
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
+    // Called for any valid attack targets are hit by this projectile.
+    onHit?: (state: GameState, target: AttackTarget) => void
+    // Called when the projectile duration expires.
+    onExpire?: (state: GameState) => void
 }
 
-type FieldEffect = FieldAnimationEffect | Projectile;
+type FieldEffect = GenericEffect | FieldAnimationEffect | Projectile;
 type FieldObject = Hero | Nexus | Enemy | Spawner | WaveSpawner | Loot | Structure;
 
 

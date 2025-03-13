@@ -1,5 +1,5 @@
 import {createAnimation, drawFrame} from 'app/utils/animations';
-import {groupHeal, slam} from 'app/definitions/enemyAbilities';
+import {groupHeal, poisonSpit, slam} from 'app/definitions/enemyAbilities';
 
 export const enemyDefinitions: {[key in EnemyType]?: EnemyDefinition} = {};
 
@@ -41,17 +41,16 @@ enemyDefinitions.snake = {
     aggroRadius: 150,
 };
 
-// Remove attack range and add acid spit ability that creates AOE DOT for 5 seconds with radius 80.
 enemyDefinitions.cobra = {
     name: 'Cobra',
     color: '#0F0',
     r: 6,
+    abilities: [poisonSpit],
     getStatsForLevel(level: number): EnemyLevelDerivedStats {
         const baseStats = getBasicEnemyStatsForLevel(level);
         return {
             ...baseStats,
             attacksPerSecond: baseStats.attacksPerSecond * 1.2,
-            attackRange: 20,
         };
     },
     render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {

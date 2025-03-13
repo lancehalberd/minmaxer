@@ -94,14 +94,15 @@ interface ActiveEnemyAbilityDefinition<T extends AbilityTarget|undefined> {
     getTargetingInfo: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>) => AbilityTargetingInfo
     isTargetValid?: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: AbilityTarget) => boolean
     canActivate?: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>) => boolean
-    onActivate: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) => void
+    // Note that enemies initially choose valid targets for abilities, the final target is always a location target.
+    onActivate: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: LocationTarget) => void
     // Returns the cooldown for this ability in milliseconds.
     cooldown: Computed<number, ActiveEnemyAbility<T>>
     // Zone wide cooldown on how often enemies can attempt to use this ability. Note this starts during the ability warning
     // not on ability activiate.
     zoneCooldown?: number
     warningTime?: Computed<number, ActiveEnemyAbility<T>>
-    renderWarning?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) => void
+    renderWarning?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: LocationTarget) => void
 }
 
 interface PassiveEnemyAbilityDefinition {
@@ -126,7 +127,7 @@ interface ActiveEnemyAbility<T extends AbilityTarget|undefined> {
     // Whether the hero should automatically use this ability if it is an active ability.
     warningTime: number
     warningDuration: number
-    target?: T
+    target?: LocationTarget
 }
 
 type EnemyAbility = PassiveEnemyAbility | ActiveEnemyAbility<any>;

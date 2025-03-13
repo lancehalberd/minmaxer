@@ -1,7 +1,7 @@
 
 interface LocationTarget extends ZoneLocation {
     objectType: 'point'
-    r: 0
+    r?: 0
 }
 
 type AllyTarget = Hero | Nexus;

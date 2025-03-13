@@ -336,7 +336,7 @@ class HeroObject implements Hero {
                 delete this.selectedAbility;
             } else {
                 const targetingInfo = this.selectedAbility.definition.getTargetingInfo(state, this, this.selectedAbility);
-                if (moveHeroTowardsTarget(state, this, this.abilityTarget, this.r + this.abilityTarget.r + targetingInfo.range)) {
+                if (moveHeroTowardsTarget(state, this, this.abilityTarget, this.r + (this.abilityTarget.r ?? 0) + targetingInfo.range)) {
                     const definition = this.selectedAbility.definition;
                     definition.onActivate(state, this, this.selectedAbility, this.abilityTarget);
                     this.selectedAbility.cooldown = definition.getCooldown(state, this, this.selectedAbility);

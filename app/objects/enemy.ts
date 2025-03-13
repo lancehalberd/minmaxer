@@ -60,7 +60,7 @@ function onHitEnemy(this: Enemy, state: GameState, attacker: Hero) {
 }
 
 export function updateEnemy(this: Enemy, state: GameState) {
-    if (this.activeAbility) {
+    if (this.activeAbility?.target) {
         this.activeAbility.warningTime += frameLength;
         if (this.activeAbility.warningTime > this.activeAbility.warningDuration) {
             this.activeAbility.definition.onActivate(state, this, this.activeAbility, this.activeAbility.target);
@@ -171,13 +171,20 @@ function prepareToUseAbilityOnTarget<T extends FieldTarget|undefined>(state: Gam
     enemy.activeAbility = ability;
     ability.warningTime = 0;
     ability.warningDuration = computeValue(state, ability, ability.definition.warningTime, 0);
-    ability.target = target;
+    if (target) {
+        ability.target = {objectType: 'point', zone: target.zone, x: target.x, y: target.y, r: 0};
+    } else {
+        ability.target = {objectType: 'point', zone: enemy.zone, x: enemy.x, y: enemy.y, r: 0};
+    }
     if (ability.definition.zoneCooldown) {
         enemy.zone.zoneEnemyCooldowns.set(ability.definition, ability.definition.zoneCooldown);
     }
 }
 
 function renderAbilityWarning(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<any>) {
+    if (!ability.target) {
+        return;
+    }
     if (ability.definition.renderWarning) {
         return ability.definition.renderWarning(context, state, enemy, ability, ability.target);
     }

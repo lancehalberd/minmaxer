@@ -1,9 +1,24 @@
 import {addDamageNumber} from 'app/effects/damageNumber';
+import {frameLength} from 'app/gameConstants';
 import {loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
 import {removeFieldObject} from 'app/utils/world';
 
-export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source}: AttackHit) {
+
+export function applyDamageOverTime(state: GameState, target: AttackTarget, damagePerSecond: number) {
+    // Currently nexux is immune to damage over time.
+    if (target.objectType === 'nexus') {
+        return;
+    }
+    let damage = damagePerSecond * frameLength / 1000;
+    if (target.objectType === 'hero') {
+        damage *= target.getIncomingDamageMultiplier(state);
+    }
+    target.health = Math.max(0, target.health - damage);
+    checkIfTargetIsDefeated(state, target);
+}
+
+export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source, showDamageNumber = true}: AttackHit) {
     if (damage < 0) {
         return
     }
@@ -34,20 +49,27 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
         ));
     }
     target.health = Math.max(0, target.health - damage);
-    addDamageNumber(state, {target, damage, isCrit});
-    if (target.health <= 0) {
-        // remove the object from the state, if not a 'nexus' when it dies.
-        removeFieldObject(state, target);
-        if ((target.objectType === 'enemy' || target.objectType === 'spawner') && target.onDeath) {
-            target.onDeath(state);
-        }
-        if (target.objectType === 'hero') {
-            const reviveTime = Math.floor(target.level * 5 * (1 + state.nexus.deathCount * 0.2));
-            target.reviveCooldown = {
-                total: reviveTime,
-                remaining: reviveTime,
-            };
-        }
+    if (showDamageNumber) {
+        addDamageNumber(state, {target, damage: damage | 0, isCrit});
+    }
+    checkIfTargetIsDefeated(state, target);
+}
+
+export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget) {
+    if (target.objectType === 'nexus' || target.health > 0) {
+        return;
+    }
+    // remove the object from the state, if not a 'nexus' when it dies.
+    removeFieldObject(state, target);
+    if ((target.objectType === 'enemy' || target.objectType === 'spawner') && target.onDeath) {
+        target.onDeath(state);
+    }
+    if (target.objectType === 'hero') {
+        const reviveTime = Math.floor(target.level * 5 * (1 + state.nexus.deathCount * 0.2));
+        target.reviveCooldown = {
+            total: reviveTime,
+            remaining: reviveTime,
+        };
     }
 }
 

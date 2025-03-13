@@ -30,6 +30,7 @@ export function addProjectile(state: GameState, props: ProjectileProps): Project
 function updateProjectile(this: Projectile, state: GameState) {
     this.duration -= frameLength;
     if (this.duration < 0) {
+        this.onExpire?.(state);
         removeEffect(state, this);
         return;
     }
@@ -42,9 +43,12 @@ function updateProjectile(this: Projectile, state: GameState) {
             }
             damageTarget(state, target, this.hit);
             this.hitTargets.add(target);
+            this.onHit?.(state, target);
         }
         if (!this.piercing && this.hitTargets.size) {
+            this.onExpire?.(state);
             removeEffect(state, this);
+
         }
     }
 }

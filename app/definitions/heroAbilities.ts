@@ -1,5 +1,6 @@
-import {damageTarget, getEnemyTargets, getTargetsInCircle, applyEffectToHero} from 'app/utils/combat';
 import {addProjectile} from 'app/effects/projectile';
+import {damageTarget, getEnemyTargets, getTargetsInCircle, applyEffectToHero} from 'app/utils/combat';
+// import {getDistance} from 'app/utils/geometry';
 
 
 // Warrior skills
@@ -9,8 +10,7 @@ export const spinStrike: ActiveAbilityDefinition = {
     getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
         // This skill is used immediately where the hero is standing when activated.
         return {
-            // The attack radius is 1.1/1.2/1.3/1.4/1.5x of the base radius.
-            hitRadius: hero.r + [1.1, 1.2, 1.3, 1.4, 1.5][ability.level - 1] * hero.getAttackRange(state),
+            hitRadius: hero.r + [1.4, 1.5, 1.6, 1.8, 2][ability.level - 1] * hero.getAttackRange(state),
             range: 0,
         };
     },
@@ -21,6 +21,8 @@ export const spinStrike: ActiveAbilityDefinition = {
         const targetingInfo = this.getTargetingInfo(state, hero, ability);
         const hitCircle = {x: hero.x, y: hero.y, r: targetingInfo.hitRadius || 0};
         const targets = getTargetsInCircle(state, getEnemyTargets(state, hero.zone), hitCircle);
+        // console.log(hitCircle);
+        // console.log(targets.length, 'vs ', getEnemyTargets(state, hero.zone).map(t => ({x: t.x, y: t.y, r: t.r, d: getDistance(t, hitCircle)})));
         // This attack does 25/35/45/55/65% increased base damage.
         let damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.getDamage(state);
         // TODO: this should apply extra hit, crit chance + strength damage bonus.
