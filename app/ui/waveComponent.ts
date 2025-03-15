@@ -70,6 +70,7 @@ class WaveStone implements UIButton {
     }
     updatePosition(state: GameState) {
         this.y = (this.wave.actualStartTime - state.world.time) / 1000 / state.waveScale;
+        this.h = this.wave.duration / 1000 / state.waveScale;
     }
     onClick(state: GameState): boolean {
         if (this.wave.summonEarlySpeed) {

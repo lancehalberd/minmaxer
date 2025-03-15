@@ -1,7 +1,9 @@
 import {uiSize} from 'app/gameConstants';
-import {CircleIconButton, MinusIconButton, PlusIconButton, RepeatToggle} from 'app/ui/iconButton';
+import {MinusIconButton, PlusIconButton, RepeatToggle} from 'app/ui/iconButton';
+import {isMouseOverTarget} from 'app/mouse';
 import {computeResourceCost, computeValue} from 'app/utils/computed';
 import {drawNumberFillBar, fillRect, fillText} from 'app/utils/draw';
+import {pad} from 'app/utils/geometry';
 import {availableWorkersForJob, getMaxWorkersForJob, getOrCreateJob, updateAssignedWorkers} from 'app/utils/job';
 
 interface JobComponentProps {
@@ -14,7 +16,6 @@ interface JobComponentProps {
 export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarget}: JobComponentProps): JobUIElement {
     const scaledSize = scale * uiSize;
     const w = 6 * scaledSize;
-    // TODO: Turn the label into a button for the Hero.
     // TODO: Turn fill bar into histogram based on the quality of the Tool, full saturation for best tool, in increments down to half saturation for worst tool.
     // TODO: Try turning the population UI into a slider
     // Draw a line at the current level
@@ -64,23 +65,8 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
             return true;
         }
     });
-    const heroButton = new CircleIconButton({
-        x: -scaledSize,
-        y: 0,
-        w: scaledSize, h: scaledSize,
-        onClick(state: GameState) {
-            if (state.selectedHero) {
-                state.selectedHero.assignedJob = getOrCreateJob(state, jobDefinition);
-            }
-            return true;
-        },
-        onHover(state: GameState) {
-            showJobPreviewForHero(state, jobDefinition);
-            return true;
-        }
-    });
     const repeatToggle = new RepeatToggle({
-        x: w, y: 0,
+        x: w -scaledSize / 2, y: -scaledSize / 2,
         w: scaledSize, h: scaledSize,
         isActive(state: GameState) {
             return getOrCreateJob(state, jobDefinition).shouldRepeatJob;
@@ -105,6 +91,9 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
             context.save();
                 context.translate(this.x, this.y);
                 const job = getOrCreateJob(state, jobDefinition);
+                if (isMouseOverTarget(state, this)) {
+                    fillRect(context, pad({...this, x:0, y: 0, h: scaledSize}, 1 * scale), '#FFF');
+                }
                 fillRect(context, {...this, x:0, y: 0, h: scaledSize}, '#000');
                 const label = computeValue(state, jobDefinition, jobDefinition.label, '???');
                 fillText(context, {text: label, x: this. w / 2, y: scaledSize / 2 + 1 * scale, size: scaledSize - 4 * scale, color: '#FFF'});
@@ -146,10 +135,17 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
                 buttons.push(plusButton);
                 buttons.push(maxButton);
             }
-            if (state.selectedHero && jobDefinition.applyHeroProgress) {
-                buttons.push(heroButton);
-            }
             return buttons;
+        },
+        onClick(state: GameState) {
+            if (state.selectedHero && jobDefinition.applyHeroProgress) {
+                state.selectedHero.assignedJob = getOrCreateJob(state, jobDefinition);
+            }
+            return true;
+        },
+        onHover(state: GameState) {
+            showJobPreviewForHero(state, jobDefinition);
+            return true;
         }
     };
 }

@@ -498,7 +498,7 @@ class HeroObject implements Hero {
             // If the job doesn't have a completiong time, just render the bar filling up so we can still see the
             // hero is assigned a job.
             const p = totalSeconds ? job.workerSecondsCompleted / totalSeconds : (this.zone.time % 1000) / 1000;
-            const r = {x: this.x - this.r, y: this.y - this.r, w: Math.floor(2 * this.r * p), h: 2};
+            const r = {x: this.x - this.r, y: this.y - this.r - 5, w: Math.floor(2 * this.r * p), h: 2};
             fillRect(context, r, '#0AF');
             fillRect(context, {...r, x: r.x + r.w - 1, w: 1}, '#8FF');
         }
