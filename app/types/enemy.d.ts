@@ -55,6 +55,8 @@ interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
     onHit: (state: GameState, attacker: Hero) => void
     onDeath?: (state: GameState) => void
     aggroRadius: number
+    // When this enemy is aggroed, all enemies in its aggro pack will be aggroed as well.
+    aggroPack: Enemy[]
     // The last time the enemy attacked.
     lastAttackTime?: number
     movementTarget?: Point

@@ -188,6 +188,9 @@ export function renderEssenceBar(context: CanvasRenderingContext2D, state: GameS
 
 export function drawPill(context: CanvasRenderingContext2D, r: Rect, color: CanvasFill) {
     const radius = r.h / 2;
+    if (radius <= 0) {
+        return;
+    }
     context.fillStyle = color;
     context.beginPath();
     context.arc(r.x + radius, r.y + radius, radius, Math.PI / 2, 3 * Math.PI / 2);
@@ -199,6 +202,9 @@ export function drawPill(context: CanvasRenderingContext2D, r: Rect, color: Canv
 
 export function drawPillFill(context: CanvasRenderingContext2D, r: Rect, p: number, color: CanvasFill) {
     const w = (r.w * p) | 0;
+    if (w <= 0) {
+        return;
+    }
     const radius = r.h / 2;
     if (w < 2 * radius) {
         context.fillStyle = color;

@@ -10,7 +10,7 @@ const spawns = <const>[
     {type: 'cobra', level: 10},
 ];
 
-const bigRadius = 300, smallRadius = 80;
+const bigRadius = 300, smallRadius = 60, packSize = 5;
 export const snakePit: ZoneDefinition = {
     name: 'Snake Pit',
     floorColor: '#666',
@@ -23,9 +23,12 @@ export const snakePit: ZoneDefinition = {
             const bigTheta = -Math.PI / 6 + 1.5 * Math.PI * j / spawns.length;
             const cx = bigRadius * Math.cos(bigTheta);
             const cy = -bigRadius * Math.sin(bigTheta) - bigRadius;
-            for (let i = 0; i < 8; i++) {
-                const theta = 2 * Math.PI * i / 8 + Math.PI / 16 * (i % 2);
+            const aggroPack: Enemy[] = [];
+            for (let i = 0; i < packSize; i++) {
+                const theta = 2 * Math.PI * i / packSize + Math.PI / 16 * (j % 2);
                 const enemy: Enemy = createEnemy(type, level, {zone, x: cx + smallRadius * Math.cos(theta), y: cy + smallRadius * Math.sin(theta)});
+                enemy.aggroPack = aggroPack;
+                aggroPack.push(enemy);
                 zone.objects.push(enemy);
             }
         }

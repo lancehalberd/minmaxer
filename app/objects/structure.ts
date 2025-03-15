@@ -211,6 +211,7 @@ function enterNewZoneInstance(state: GameState, definition: ZoneDefinition, exit
 
 function enterZone(state: GameState, {zone, x, y}: ZoneLocation, hero: Hero) {
     removeFieldObject(state, hero);
+    // TODO: Cleanup sub-zones with no heroes to avoid possible memory leaks by removing all objects from the zones.
     hero.zone = zone;
     hero.x = x;
     hero.y = y;

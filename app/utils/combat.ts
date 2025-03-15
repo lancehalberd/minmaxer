@@ -92,6 +92,8 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
             source.enemyDefeatCount += 1;
         }
         if (target.objectType === 'enemy') {
+            // TODO: add a cleanup function to objects to try to avoid memory leaks.
+            target.aggroPack = [];
             const definition = enemyDefinitions[target.enemyType];
             const lootPool = definition?.getLootPool(state, target);
             let lootChance = (definition?.lootChance ?? 0.1);

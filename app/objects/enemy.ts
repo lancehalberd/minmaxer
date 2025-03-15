@@ -16,6 +16,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         color: definition.color,
         r: definition.r,
         aggroRadius: definition.aggroRadius,
+        aggroPack: [],
         health: derivedStats.maxHealth,
         getMaxHealth(state: GameState) {
             return derivedStats.maxHealth;
@@ -53,9 +54,19 @@ function onHitEnemy(this: Enemy, state: GameState, attacker: Hero) {
     if (this.isBoss) {
         return;
     }
+    aggroEnemyPack(this, attacker);
+}
+
+function aggroEnemyPack(enemy: Enemy, target: AllyTarget) {
     // Heroes will prioritize attacking a hero over other targets.
-    if (this.attackTarget?.objectType !== 'hero') {
-        this.attackTarget = attacker;
+    if (enemy.attackTarget?.objectType !== 'hero') {
+        enemy.attackTarget = target;
+    }
+    // Aggro the entire pack if one exists.
+    for (const ally of (enemy.aggroPack ?? [])) {
+        if (ally.attackTarget?.objectType !== 'hero') {
+            ally.attackTarget = target;
+        }
     }
 }
 
@@ -89,6 +100,9 @@ export function updateEnemy(this: Enemy, state: GameState) {
                 this.attackTarget = object;
                 closestDistance = distance;
             }
+        }
+        if (this.attackTarget) {
+            aggroEnemyPack(this, this.attackTarget);
         }
     }
     // Update ability cooldown and autocast any abilities that make sense.
