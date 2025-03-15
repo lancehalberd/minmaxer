@@ -1,11 +1,15 @@
+import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 import {addDamageNumber} from 'app/effects/damageNumber';
-import {frameLength} from 'app/gameConstants';
-import {loseEssence} from 'app/utils/essence';
+import {addTextEffect} from 'app/effects/textEffect';
+import {createLoot, pickupLoot} from 'app/objects/loot';
+import {frameLength, levelBuffer} from 'app/gameConstants';
+import {gainEssence, loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
+import {getItemLabel} from 'app/utils/inventory';
 import {removeFieldObject} from 'app/utils/world';
 
 
-export function applyDamageOverTime(state: GameState, target: AttackTarget, damagePerSecond: number) {
+export function applyDamageOverTime(state: GameState, target: AttackTarget, damagePerSecond: number, source?: AttackTarget) {
     // Currently nexux is immune to damage over time.
     if (target.objectType === 'nexus') {
         return;
@@ -15,10 +19,10 @@ export function applyDamageOverTime(state: GameState, target: AttackTarget, dama
         damage *= target.getIncomingDamageMultiplier(state);
     }
     target.health = Math.max(0, target.health - damage);
-    checkIfTargetIsDefeated(state, target);
+    checkIfTargetIsDefeated(state, target, source);
 }
 
-export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source, showDamageNumber = true}: AttackHit) {
+export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source, showDamageNumber = true, delayDamageNumber = 0}: AttackHit) {
     if (damage < 0) {
         return
     }
@@ -50,19 +54,61 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
     }
     target.health = Math.max(0, target.health - damage);
     if (showDamageNumber) {
-        addDamageNumber(state, {target, damage: damage | 0, isCrit});
+        addDamageNumber(state, {target, damage: damage | 0, isCrit, delay: delayDamageNumber});
     }
-    checkIfTargetIsDefeated(state, target);
+    checkIfTargetIsDefeated(state, target, source);
 }
 
-export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget) {
+export function getHeroes(state: GameState) {
+    const heroes: Hero[] = [];
+    for (const hero of state.heroSlots) {
+        if (hero) heroes.push(hero);
+    }
+    return heroes;
+}
+
+export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, source?: AttackTarget) {
     if (target.objectType === 'nexus' || target.health > 0) {
         return;
     }
     // remove the object from the state, if not a 'nexus' when it dies.
     removeFieldObject(state, target);
-    if ((target.objectType === 'enemy' || target.objectType === 'spawner') && target.onDeath) {
-        target.onDeath(state);
+    if (target.objectType === 'enemy' || target.objectType === 'spawner') {
+
+        target.onDeath?.(state);
+
+        // Loot drops+xp apply to all heroes in range.
+        const heroesInRange = getTargetsInCircle(state, getHeroes(state), {x: target.x, y: target.y, r: 200});
+        const lootType = (Math.random() < 0.1) ? (Math.random() < 0.9 ? 'potion' : 'invincibilityPotion') : undefined;
+        for (const hero of heroesInRange) {
+            const levelDisparity = hero.level - (target.level + levelBuffer);
+            const experiencePenalty = 1 - 0.1 * Math.max(levelDisparity, 0);
+            hero.experience += Math.max(target.experienceWorth * experiencePenalty, 0) / heroesInRange.length;
+            if (lootType) {
+                pickupLoot(state, hero, createLoot(lootType, target));
+            }
+        }
+        if (source?.objectType === 'hero') {
+            source.enemyDefeatCount += 1;
+        }
+        if (target.objectType === 'enemy') {
+            const definition = enemyDefinitions[target.enemyType];
+            const lootPool = definition?.getLootPool(state, target);
+            let lootChance = (definition?.lootChance ?? 0.1);
+            // Some enemies likes bosses may have lootChance higher than 1.
+            // This will be 100% chance for N items, and possibly some % chance for an additional item.
+            let delay = 400;
+            while (lootPool?.length && lootChance > 0) {
+                if (lootChance >= 1 || Math.random() < lootChance) {
+                    const itemKey = rollLoot(lootPool);
+                    addTextEffect(state, {target, text: getItemLabel(itemKey), delay});
+                    state.inventory[itemKey] = (state.inventory[itemKey] ?? 0) + 1;
+                    delay += 400;
+                }
+                lootChance--;
+            }
+        }
+        gainEssence(state, target.essenceWorth);
     }
     if (target.objectType === 'hero') {
         const reviveTime = Math.floor(target.level * 5 * (1 + state.nexus.deathCount * 0.2));
@@ -71,6 +117,19 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget) 
             remaining: reviveTime,
         };
     }
+}
+
+export function rollLoot(weightedDrops: WeightedDrop[]): InventoryKey {
+    let total = weightedDrops.map(d => d.weight).reduce((sum, weight) => sum + weight, 0);
+    let roll = Math.floor(Math.random() * total);
+    for (const drop of weightedDrops) {
+        roll -= drop.weight;
+        if (roll < 0) {
+            return drop.keys[Math.floor(Math.random() * drop.keys.length)];
+        }
+    }
+    console.error('Returning default drop');
+    return 'wood';
 }
 
 // Returns whether a target is still available to target with an ability.
@@ -107,19 +166,7 @@ export function getTargetsInCircle<T extends AttackTarget>(state: GameState, pos
 }
 
 
-export function applyEffectToHero(state: GameState, effect: ObjectEffect<Hero>, hero: Hero) {
-    hero.effects.push(effect);
-    effect.apply(state, hero);
-}
 
-export function removeEffectFromHero(state: GameState, effect: ObjectEffect<Hero>, hero: Hero) {
-    const index = hero.effects.indexOf(effect);
-    if (index < 0) {
-        return;
-    }
-    hero.effects.splice(index, 1);
-    effect.remove(state, hero);
-}
 
 export function isAbilityMouseTargetValid(state: GameState, targetingInfo: AbilityTargetingInfo): boolean {
     const mouseTarget = state.mouse.mouseHoverTarget;

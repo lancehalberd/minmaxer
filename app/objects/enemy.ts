@@ -1,4 +1,4 @@
-import {enemyDefinitions} from 'app/definitions/enemyDefinitions';
+import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 import {frameLength, framesPerSecond} from 'app/gameConstants';
 import {damageTarget, isEnemyAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';

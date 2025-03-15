@@ -1,4 +1,4 @@
-import {applyEffectToHero} from 'app/utils/combat';
+import {applyEffectToHero} from 'app/utils/ability';
 import {addHealEffectToTarget} from 'app/effects/healAnimation';
 
 export const lootDefinitions: {[key in LootType]?: LootDefinition} = {};

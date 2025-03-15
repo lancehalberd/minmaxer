@@ -24,6 +24,28 @@ const str = makeStatFunction('str');
 const dex = makeStatFunction('dex');
 const int = makeStatFunction('int');
 
+
+addItemDefinition({
+    key: 'scales',
+    name: 'Scales',
+    charmStats: {modifiers: [armor(1)]},
+    extraArmorModifiers: [armor(1)],
+});
+addItemDefinition({
+    key: 'largeScales',
+    name: 'Large Scales',
+    armorStats: {
+        armor: 3,
+    },
+    baseArmorStats: {armor: 2, armorCap: 5},
+    extraArmorModifiers: [armor(1)],
+});
+addItemDefinition({
+    key: 'hardScales',
+    name: 'Hard Scales',
+    charmStats: {modifiers: [armor(5)]},
+    extraArmorModifiers: [armor(3)],
+});
 addItemDefinition({
     key: 'hideScraps',
     name: 'Hide Scraps',

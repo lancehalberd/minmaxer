@@ -3,6 +3,9 @@ type EnemyType = 'kobold'|'koboldCleric'
     |'snake'|'cobra'
     |'mummy';
 
+
+type LootPoolGenerator = (state: GameState, enemy: Enemy) => WeightedDrop[]
+
 interface EnemyLevelDerivedStats {
     // Max life of the enemy
     maxHealth: number
@@ -29,6 +32,14 @@ interface EnemyDefinition {
     isBoss?: boolean
     render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy) => void
     abilities?: EnemyAbilityDefinition[]
+    // Defaults to 0.1= 10%
+    lootChance?: number
+    getLootPool: LootPoolGenerator
+}
+
+interface WeightedDrop {
+    keys: InventoryKey[]
+    weight: number
 }
 
 interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {

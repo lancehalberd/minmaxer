@@ -1,11 +1,10 @@
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
-import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
-import {createLoot, pickupLoot} from 'app/objects/loot';
+import {frameLength, framesPerSecond, heroLevelCap} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {damageTarget, isAbilityTargetValid, isTargetAvailable, removeEffectFromHero} from 'app/utils/combat';
+import {removeEffectFromHero} from 'app/utils/ability';
+import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
-import {gainEssence} from 'app/utils/essence';
 import {getDistance} from 'app/utils/geometry';
 import {summonHero} from 'app/utils/hero';
 import {applyHeroToJob} from 'app/utils/job';
@@ -395,7 +394,7 @@ class HeroObject implements Hero {
                         }
                         // floor damage value.
                         damage = damage | 0;
-                        damageTarget(state, this.attackTarget, {damage, isCrit, source: this});
+                        damageTarget(state, this.attackTarget, {damage, isCrit, source: this, delayDamageNumber: 200 * i});
                         checkForOnHitTargetAbilities(state, this, this.attackTarget);
                     }
                     this.attackTarget.onHit?.(state, this);
@@ -405,21 +404,6 @@ class HeroObject implements Hero {
                     }
                 }
 
-                // Remove the attack target when it is dead.
-                // Update hero experience.
-                if (this.attackTarget.health <= 0) {
-                    const levelDisparity = this.level - (this.attackTarget.level + levelBuffer);
-                    const experiencePenalty = 1 - 0.1 * Math.max(levelDisparity, 0);
-                    this.experience += Math.max(this.attackTarget.experienceWorth * experiencePenalty, 0);
-                    this.enemyDefeatCount += 1;
-                    gainEssence(state, this.attackTarget.essenceWorth);
-                    // Loot creation
-                    if (Math.random() < 0.1) {
-                        const lootType = Math.random() < 0.9 ? 'potion' : 'invincibilityPotion';
-                        // Auto-pickup loot
-                        pickupLoot(state, this, createLoot(lootType, this.attackTarget));
-                    }
-                }
             }
             return;
         }

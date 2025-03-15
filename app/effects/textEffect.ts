@@ -2,25 +2,26 @@ import {frameLength} from 'app/gameConstants';
 import {fillText} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
 
-
-interface DamageNumberEffectProps {
+interface TextEffectProps {
     target: FieldTarget
-    damage: number
+    text: string
+    color?: CanvasFill
     delay?: number
-    isCrit?: boolean
 }
-class DamageNumberEffect implements FieldAnimationEffect {
+class TextEffect implements FieldAnimationEffect {
     objectType = <const>'animation';
     zone = this.props.target.zone;
     x = Math.random() * 16 - 8;
     y = 0;
-    damage = this.props.damage;
+    text = this.props.text;
     target = this.props.target;
-    isCrit = this.props.isCrit;
-    duration = 500;
+    color = this.props.color ?? '#FFF';
     delay = this.props.delay ?? 0;
+    duration = 500;
     time = 0;
-    constructor(public props: DamageNumberEffectProps) {}
+    constructor(public props: TextEffectProps) {
+        this.zone.effects.push(this);
+    }
     update(state: GameState) {
         if (this.delay > 0) {
             this.delay -= frameLength;
@@ -40,21 +41,16 @@ class DamageNumberEffect implements FieldAnimationEffect {
         }
         // Small at the start and end, large in the middle.
         let size = 6 + 6 * Math.sin(this.time / this.duration * Math.PI);
-        if (this.isCrit) {
-            size = 1.5 * size;
-        }
         size = size | 0;
         let {x, y} = this;
         if (this.target){
             x += this.target.x;
             y += this.target.y;
         }
-        fillText(context, {text: this.damage, size, x, y, color: this.isCrit ? '#FF0' : '#F00'});
+        fillText(context, {text: this.text, size, x, y, color: this.color});
     }
     
 }
-export function addDamageNumber(state: GameState, props: DamageNumberEffectProps): FieldAnimationEffect {
-    const damageNumberEffect = new DamageNumberEffect(props);
-    damageNumberEffect.zone.effects.push(damageNumberEffect);
-    return damageNumberEffect;
+export function addTextEffect(state: GameState, props: TextEffectProps): FieldAnimationEffect {
+    return new TextEffect(props);
 }

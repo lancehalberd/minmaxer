@@ -10,6 +10,7 @@ type MaterialType =
     'hideScraps' | 'hide' | 'largeHide'
     | 'furScraps' | 'fur' | 'lionPelt' | 'bearSkin'
     | 'leatherStrap' | 'leather' | 'fineLeather'
+    | 'scales' | 'largeScales' | 'hardScales'
     | 'wood' | 'hardwood'
     | 'stone'
     | 'ironOre' | 'iron'

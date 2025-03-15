@@ -1,5 +1,6 @@
 import {addProjectile} from 'app/effects/projectile';
-import {damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle, applyEffectToHero, removeEffectFromHero} from 'app/utils/combat';
+import {applyEffectToHero, removeEffectFromHero} from 'app/utils/ability';
+import {damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillCircle} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
 // import {getDistance} from 'app/utils/geometry';

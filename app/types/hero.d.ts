@@ -235,6 +235,7 @@ interface AttackHit {
     isCrit?: boolean
     source?: AttackTarget
     showDamageNumber?: boolean
+    delayDamageNumber?: number
 }
 
 
