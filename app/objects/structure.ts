@@ -219,6 +219,7 @@ function enterZone(state: GameState, {zone, x, y}: ZoneLocation, hero: Hero) {
     delete hero.attackTarget;
     // Each zone has its own timer so make sure lastAttackTime is set to a reasonable value for the zone.
     hero.lastAttackTime = zone.time;
+    hero.lastTimeDamageTaken = zone.time;
     if (hero === state.selectedHero) {
         followCameraTarget(state, hero);
     }

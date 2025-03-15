@@ -1,5 +1,7 @@
 import {addProjectile} from 'app/effects/projectile';
-import {damageTarget, getEnemyTargets, getTargetsInCircle, applyEffectToHero} from 'app/utils/combat';
+import {damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle, applyEffectToHero, removeEffectFromHero} from 'app/utils/combat';
+import {fillCircle} from 'app/utils/draw';
+import {removeEffect} from 'app/utils/effect';
 // import {getDistance} from 'app/utils/geometry';
 
 
@@ -52,7 +54,7 @@ function removeBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, he
 export const battleRager: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Battle Rager',
-    onHitTarget(state: GameState, hero: Hero, target: AttackTarget, ability: PassiveAbility) {
+    onHitTarget(state: GameState, hero: Hero, ability: PassiveAbility, target: AttackTarget) {
         let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
         if (effect?.effectType === 'abilityEffect') {
             effect.remove(state, hero);
@@ -131,7 +133,7 @@ function getCriticalShotDamageMultiplier(abilityLevel: number): number {
 export const criticalShot: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Critical Shot',
-    modifyDamage(state: GameState, hero: Hero, target: AbilityTarget|undefined, ability: Ability, damage: number): number {
+    modifyDamage(state: GameState, hero: Hero, ability: Ability, target: AbilityTarget|undefined, damage: number): number {
         // Nothing happens if the critical strike roll fails.
         if (Math.random() > getCriticalShotChance(ability.level) / 100) {
             return damage;
@@ -141,11 +143,166 @@ export const criticalShot: PassiveAbilityDefinition = {
 };
 
 // Mage skills
-/*
-Active: Fire ball
-Area of Effect skill that does 40/45/50/55/60% increased damage over an area that is 1.4/1.55/1.70/1.85/2x base radius
-Range is 80
-Cooldown is 10s
-Passive: Fortress
-Prevents 50/55/60/65/70% incoming damage from the next 1/2/2/3/3 sources
-Barrier refreshes to full after 3/3/3/4/4 seconds since last damage instance*/
+const explosionFill = 'rgba(255, 0, 0, 0.5)';
+interface ExplosionEffectProps extends ZoneLocation {
+    r: number
+    damage: number
+    targetsAllies?: boolean
+    targetsEnemies?: boolean
+    source: AttackTarget
+}
+class ExplosionEffect implements GenericEffect {
+    objectType = <const>'effect';
+    color = explosionFill;
+    zone = this.props.zone;
+    r = this.props.r;
+    x = this.props.x;
+    y = this.props.y;
+    damage = this.props.damage;
+    targetsAllies = this.props.targetsAllies;
+    targetsEnemies = this.props.targetsEnemies;
+    source = this.props.source;
+    constructor(public props: ExplosionEffectProps) {
+        this.zone.effects.push(this);
+    }
+    update(state: GameState) {
+        if (this.targetsAllies) {
+            const targets = getTargetsInCircle(state, getAllyTargets(state, this.zone), this);
+            for (const target of targets) {
+                damageTarget(state, target, this);
+            }
+        }
+        if (this.targetsEnemies) {
+            const targets = getTargetsInCircle(state, getEnemyTargets(state, this.zone), this);
+            for (const target of targets) {
+                damageTarget(state, target, this);
+            }
+        }
+        removeEffect(state, this);
+    }
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        fillCircle(context, this)
+    }
+}
+
+const fireballProjectileRadius = 5;
+export const fireball: ActiveAbilityDefinition<AbilityTarget> = {
+    abilityType: 'activeAbility',
+    name: 'Fireball',
+    getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
+        // This skill is used immediately where the hero is standing when activated.
+        return {
+            canTargetEnemy: true,
+            canTargetLocation: true,
+            projectileRadius: fireballProjectileRadius,
+            range: 110,
+        };
+    },
+    getCooldown(state: GameState, hero: Hero, ability: ActiveAbility) {
+        return 10000;
+    },
+    onActivate(state: GameState, hero: Hero, ability: ActiveAbility, target: AbilityTarget) {
+        // Create a piercing projectile.
+        const speed = 200;
+        const dx = target.x - hero.x, dy = target.y - hero.y;
+        const mag = Math.sqrt(dx*dx + dy*dy);
+        const damage = ([1.4, 1.45, 1.5, 1.55, 1.6][ability.level - 1] * hero.getDamageForTarget(state, target)) | 0;
+        const explosionRadius = ([1.4, 1.55, 1.70, 1.85, 2][ability.level - 1] * 20) | 0;
+        // TODO: this should apply extra hit, crit chance + strength damage bonus.
+        const targetingInfo = this.getTargetingInfo(state, hero, ability);
+        addProjectile(state, {
+            zone: hero.zone,
+            x: hero.x + dx * hero.r / mag,
+            y: hero.y + dy * hero.r / mag,
+            hitsEnemies: targetingInfo.canTargetEnemy,
+            vx: dx * speed / mag,
+            vy: dy * speed / mag,
+            r: fireballProjectileRadius,
+            duration: 1000 * getPiercingShotRange(state, hero, ability) / speed,
+            hit: {damage: 0, source: hero},
+            render: renderFireballProjectile,
+            onExpire(this: Projectile, state: GameState) {
+                // PoisonPoolEffect automatically adds itself to the zone in the constructor.
+                new ExplosionEffect({
+                    zone: this.zone,
+                    x: this.x,
+                    y: this.y,
+                    r: explosionRadius,
+                    targetsEnemies: true,
+                    damage,
+                    source: hero,
+                });
+            }
+        });
+    },
+};
+function renderFireballProjectile(this: Projectile, context: CanvasRenderingContext2D, state: GameState) {
+    fillCircle(context, {...this, color: explosionFill});
+}
+
+
+function getFortressDamageReduction(abilityLevel: number): number {
+    return [0.5, .45, .4, .35, .3][abilityLevel - 1]
+}
+function applyFortressEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
+    hero.addStatModifiers([{
+        stat: 'incomingDamageMultiplier',
+        multiplier: getFortressDamageReduction(this.abilityLevel),
+    }]);
+}
+function removeFortressffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
+    hero.removeStatModifiers([{
+        stat: 'incomingDamageMultiplier',
+        multiplier: getFortressDamageReduction(this.abilityLevel),
+    }]);
+}
+export const fortress: PassiveAbilityDefinition = {
+    abilityType: 'passiveAbility',
+    name: 'Fortress',
+    renderUnderHero(context: CanvasRenderingContext2D, state: GameState, hero: Hero, ability: PassiveAbility) {
+        const effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        if (effect?.effectType === 'abilityEffect') {
+            context.strokeStyle = 'rgba(255, 0, 128, 0.6)';
+            for (let i = 0; i < effect.stacks; i++) {
+                fillCircle(context, {x: hero.x, y: hero.y, r: hero.r + 2 * (1+ i)});
+                context.stroke();
+            }
+        }
+    },
+    update(state: GameState, hero: Hero, ability: PassiveAbility) {
+        const maxStacks = [1, 2, 2, 3, 3][ability.level - 1];
+        let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        // Remove the effect from the hero when the ability level changes in order to update the buff to the new value.
+        if (effect?.effectType === 'abilityEffect' && effect.abilityLevel !== ability.level) {
+            removeEffectFromHero(state, effect, hero);
+        }
+        if (effect?.effectType !== 'abilityEffect' || effect.stacks < maxStacks) {
+            const recoveryDuration = 1000 * [3, 3, 3, 4, 4][ability.level - 1];
+            const timeSinceDamageTaken = hero.zone.time - (hero.lastTimeDamageTaken || 0);
+            if (timeSinceDamageTaken >= recoveryDuration) {
+                if (effect?.effectType === 'abilityEffect') {
+                    effect.stacks = maxStacks
+                } else {
+                    effect = {
+                        effectType: 'abilityEffect',
+                        ability,
+                        abilityLevel: ability.level,
+                        stacks: maxStacks,
+                        apply: applyFortressEffect,
+                        remove: removeFortressffect,
+                    };
+                    applyEffectToHero(state, effect, hero);
+                }
+            }
+        }
+    },
+    onHit(state: GameState, hero: Hero, ability: PassiveAbility, source: AttackTarget) {
+        let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        if (effect?.effectType === 'abilityEffect') {
+            effect.stacks--;
+            if (effect.stacks <= 0) {
+                removeEffectFromHero(state, effect, hero);
+            }
+        }
+    },
+};

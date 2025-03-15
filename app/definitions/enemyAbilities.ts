@@ -110,11 +110,11 @@ class PoisonPoolEffect implements GenericEffect {
         }
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
-        context
         fillCircle(context, this)
     }
 }
 
+const poisionSpitProjectileRadius = 8;
 export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeEnemyAbility',
     name: 'Poison Spit',
@@ -125,7 +125,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
             // This is the hit radius of the projectile, not the poison pool.
             // Prefer using this so that the enemy tends to deploy the pool so that its target is near
             // the center and not at the very edge.
-            hitRadius: 10,
+            hitRadius: poisionSpitProjectileRadius,
             range: 100,
         };
     },
@@ -144,7 +144,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
             hitsEnemies: targetingInfo.canTargetEnemy,
             vx: dx * speed / mag,
             vy: dy * speed / mag,
-            r: 10,
+            r: poisionSpitProjectileRadius,
             // Set the duration to expire either at the target location, or the maximum range.
             duration: 1000 * Math.min(mag, targetingInfo.range) / speed,
             piercing: true,

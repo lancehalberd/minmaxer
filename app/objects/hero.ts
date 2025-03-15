@@ -2,7 +2,7 @@ import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {frameLength, framesPerSecond, heroLevelCap, levelBuffer} from 'app/gameConstants';
 import {createLoot, pickupLoot} from 'app/objects/loot';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
+import {damageTarget, isAbilityTargetValid, isTargetAvailable, removeEffectFromHero} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
@@ -162,7 +162,7 @@ class HeroObject implements Hero {
         for (const ability of this.abilities) {
             if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
                 if (ability.definition.modifyDamage) {
-                    damage = ability.definition.modifyDamage(state, this, target, ability, damage);
+                    damage = ability.definition.modifyDamage(state, this, ability, target, damage);
                 }
             }
         }
@@ -306,12 +306,15 @@ class HeroObject implements Hero {
 
         // Update ability cooldown and autocast any abilities that make sense.
         for (const ability of this.abilities) {
-            if (ability.abilityType === 'activeAbility') {
+            if (ability.level > 0 && ability.abilityType === 'activeAbility') {
                 if (ability.cooldown > 0) {
                     ability.cooldown -= frameLength;
                 } else if (ability.autocast) {
                     checkToAutocastAbility(state, this, ability);
                 }
+            }
+            if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
+                ability.definition.update?.(state, this, ability);
             }
         }
 
@@ -321,8 +324,7 @@ class HeroObject implements Hero {
             if (effect.duration) {
                 effect.duration -= frameLength / 1000;
                 if (effect.duration <= 0) {
-                    this.effects.splice(i--, 1);
-                    effect.remove(state, this);
+                    removeEffectFromHero(state, this.effects[i--], this);
                 }
             }
         }
@@ -362,7 +364,7 @@ class HeroObject implements Hero {
             let closestDistance = this.getAttackRange(state);
             for (const object of this.zone.objects) {
                 if (object.objectType === 'enemy') {
-                    const distance = getDistance(this, object);
+                    const distance = getDistance(this, object) - this.r - object.r;
                     if (distance < closestDistance) {
                         this.attackTarget = object;
                         closestDistance = distance;
@@ -450,8 +452,16 @@ class HeroObject implements Hero {
                 color: 'blue',
             });
         }
+        // Debug code to render a ring at the hero's attack range.
+        //fillRing(context, {...this, r: this.r + this.getAttackRange(state) - 1, r2: this.r + this.getAttackRange(state), color: '#FFF'});
         if (this.attackTarget) {
             fillRing(context, {...this.attackTarget, r: this.attackTarget.r + 2, r2: this.attackTarget.r - 2, color: '#FFF'});
+        }
+
+        for (const ability of this.abilities) {
+            if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
+                ability.definition.renderUnderHero?.(context, state, this, ability);
+            }
         }
 
         // Draw a circle for the hero centered at their location, with their radius and color.
@@ -509,6 +519,12 @@ export function addBasicHeroes(state: GameState) {
 }
 
 function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
+    this.lastTimeDamageTaken = this.zone.time;
+    for (const ability of this.abilities) {
+        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
+            ability.definition.onHit?.(state, this, ability, attacker);
+        }
+    }
     // Hero will ignore being attacked if they are completing a movement command.
     if (this.movementTarget) {
         return;
@@ -583,7 +599,7 @@ function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbi
 function checkForOnHitTargetAbilities(state: GameState, hero: Hero, target: AttackTarget) {
     for (const ability of hero.abilities) {
         if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
-            ability.definition.onHitTarget?.(state, hero, target, ability);
+            ability.definition.onHitTarget?.(state, hero, ability, target);
         }
     }
 }

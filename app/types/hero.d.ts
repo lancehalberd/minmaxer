@@ -91,6 +91,7 @@ interface Hero extends Circle, ZoneLocation {
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
+    lastTimeDamageTaken?: number
     movementTarget?: FieldTarget
     assignedJob?: Job
     // The target of the last explicit command the hero was given, if any.
@@ -180,9 +181,13 @@ interface ActiveAbilityDefinition<T=AbilityTarget|undefined> {
 interface PassiveAbilityDefinition {
     abilityType: 'passiveAbility'
     name: string
+    update?: (state: GameState, hero: Hero, ability: PassiveAbility) => void
+    renderUnderHero?: (context: CanvasRenderingContext2D, state: GameState, hero: Hero, ability: PassiveAbility) => void
+    // Called when the ability user is hit by something.
+    onHit?: (state: GameState, hero: Hero, ability: PassiveAbility, source: AttackTarget) => void
     // Called when the ability user hits any target.
-    onHitTarget?: (state: GameState, hero: Hero, target: AttackTarget, ability: PassiveAbility) => void
-    modifyDamage?: (state: GameState, hero: Hero, target: AbilityTarget|undefined, ability: PassiveAbility, damage: number) => number
+    onHitTarget?: (state: GameState, hero: Hero, ability: PassiveAbility, target: AttackTarget) => void
+    modifyDamage?: (state: GameState, hero: Hero, ability: PassiveAbility, target: AbilityTarget|undefined, damage: number) => number
 }
 
 type AbilityDefinition = ActiveAbilityDefinition<any> | PassiveAbilityDefinition;
