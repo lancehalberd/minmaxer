@@ -66,7 +66,7 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
         }
     });
     const repeatToggle = new RepeatToggle({
-        x: w -scaledSize / 2, y: -scaledSize / 2,
+        x: w - 3 * scaledSize / 4, y: -scaledSize / 4,
         w: scaledSize, h: scaledSize,
         isActive(state: GameState) {
             return getOrCreateJob(state, jobDefinition).shouldRepeatJob;

@@ -15,14 +15,11 @@ TODO:
 Minigames for improving stats/experience.
 
 Add a way to farm materials from enemies/content:
-    Add drop pools to enemies + more enemy types?
+    More enemy types?
     Include rare resources
     Add rare drop chance for harvesting actions:
         1% chance to get hardwood instead of wood
         Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
-
-Prevent heroes/enemies from walking over structures.
-Prevent heroes/enemies from being within 10px of each other.
 
 Basic Crafting Improvements
     Add HUD button for opening crafting panel.

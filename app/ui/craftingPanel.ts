@@ -1,5 +1,6 @@
 import {craftingJobDefinitions} from 'app/city/crafting';
 import {canvas, uiSize} from 'app/gameConstants';
+import {CloseIconButton} from 'app/ui/iconButton';
 import {TextButton} from 'app/ui/textButton';
 import {fillRect} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
@@ -14,6 +15,16 @@ export class CraftingPanel implements UIContainer {
     x = 40;
     y = (canvas.height - this.h) / 2;
     page = 0;
+    closeButton = new CloseIconButton({
+        x: this.w - 2 * uiSize,
+        y: uiSize,
+        w: uiSize,
+        h: uiSize,
+        onPress: (state: GameState) => {
+            state.openCraftingPanel = false;
+            return true;
+        },
+    });
     craftingElements: UIElement[] = [];
     updateCraftingElements(state: GameState): void {
         this.craftingElements = [];
@@ -67,7 +78,7 @@ export class CraftingPanel implements UIContainer {
         context.restore();
     }
     getChildren(state: GameState) {
-        const children: UIElement[] = [];
+        const children: UIElement[] = [this.closeButton];
         // Just include the current page of crafting options.
         for (let i = 0; i < itemsPerPage; i++) {
             const element = this.craftingElements[this.page * itemsPerPage + i];

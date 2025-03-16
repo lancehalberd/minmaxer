@@ -129,7 +129,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
             range: 100,
         };
     },
-    cooldown: 5000,
+    cooldown: 8000,
     zoneCooldown: 1000,
     warningTime: 0,
     onActivate(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<AbilityTarget>, target: LocationTarget) {
@@ -141,7 +141,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
             zone: enemy.zone,
             x: enemy.x + dx * enemy.r / mag,
             y: enemy.y + dy * enemy.r / mag,
-            hitsEnemies: targetingInfo.canTargetEnemy,
+            hitsAllies: true,
             vx: dx * speed / mag,
             vy: dy * speed / mag,
             r: poisionSpitProjectileRadius,

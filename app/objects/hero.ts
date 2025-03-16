@@ -555,6 +555,28 @@ function moveHeroTowardsTarget(state: GameState, hero: Hero, target: AbilityTarg
         hero.x += pixelsPerFrame * dx / mag;
         hero.y += pixelsPerFrame * dy / mag;
     }
+    // Push the hero away from any objects they get too close to.
+    for (const object of hero.zone.objects) {
+        if (object === hero) {
+            continue;
+        }
+        let minDistance = hero.r + object.r - 8;
+        if (minDistance <= 0) {
+            continue;
+        }
+        //if (object.objectType === 'hero') {
+        //    minDistance = hero.r + object.r - 10;
+        //} else if (object.objectType === '')
+        const dx = hero.x - object.x, dy = hero.y - object.y;
+        if (!dx && !dy) {
+            continue;
+        }
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        if (mag < minDistance) {
+            hero.x = object.x + dx * minDistance / mag;
+            hero.y = object.y + dy * minDistance / mag;
+        }
+    }
     return false;
 }
 

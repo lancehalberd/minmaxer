@@ -1,4 +1,5 @@
 import {canvas, uiSize} from 'app/gameConstants';
+import {CloseIconButton} from 'app/ui/iconButton';
 import {TextButton} from 'app/ui/textButton';
 import {computeValue} from 'app/utils/computed';
 import {fillRect, fillText} from 'app/utils/draw';
@@ -9,6 +10,7 @@ interface ChooseItemPanelProps<T extends InventoryItem> extends Partial<UIContai
     items: Computed<T[], ChooseItemPanel<T>>
     onHoverItem?: (state: GameState, item: T) => void
     onSelectItem: (state: GameState, item: T) => void
+    onClose?: (state: GameState) => void
 }
 export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     objectType = <const>'uiContainer';
@@ -21,6 +23,17 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     h = this.props.h ?? 400;
     x = this.props.x ?? 300;
     y = this.props.y ?? (canvas.height - this.h) / 2;
+    onClose = this.props.onClose;
+    closeButton = new CloseIconButton({
+        x: this.w - 2 * uiSize,
+        y: uiSize,
+        w: uiSize,
+        h: uiSize,
+        onPress: (state: GameState) => {
+            this.onClose?.(state);
+            return true;
+        },
+    });
     constructor(public props: ChooseItemPanelProps<T>) {}
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -42,6 +55,9 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     }
     getChildren(state: GameState) {
         const buttons: UIElement[] = [];
+        if (this.onClose) {
+            buttons.push(this.closeButton);
+        }
         let y = 45;
         for (const item of computeValue(state, this, this.items, [])) {
             const itemButton = new TextButton({

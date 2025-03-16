@@ -70,7 +70,7 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
     const label = getItemLabel(craftingJobDefinition.item);
     const jobDefinition: JobDefinition = {
         key: 'craft-' + craftingJobDefinition.item,
-        label: 'Make ' + label,
+        label: '+' + label,
         resourceCost: craftingJobDefinition.resourceCost,
         essenceCost: craftingJobDefinition.essenceCost,
         workerSeconds: craftingJobDefinition.workerSeconds,

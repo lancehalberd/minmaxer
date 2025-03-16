@@ -123,12 +123,12 @@ export function updateEnemy(this: Enemy, state: GameState) {
         this.movementTarget = this.defaultTarget;
     }
     if (this.attackTarget) {
-        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
+        //const pixelsPerFrame = this.movementSpeed / framesPerSecond;
         // Move this until it reaches the target.
-        const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
+        //const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
+        //const mag = Math.sqrt(dx * dx + dy * dy);
         // Attack the target when it is in range.
-        if (mag <= this.r + this.attackTarget.r + this.attackRange) {
+        if (moveEnemyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.attackRange)) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / this.attacksPerSecond;
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
@@ -138,18 +138,18 @@ export function updateEnemy(this: Enemy, state: GameState) {
             }
             return;
         }
-        if (mag < pixelsPerFrame) {
+        /*if (mag < pixelsPerFrame) {
             this.x = this.attackTarget.x;
             this.y = this.attackTarget.y;
         } else {
             this.x += pixelsPerFrame * dx / mag;
             this.y += pixelsPerFrame * dy / mag;
-        }
+        }*/
         return;
     }
     if (!this.attackTarget && this.movementTarget) {
         // Move enemy until it reaches the target.
-        const pixelsPerFrame = this.movementSpeed / framesPerSecond;
+        /*const pixelsPerFrame = this.movementSpeed / framesPerSecond;
         const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
         const mag = Math.sqrt(dx * dx + dy * dy);
         if (mag < pixelsPerFrame) {
@@ -158,13 +158,59 @@ export function updateEnemy(this: Enemy, state: GameState) {
         } else {
             this.x += pixelsPerFrame * dx / mag;
             this.y += pixelsPerFrame * dy / mag;
-        }
+        }*/
 
         // Remove the target once they reach their destination.
-        if (this.x === this.movementTarget.x && this.y === this.movementTarget.y) {
+        if (moveEnemyTowardsTarget(state, this, this.movementTarget)) {
             delete this.movementTarget;
         }
     }
+}
+
+function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityTarget, distance = 0): boolean {
+    const pixelsPerFrame = enemy.movementSpeed / framesPerSecond;
+    // Move this until it reaches the target.
+    // Slightly perturb the target so enemies don't get stacked with the exact same heading.
+    const dx = target.x - 0.5 + Math.random() - enemy.x;
+    const dy = target.y - 0.5 + Math.random() - enemy.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    // Attack the target when it is in range.
+    if (mag <= distance) {
+        return true;
+    }
+    if (mag < pixelsPerFrame) {
+        enemy.x = target.x;
+        enemy.y = target.y;
+    } else {
+        enemy.x += pixelsPerFrame * dx / mag;
+        enemy.y += pixelsPerFrame * dy / mag;
+    }
+    // Push the enemy away from any objects they get too close to.
+    for (const object of enemy.zone.objects) {
+        if (object === enemy) {
+            continue;
+        }
+        let minDistance = enemy.r + object.r - 6;
+        if (minDistance <= 0) {
+            continue;
+        }
+        //if (object.objectType === 'enemy') {
+        //    minDistance = enemy.r + object.r - 10;
+        //} else if (object.objectType === '')
+        const dx = enemy.x - object.x, dy = enemy.y - object.y;
+        if (!dx && !dy) {
+            continue;
+        }
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        if (mag < minDistance) {
+            //console.log(mag, ' < ', minDistance);
+            //console.log(enemy.x, enemy.y);
+            enemy.x = object.x + dx * minDistance / mag;
+            enemy.y = object.y + dy * minDistance / mag;
+            //console.log('->', enemy.x, enemy.y);
+        }
+    }
+    return false;
 }
 
 export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, state: GameState) {

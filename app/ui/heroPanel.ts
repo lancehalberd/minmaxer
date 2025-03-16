@@ -1,4 +1,5 @@
-import {canvas} from 'app/gameConstants';
+import {canvas, uiSize} from 'app/gameConstants';
+import {CloseIconButton} from 'app/ui/iconButton';
 import {TextButton} from 'app/ui/textButton';
 import {fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
@@ -100,6 +101,19 @@ export class HeroPanel implements UIContainer {
     h = 500;
     x = 40;
     y = (canvas.height - this.h) / 2;
+    closeButton = new CloseIconButton({
+        x: this.w - 2 * uiSize,
+        y: uiSize,
+        w: uiSize,
+        h: uiSize,
+        onPress: (state: GameState) => {
+            state.openCharacterPanel = false;
+            state.openChooseWeaponPanel = false;
+            state.openChooseArmorPanel = false;
+            state.openChooseCharmPanel = false;
+            return true;
+        },
+    });
     equipHeroPanel = new EquipHeroPanel();
 
     getTextLines(state: GameState): string[] {
@@ -155,6 +169,6 @@ export class HeroPanel implements UIContainer {
     getChildren(state: GameState) {
         this.equipHeroPanel.x = (this.w - this.equipHeroPanel.w) / 2;
         this.equipHeroPanel.y = 25 + this.getTextLines(state).length * 20;
-        return [this.equipHeroPanel];
+        return [this.closeButton, this.equipHeroPanel];
     }
 }

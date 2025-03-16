@@ -43,6 +43,9 @@ export const chooseArmorPanel = new ChooseItemPanel<Armor>({
         }
         state.openChooseArmorPanel = false;
     },
+    onClose(state: GameState) {
+        state.openChooseArmorPanel = false;
+    },
 });
 export const chooseWeaponPanel = new ChooseItemPanel<Weapon>({
     title: 'Choose Weapon',
@@ -76,6 +79,9 @@ export const chooseWeaponPanel = new ChooseItemPanel<Weapon>({
                 removeItemFromInventory(state, item);
             }
         }
+        state.openChooseWeaponPanel = false;
+    },
+    onClose(state: GameState) {
         state.openChooseWeaponPanel = false;
     },
 });
@@ -112,6 +118,9 @@ export const chooseCharmPanel = new ChooseItemPanel<Charm>({
                 removeItemFromInventory(state, item);
             }
         }
+        state.openChooseCharmPanel = false;
+    },
+    onClose(state: GameState) {
         state.openChooseCharmPanel = false;
     },
 });

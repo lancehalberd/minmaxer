@@ -1,4 +1,4 @@
-import {fillBorderedRect, fillCircle, fillRect} from 'app/utils/draw';
+import {fillBorderedRect, fillCircle, fillRect, strokeX} from 'app/utils/draw';
 import {isMouseOverTarget} from 'app/mouse';
 import {uiSize} from 'app/gameConstants';
 
@@ -31,6 +31,14 @@ export class IconButton implements UIButton {
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
         this.drawBackground(context, state);
+    }
+}
+export class CloseIconButton extends IconButton {
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        // this.drawBackground(context, state);
+        const color = isMouseOverTarget(state, this) ? '#999' : '#FFF';
+        context.lineWidth = 2;
+        strokeX(context, {x: this.x + this.w / 2, y: this.y + this.h / 2}, 0.8 * Math.min(this.w, this.h), color);
     }
 }
 export class PlusIconButton extends IconButton {

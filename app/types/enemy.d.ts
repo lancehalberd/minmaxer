@@ -59,7 +59,7 @@ interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
     aggroPack: Enemy[]
     // The last time the enemy attacked.
     lastAttackTime?: number
-    movementTarget?: Point
+    movementTarget?: AbilityTarget
     attackTarget?: AllyTarget
     // If set the enemy will attack this target when idle.
     defaultTarget?: AllyTarget
