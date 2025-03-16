@@ -561,6 +561,11 @@ function moveHeroTowardsTarget(state: GameState, hero: Hero, target: AbilityTarg
             continue;
         }
         let minDistance = hero.r + object.r - 8;
+        // This will make the min distance slightly smaller than it is for bosses,
+        // to prevent pushing them around.
+        if (object.objectType === 'enemy' && object.isBoss) {
+            minDistance += 4;
+        }
         if (minDistance <= 0) {
             continue;
         }

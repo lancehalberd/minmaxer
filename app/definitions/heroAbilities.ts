@@ -263,6 +263,7 @@ export const fortress: PassiveAbilityDefinition = {
     renderUnderHero(context: CanvasRenderingContext2D, state: GameState, hero: Hero, ability: PassiveAbility) {
         const effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
         if (effect?.effectType === 'abilityEffect') {
+            context.lineWidth = 1;
             context.strokeStyle = 'rgba(255, 0, 128, 0.6)';
             for (let i = 0; i < effect.stacks; i++) {
                 fillCircle(context, {x: hero.x, y: hero.y, r: hero.r + 2 * (1+ i)});

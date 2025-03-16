@@ -202,8 +202,9 @@ class EnemyWaveSpawner implements WaveSpawner {
             const enemy: Enemy = createEnemy(scheduledSpawn.enemyType, scheduledSpawn.level, this);
             // Enemies spawned during waves all attack the nexus by default.
             enemy.defaultTarget = state.nexus;
-            enemy.x = this.x + this.r * Math.cos(theta);
-            enemy.y = this.y + this.r * Math.sin(theta);
+            // Spawn enemies just slightly overlapping the spawner.
+            enemy.x = this.x + (this.r + enemy.r - 4) * Math.cos(theta);
+            enemy.y = this.y + (this.r + enemy.r - 4) * Math.sin(theta);
             this.lastSpawnTime = this.zone.time;
             this.spawnedEnemies.push(enemy);
             this.zone.objects.push(enemy);
@@ -228,7 +229,8 @@ export function checkToAddNewSpawner(state: GameState) {
     // Add additional spawners/waves as necessary for now.
     if (numSpawners === 0 || !state.waves[state.nextWaveIndex + 5]) {
         const level = state.world.nextSpawnerLevel;
-        const theta = 2 * Math.PI * level / 8;
+        // This is slightly more than level * Math.PI / 4 so that the generated spawners mostly won't line up exactly.
+        const theta = 21 * Math.PI * level / 80;
         const spawnRadius = 300 + 20 * level;
         const x = state.nexus.x + spawnRadius * Math.cos(theta);
         const y = state.nexus.y - spawnRadius * Math.sin(theta);
