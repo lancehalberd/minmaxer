@@ -1,4 +1,4 @@
-import {fillBorderedRect, fillCircle, fillRect, strokeX} from 'app/utils/draw';
+import {fillBorderedRect, fillCircle, fillRect, fillText, strokeX} from 'app/utils/draw';
 import {isMouseOverTarget} from 'app/mouse';
 import {uiSize} from 'app/gameConstants';
 
@@ -63,10 +63,30 @@ export class CircleIconButton extends IconButton {
 }
 
 
+interface CharacterIconButtonProps extends IconButtonProps {
+    character: string;
+}
+export class CharacterIconButton extends IconButton {
+    w = this.props.w ?? 2 * uiSize;
+    h = this.props.h ?? 2 * uiSize;
+    character = this.props.character;
+    constructor(public props: CharacterIconButtonProps) {
+        super(props);
+    }
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        this.drawBackground(context, state);
+        const size = Math.min(this.w, this.h) - 4;
+        fillText(context, {
+            x: this.x + this.w / 2,
+            y: this.y + this.h / 2 + size / 10,
+            text: this.character,
+            size,
+        });
+    }
+}
+
+
 interface RepeatButtonProps extends IconButtonProps {
-    color?: CanvasFill
-    backgroundColor?: CanvasFill
-    hoverBackgroundColor?: CanvasFill
     isActive: (state: GameState) => boolean
 }
 export class RepeatToggle extends IconButton {

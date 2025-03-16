@@ -50,13 +50,6 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
             }
         }
     }*/
-    if (state.city.population) {
-        fillText(context, {...text, text: 'population: ' + state.city.population + ' / ' + state.city.maxPopulation, x, y});
-        y += 20;
-        fillText(context, {...text, text: 'idle: ' + state.city.idlePopulation, x, y});
-        y += 40;
-    }
-
     if (state.previewRequiredToolType) {
         const hasTool = !!getAvailableToolCount(state, state.previewRequiredToolType)
         const color = hasTool ? '#0F0' : '#F00';

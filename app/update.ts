@@ -5,6 +5,9 @@ import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
+import {toggleCraftingPanel} from 'app/ui/craftingPanel';
+import {toggleHeroPanel} from 'app/ui/heroPanel';
+import {toggleInventoryPanel} from 'app/ui/inventoryPanel';
 import {activateHeroAbility} from 'app/utils/hero';
 import {computeIdleToolCounts} from 'app/utils/inventory';
 import {updateJobs} from 'app/utils/job';
@@ -79,14 +82,6 @@ Population jobs:
         Refinery (convert raw resources into refined resources like lumber -> planks, ore -> ingots)
 */
 
-function closeAllPanels(state: GameState) {
-    state.openCharacterPanel = false;
-    state.openChooseArmorPanel = false;
-    state.openChooseWeaponPanel = false;
-    state.openChooseCharmPanel = false;
-    state.openCraftingPanel = false;
-}
-
 function update() {
     // Reset the essence preview every frame so it doesn't get stale.
     // This needs to run before updateMouseActions since it is often set when hovering over elements.
@@ -118,20 +113,13 @@ function update() {
 
 
     if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
-        if (state.selectedHero && !state.openCharacterPanel) {
-            closeAllPanels(state);
-            state.openCharacterPanel = true;
-        } else {
-            closeAllPanels(state);
-        }
+        toggleHeroPanel(state);
     }
     if (wasGameKeyPressed(state, gameKeys.craftingPanel)) {
-        if (!state.openCraftingPanel) {
-            closeAllPanels(state);
-            state.openCraftingPanel = true;
-        } else {
-            closeAllPanels(state);
-        }
+        toggleCraftingPanel(state);
+    }
+    if (wasGameKeyPressed(state, gameKeys.inventoryPanel)) {
+        toggleInventoryPanel(state);
     }
 
     if (wasGameKeyPressed(state, gameKeys.cameraLock)) {

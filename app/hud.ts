@@ -1,11 +1,50 @@
-import {canvas} from 'app/gameConstants';
+import {canvas, uiSize} from 'app/gameConstants';
 import {getHeroAbilityButtons, getNexusAbilityButtons} from 'app/ui/abilityButton';
-import {CraftingPanel} from 'app/ui/craftingPanel';
+import {CraftingPanel, toggleCraftingPanel} from 'app/ui/craftingPanel';
 import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equipmentPanels';
 import {getHeroButtons} from 'app/ui/heroButton';
-import {HeroPanel} from 'app/ui/heroPanel';
+import {HeroPanel, toggleHeroPanel} from 'app/ui/heroPanel';
+import {inventoryPanel, toggleInventoryPanel} from 'app/ui/inventoryPanel';
+import {CharacterIconButton} from 'app/ui/iconButton';
 import {requireFrame, drawFrame} from 'app/utils/animations';
 import {waveComponent} from 'app/ui/waveComponent';
+import {fillText} from 'app/utils/draw';
+
+const buttonSize = 4 * uiSize
+
+
+const characterPanelButton = new CharacterIconButton({
+    x: 40 + uiSize,
+    y: canvas.height - buttonSize - uiSize,
+    w: buttonSize, h: buttonSize,
+    character: 'C',
+    onClick: (state: GameState) => {
+        toggleHeroPanel(state);
+        return true;
+    },
+});
+
+const inventoryPanelButton = new CharacterIconButton({
+    x: 40 + uiSize + 1 * (buttonSize + uiSize),
+    y: canvas.height - buttonSize - uiSize,
+    w: buttonSize, h: buttonSize,
+    character: 'I',
+    onClick: (state: GameState) => {
+        toggleInventoryPanel(state);
+        return true;
+    },
+});
+
+const craftingPanelButton = new CharacterIconButton({
+    x: 40 + uiSize + 2 * (buttonSize + uiSize),
+    y: canvas.height - buttonSize - uiSize,
+    w: buttonSize, h: buttonSize,
+    character: 'M',
+    onClick: (state: GameState) => {
+        toggleCraftingPanel(state);
+        return true;
+    },
+});
 
 
 const heroPanel = new HeroPanel();
@@ -13,25 +52,54 @@ const craftingPanel = new CraftingPanel();
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
 export function updateHudUIElements(state: GameState) {
+    const openPanels: UIElement[] = [];
+    const panelButtons: UIElement[] = [];
     state.hudUIElements = getNexusAbilityButtons(state);
     if (state.selectedHero) {
         state.hudUIElements = [...state.hudUIElements, ...getHeroAbilityButtons(state, state.selectedHero)];
+        panelButtons.push(characterPanelButton);
+    }
+    if (Object.keys(state.inventory).length) {
+        panelButtons.push(inventoryPanelButton);
+    }
+    if (state.city.population) {
+        state.hudUIElements.push(populationDisplay);
+    }
+    craftingPanel.updateCraftingElements(state);
+    if (craftingPanel.craftingElements.length) {
+        panelButtons.push(craftingPanelButton);
     }
     if (state.openCharacterPanel) {
-        state.hudUIElements.push(heroPanel);
+        openPanels.push(heroPanel);
     }
     if (state.openCraftingPanel) {
-        state.hudUIElements.push(craftingPanel);
+        openPanels.push(craftingPanel);
     }
     if (state.openChooseWeaponPanel) {
-        state.hudUIElements.push(chooseWeaponPanel);
+        openPanels.push(chooseWeaponPanel);
     }
     if (state.openChooseArmorPanel) {
-        state.hudUIElements.push(chooseArmorPanel);
+        openPanels.push(chooseArmorPanel);
     }
     if (state.openChooseCharmPanel) {
-        state.hudUIElements.push(chooseCharmPanel);
+        openPanels.push(chooseCharmPanel);
     }
+    if (state.openInventoryPanel) {
+        openPanels.push(inventoryPanel);
+    }
+    let x = waveComponent.x + waveComponent.w;
+    for (const openPanel of openPanels) {
+        openPanel.x = x;
+        x += openPanel.w + 5;
+        state.hudUIElements.push(openPanel);
+    }
+    x = 50;
+    for (const panelButton of panelButtons) {
+        panelButton.x = x;
+        x += panelButton.w + 5;
+        state.hudUIElements.push(panelButton);
+    }
+
     state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
     state.hudUIElements.push(playPauseButton);
     state.hudUIElements.push(waveComponent);
@@ -64,3 +132,28 @@ export const playPauseButton: UIButton = {
         return true;
     }
 }
+
+const personFrame = requireFrame('gfx/militaryIcons.png', {x: 173, y: 159, w: 10, h: 16});
+const populationDisplay: UIContainer = {
+    objectType: 'uiContainer',
+    w: 100,
+    h: 32,
+    y: padding + 2,
+    x: canvas.width / 2,
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        context.save();
+            context.translate(this.x, this.y);
+            const scale = this.h / personFrame.h;
+            drawFrame(context, personFrame, {x: 0, y: 0, h: scale * personFrame.h, w: scale * personFrame.w});
+            let text = state.city.idlePopulation + '/' + state.city.population + ' (' + state.city.maxPopulation + ')';
+            fillText(context, {
+                textAlign: 'left',
+                size: 32,
+                color: '#FFF',
+                x: scale * personFrame.w + padding,
+                y: this.h / 2,
+                text,
+            });
+        context.restore();
+    },
+};

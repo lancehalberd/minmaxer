@@ -32,7 +32,7 @@ function updateArchers(state: GameState, archerJob: Job) {
             let closestDistance = archerRange;
             for (const object of state.nexus.zone.objects) {
                 if (object.objectType === 'enemy') {
-                    const distance = getDistance(state.nexus, object);
+                    const distance = getDistance(state.nexus, object) - object.r - state.nexus.r;
                     if (distance < closestDistance) {
                         state.city.archersTarget = object;
                         closestDistance = distance;

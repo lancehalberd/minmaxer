@@ -236,7 +236,7 @@ export function checkToAddNewSpawner(state: GameState) {
         if (level % 3 === 0) {
             structure = new Quary({zone: state.world, jobKey: 'quary-' + level, stone: level * 1000, x, y});
         } else if (level % 3 === 1) {
-            structure = new Forest({zone: state.world, jobKey: 'forest-' + level, wood: level * 1000, x, y});
+            structure = new Forest({zone: state.world, jobKey: 'forest-' + level, wood: 5 * level * 1000, x, y});
         } else {
             structure = new Village({zone: state.world, population: 5, x, y});
         }

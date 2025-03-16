@@ -70,7 +70,7 @@ interface ModifierStats {
 }
 
 interface GenericItem {
-    // This shouls be defined for all generic items but it is made optional to make this
+    // This should be defined for all generic items but it is made optional to make this
     // type compatable with CraftedEquipment which does not require a key.
     key?: InventoryKey
     name: string

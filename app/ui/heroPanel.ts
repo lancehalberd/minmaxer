@@ -95,6 +95,18 @@ export class EquipHeroPanel implements UIContainer {
     }
 }
 
+export function toggleHeroPanel(state: GameState, open = !state.openCharacterPanel) {
+    state.openCraftingPanel = false;
+    if (!open) {
+        state.openCharacterPanel = false;
+        state.openChooseArmorPanel = false;
+        state.openChooseWeaponPanel = false;
+        state.openChooseCharmPanel = false;
+    } else {
+        state.openCharacterPanel = true;
+    }
+}
+
 export class HeroPanel implements UIContainer {
     objectType = <const>'uiContainer';
     w = 250;
@@ -107,10 +119,7 @@ export class HeroPanel implements UIContainer {
         w: uiSize,
         h: uiSize,
         onPress: (state: GameState) => {
-            state.openCharacterPanel = false;
-            state.openChooseWeaponPanel = false;
-            state.openChooseArmorPanel = false;
-            state.openChooseCharmPanel = false;
+            toggleHeroPanel(state, false);
             return true;
         },
     });

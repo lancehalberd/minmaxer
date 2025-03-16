@@ -1,11 +1,18 @@
 import {craftingJobDefinitions} from 'app/city/crafting';
 import {canvas, uiSize} from 'app/gameConstants';
-import {CloseIconButton} from 'app/ui/iconButton';
-import {TextButton} from 'app/ui/textButton';
+import {CharacterIconButton, CloseIconButton} from 'app/ui/iconButton';
 import {fillRect} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {isJobDiscovered} from 'app/utils/job';
 
+
+export function toggleCraftingPanel(state: GameState, open = !state.openCraftingPanel) {
+    state.openCraftingPanel = open;
+    state.openCharacterPanel = false;
+    state.openChooseArmorPanel = false;
+    state.openChooseWeaponPanel = false;
+    state.openChooseCharmPanel = false;
+}
 
 const itemsPerPage = 6;
 export class CraftingPanel implements UIContainer {
@@ -38,23 +45,19 @@ export class CraftingPanel implements UIContainer {
     totalPages(state: GameState) {
         return Math.ceil(this.craftingElements.length / itemsPerPage);
     }
-    prevButton = new TextButton({
-        x: this.x + 90,
-        y: this.y + 190,
-        text(state: GameState) {
-            return '<<<';
-        },
+    prevButton = new CharacterIconButton({
+        x: this.w / 2 - 3 * uiSize,
+        y: this.h - 3 * uiSize,
+        character: '<',
         onClick: (state: GameState) => {
             this.page = (this.page + this.craftingElements.length - 1) % this.craftingElements.length;
             return true;
         },
     });
-    nextButton = new TextButton({
-        x: this.x + 90,
-        y: this.y + 220,
-        text(state: GameState) {
-            return '>>>';
-        },
+    nextButton = new CharacterIconButton({
+        x: this.w / 2 + uiSize,
+        y: this.h - 3 * uiSize,
+        character: '>',
         onClick: (state: GameState) => {
             this.page = (this.page + 1) % this.craftingElements.length;
             return true;
@@ -90,7 +93,6 @@ export class CraftingPanel implements UIContainer {
             element.y = (i + 0.5) * 2.5 * uiSize * 2;
             children.push(element);
         }
-        //
         if (this.totalPages(state) > 1) {
             children.push(this.prevButton);
             children.push(this.nextButton);

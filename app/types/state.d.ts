@@ -13,6 +13,7 @@ interface GameState {
     openChooseArmorPanel?: boolean
     openChooseWeaponPanel?: boolean
     openChooseCharmPanel?: boolean
+    openInventoryPanel?: boolean
     openCraftingPanel?: boolean
     // Used for tracking which charm is being updated.
     selectedCharmIndex?: number

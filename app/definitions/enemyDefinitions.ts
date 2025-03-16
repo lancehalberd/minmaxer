@@ -48,15 +48,15 @@ function standardLootPool(
             weightedDrops.push({keys: commonItems, weight: Math.floor(commonWeight * weightAdjustment)});
         }
         if (uncommonItems.length) {
-            const weightAdjustment = 10 * enemy.level / 100;
+            const weightAdjustment = 1 + 9 * enemy.level / 100;
             weightedDrops.push({keys: uncommonItems, weight: Math.floor(uncommonWeight * weightAdjustment)});
         }
         if (rareItems.length) {
-            const weightAdjustment = 5 * enemy.level / 100;
+            const weightAdjustment = 1 + 4 * enemy.level / 100;
             weightedDrops.push({keys: rareItems, weight: Math.floor(rareWeight * weightAdjustment)});
         }
         if (legendaryItems.length) {
-            const weightAdjustment = 2 * enemy.level / 100;
+            const weightAdjustment = 1 + enemy.level / 100;
             weightedDrops.push({keys: legendaryItems, weight: Math.floor(legendaryWeight * weightAdjustment)});
         }
 

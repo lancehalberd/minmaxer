@@ -1,13 +1,15 @@
 import {canvas, uiSize} from 'app/gameConstants';
-import {CloseIconButton} from 'app/ui/iconButton';
+import {CharacterIconButton, CloseIconButton} from 'app/ui/iconButton';
 import {TextButton} from 'app/ui/textButton';
 import {computeValue} from 'app/utils/computed';
 import {fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 
+const itemsPerPage = 15;
 interface ChooseItemPanelProps<T extends InventoryItem> extends Partial<UIContainer> {
     title: string
     items: Computed<T[], ChooseItemPanel<T>>
+    showQuantity?: boolean
     onHoverItem?: (state: GameState, item: T) => void
     onSelectItem: (state: GameState, item: T) => void
     onClose?: (state: GameState) => void
@@ -19,10 +21,12 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     items = this.props.items;
     onHoverItem = this.props.onHoverItem;
     onSelectItem = this.props.onSelectItem;
+    showQuantity = this.props.showQuantity ?? true;
     w = this.props.w ?? 250;
     h = this.props.h ?? 400;
     x = this.props.x ?? 300;
     y = this.props.y ?? (canvas.height - this.h) / 2;
+    page = 0;
     onClose = this.props.onClose;
     closeButton = new CloseIconButton({
         x: this.w - 2 * uiSize,
@@ -34,7 +38,30 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
             return true;
         },
     });
+    prevButton = new CharacterIconButton({
+        x: this.w / 2 - 3 * uiSize,
+        y: this.h - 3 * uiSize,
+        character: '<',
+        onClick: (state: GameState) => {
+            const items = this.getItems(state);
+            this.page = (this.page + items.length - 1) % items.length;
+            return true;
+        },
+    });
+    nextButton = new CharacterIconButton({
+        x: this.w / 2 + uiSize,
+        y: this.h - 3 * uiSize,
+        character: '>',
+        onClick: (state: GameState) => {
+            const items = this.getItems(state);
+            this.page = (this.page + 1) % items.length;
+            return true;
+        },
+    });
     constructor(public props: ChooseItemPanelProps<T>) {}
+    totalPages(state: GameState) {
+        return Math.ceil(this.getItems(state).length / itemsPerPage);
+    }
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
         const hero = state.selectedHero;
@@ -53,17 +80,23 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
             }
         context.restore();
     }
+    getItems(state: GameState): T[] {
+        return computeValue(state, this, this.items, []);
+    }
     getChildren(state: GameState) {
-        const buttons: UIElement[] = [];
+        const children: UIElement[] = [];
         if (this.onClose) {
-            buttons.push(this.closeButton);
+            children.push(this.closeButton);
         }
         let y = 45;
-        for (const item of computeValue(state, this, this.items, [])) {
+        for (const item of this.getItems(state)) {
             const itemButton = new TextButton({
                 y,
-                uniqueId: 'choose-item-' + y,
-                text(state: GameState) {
+                uniqueId: 'choose-item-' + this.title + y,
+                text: (state: GameState) => {
+                    if (this.showQuantity && item.key && state.inventory[item.key]) {
+                        return state.inventory[item.key] + ' ' + item.name;
+                    }
                     return item.name;
                 },
                 onHover: (state: GameState) => {
@@ -76,9 +109,13 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
                 },
             });
             itemButton.x = (this.w - itemButton.w) / 2;
-            buttons.push(itemButton);
+            children.push(itemButton);
             y += 2.5 * uiSize;
         }
-        return buttons;
+        if (this.totalPages(state) > 1) {
+            children.push(this.prevButton);
+            children.push(this.nextButton);
+        }
+        return children;
     }
 }

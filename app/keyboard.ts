@@ -51,6 +51,7 @@ export const gameKeys = {
     characterPanel: 8,
     cameraLock: 9,
     craftingPanel: 10,
+    inventoryPanel: 11,
 };
 
 const KEYBOARD_MAPPINGS = {
@@ -64,6 +65,7 @@ const KEYBOARD_MAPPINGS = {
     [gameKeys.ability]: [KEY.R],
     [gameKeys.characterPanel]: [KEY.C],
     [gameKeys.craftingPanel]: [KEY.M],
+    [gameKeys.inventoryPanel]: [KEY.I],
     [gameKeys.cameraLock]: [KEY.Y],
 };
 
