@@ -1,5 +1,5 @@
 import {addProjectile} from 'app/effects/projectile';
-import {applyEffectToHero, removeEffectFromHero} from 'app/utils/ability';
+import {applyEffectToAlly, removeEffectFromAlly} from 'app/utils/ability';
 import {damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillCircle} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
@@ -10,28 +10,28 @@ import {removeEffect} from 'app/utils/effect';
 export const spinStrike: ActiveAbilityDefinition = {
     abilityType: 'activeAbility',
     name: 'Spin Strike',
-    getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
-        // This skill is used immediately where the hero is standing when activated.
+    getTargetingInfo(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
+        // This skill is used immediately where the ally is standing when activated.
         return {
-            hitRadius: hero.r + [1.4, 1.5, 1.6, 1.8, 2][ability.level - 1] * hero.getAttackRange(state),
+            hitRadius: ally.r + [1.4, 1.5, 1.6, 1.8, 2][ability.level - 1] * ally.getAttackRange(state),
             range: 0,
         };
     },
-    getCooldown(state: GameState, hero: Hero, ability: ActiveAbility) {
+    getCooldown(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
         return 5000;
     },
-    onActivate(state: GameState, hero: Hero, ability: ActiveAbility) {
-        const targetingInfo = this.getTargetingInfo(state, hero, ability);
-        const hitCircle = {x: hero.x, y: hero.y, r: targetingInfo.hitRadius || 0};
-        const targets = getTargetsInCircle(state, getEnemyTargets(state, hero.zone), hitCircle);
+    onActivate(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
+        const targetingInfo = this.getTargetingInfo(state, ally, ability);
+        const hitCircle = {x: ally.x, y: ally.y, r: targetingInfo.hitRadius || 0};
+        const targets = getTargetsInCircle(state, getEnemyTargets(state, ally.zone), hitCircle);
         // console.log(hitCircle);
-        // console.log(targets.length, 'vs ', getEnemyTargets(state, hero.zone).map(t => ({x: t.x, y: t.y, r: t.r, d: getDistance(t, hitCircle)})));
+        // console.log(targets.length, 'vs ', getEnemyTargets(state, ally.zone).map(t => ({x: t.x, y: t.y, r: t.r, d: getDistance(t, hitCircle)})));
         // This attack does 25/35/45/55/65% increased base damage.
-        let damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * hero.getDamage(state);
+        let damage = [1.25, 1.35, 1.45, 1.55, 1.65][ability.level - 1] * ally.getDamage(state);
         // TODO: this should apply extra hit, crit chance + strength damage bonus.
         damage = damage | 0;
         for (const target of targets) {
-            damageTarget(state, target, {damage, source: hero});
+            damageTarget(state, target, {damage, source: ally});
         }
     },
 };
@@ -40,28 +40,29 @@ function getBattleRagerBonusValue(abilityLevel: number, stacks: number): number 
     // Attack speed increase by 5%/6%/7%/8%/10% per hit up to 30%/35/40/45/50 increased attack speed
     return Math.min([5, 6, 7, 8, 10][abilityLevel - 1] * stacks, [30, 35, 40, 45, 50][abilityLevel - 1]);
 }
-function applyBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.addStatModifiers([{
+function applyBattleRagerEffect(this: AbilityEffect<Hero|Ally>, state: GameState, ally: Hero|Ally) {
+    ally.addStatModifiers([{
         stat: 'attacksPerSecond',
         percentBonus: getBattleRagerBonusValue(this.abilityLevel, this.stacks),
     }]);
 }
-function removeBattleRagerEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.removeStatModifiers([{
+function removeBattleRagerEffect(this: AbilityEffect<Hero|Ally>, state: GameState, ally: Hero|Ally) {
+    ally.removeStatModifiers([{
         stat: 'attacksPerSecond',
         percentBonus: getBattleRagerBonusValue(this.abilityLevel, this.stacks),
     }]);
 }
+
 export const battleRager: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Battle Rager',
-    onHitTarget(state: GameState, hero: Hero, ability: PassiveAbility, target: AttackTarget) {
-        let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+    onHitTarget(state: GameState, ally: Hero|Ally, ability: PassiveAbility, target: AttackTarget) {
+        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
         if (effect?.effectType === 'abilityEffect') {
-            effect.remove(state, hero);
+            effect.remove(state, ally);
             effect.stacks!++;
             effect.abilityLevel = ability.level;
-            effect.apply(state, hero);
+            effect.apply(state, ally);
             effect.duration = 2;
             return;
         }
@@ -74,51 +75,51 @@ export const battleRager: PassiveAbilityDefinition = {
             apply: applyBattleRagerEffect,
             remove: removeBattleRagerEffect,
         }
-        applyEffectToHero(state, effect, hero);
+        applyEffectToAlly(state, effect, ally);
     },
 };
 
 // Ranger skills
-function getPiercingShotRange(state: GameState, hero: Hero, ability: ActiveAbility): number {
+function getPiercingShotRange(state: GameState, ally: Hero|Ally, ability: ActiveAbility): number {
     return [80, 90, 100, 110, 120][ability.level - 1];
 }
 const piercingShotRadius = 10;
 export const piercingShot: ActiveAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeAbility',
     name: 'Piercing Shot',
-    getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
-        // This skill is used immediately where the hero is standing when activated.
+    getTargetingInfo(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
+        // This skill is used immediately where the ally is standing when activated.
         return {
             canTargetEnemy: true,
             canTargetLocation: true,
             projectileRadius: piercingShotRadius,
             // 80/90/100/110/120 range
-            range: getPiercingShotRange(state, hero, ability),
+            range: getPiercingShotRange(state, ally, ability),
         };
     },
-    getCooldown(state: GameState, hero: Hero, ability: ActiveAbility) {
+    getCooldown(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
         return 8000;
     },
-    onActivate(state: GameState, hero: Hero, ability: ActiveAbility, target: AbilityTarget) {
+    onActivate(state: GameState, ally: Hero|Ally, ability: ActiveAbility, target: AbilityTarget) {
         // Create a piercing projectile.
         const speed = 200;
-        const dx = target.x - hero.x, dy = target.y - hero.y;
+        const dx = target.x - ally.x, dy = target.y - ally.y;
         const mag = Math.sqrt(dx*dx + dy*dy);
         // This attack 1.5/1.7/1.9/2.1/2.3x base damage.
-        const damage = ([1.5, 1.7, 1.9, 2.1, 2.3][ability.level - 1] * hero.getDamageForTarget(state, target)) | 0;
+        const damage = ([1.5, 1.7, 1.9, 2.1, 2.3][ability.level - 1] * ally.getDamageForTarget(state, target)) | 0;
         // TODO: this should apply extra hit, crit chance + strength damage bonus.
-        const targetingInfo = this.getTargetingInfo(state, hero, ability);
+        const targetingInfo = this.getTargetingInfo(state, ally, ability);
         addProjectile(state, {
-            zone: hero.zone,
-            x: hero.x + dx * hero.r / mag,
-            y: hero.y + dy * hero.r / mag,
+            zone: ally.zone,
+            x: ally.x + dx * ally.r / mag,
+            y: ally.y + dy * ally.r / mag,
             hitsEnemies: targetingInfo.canTargetEnemy,
             vx: dx * speed / mag,
             vy: dy * speed / mag,
             r: piercingShotRadius,
-            duration: 1000 * getPiercingShotRange(state, hero, ability) / speed,
+            duration: 1000 * getPiercingShotRange(state, ally, ability) / speed,
             piercing: true,
-            hit: {damage, source: hero},
+            hit: {damage, source: ally},
         });
     },
 };
@@ -134,7 +135,7 @@ function getCriticalShotDamageMultiplier(abilityLevel: number): number {
 export const criticalShot: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Critical Shot',
-    modifyDamage(state: GameState, hero: Hero, ability: Ability, target: AbilityTarget|undefined, damage: number): number {
+    modifyDamage(state: GameState, ally: Hero|Ally, ability: Ability, target: AbilityTarget|undefined, damage: number): number {
         // Nothing happens if the critical strike roll fails.
         if (Math.random() > getCriticalShotChance(ability.level) / 100) {
             return damage;
@@ -190,8 +191,8 @@ const fireballProjectileRadius = 5;
 export const fireball: ActiveAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeAbility',
     name: 'Fireball',
-    getTargetingInfo(state: GameState, hero: Hero, ability: ActiveAbility) {
-        // This skill is used immediately where the hero is standing when activated.
+    getTargetingInfo(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
+        // This skill is used immediately where the ally is standing when activated.
         return {
             canTargetEnemy: true,
             canTargetLocation: true,
@@ -199,28 +200,28 @@ export const fireball: ActiveAbilityDefinition<AbilityTarget> = {
             range: 110,
         };
     },
-    getCooldown(state: GameState, hero: Hero, ability: ActiveAbility) {
+    getCooldown(state: GameState, ally: Hero|Ally, ability: ActiveAbility) {
         return 10000;
     },
-    onActivate(state: GameState, hero: Hero, ability: ActiveAbility, target: AbilityTarget) {
+    onActivate(state: GameState, ally: Hero|Ally, ability: ActiveAbility, target: AbilityTarget) {
         // Create a piercing projectile.
         const speed = 200;
-        const dx = target.x - hero.x, dy = target.y - hero.y;
+        const dx = target.x - ally.x, dy = target.y - ally.y;
         const mag = Math.sqrt(dx*dx + dy*dy);
-        const damage = ([1.4, 1.45, 1.5, 1.55, 1.6][ability.level - 1] * hero.getDamageForTarget(state, target)) | 0;
+        const damage = ([1.4, 1.45, 1.5, 1.55, 1.6][ability.level - 1] * ally.getDamageForTarget(state, target)) | 0;
         const explosionRadius = ([1.4, 1.55, 1.70, 1.85, 2][ability.level - 1] * 20) | 0;
         // TODO: this should apply extra hit, crit chance + strength damage bonus.
-        const targetingInfo = this.getTargetingInfo(state, hero, ability);
+        const targetingInfo = this.getTargetingInfo(state, ally, ability);
         addProjectile(state, {
-            zone: hero.zone,
-            x: hero.x + dx * hero.r / mag,
-            y: hero.y + dy * hero.r / mag,
+            zone: ally.zone,
+            x: ally.x + dx * ally.r / mag,
+            y: ally.y + dy * ally.r / mag,
             hitsEnemies: targetingInfo.canTargetEnemy,
             vx: dx * speed / mag,
             vy: dy * speed / mag,
             r: fireballProjectileRadius,
-            duration: 1000 * getPiercingShotRange(state, hero, ability) / speed,
-            hit: {damage: 0, source: hero},
+            duration: 1000 * getPiercingShotRange(state, ally, ability) / speed,
+            hit: {damage: 0, source: ally},
             render: renderFireballProjectile,
             onExpire(this: Projectile, state: GameState) {
                 // PoisonPoolEffect automatically adds itself to the zone in the constructor.
@@ -231,7 +232,7 @@ export const fireball: ActiveAbilityDefinition<AbilityTarget> = {
                     r: explosionRadius,
                     targetsEnemies: true,
                     damage,
-                    source: hero,
+                    source: ally,
                 });
             }
         });
@@ -245,14 +246,14 @@ function renderFireballProjectile(this: Projectile, context: CanvasRenderingCont
 function getFortressDamageReduction(abilityLevel: number): number {
     return [0.5, .45, .4, .35, .3][abilityLevel - 1]
 }
-function applyFortressEffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.addStatModifiers([{
+function applyFortressEffect(this: AbilityEffect<Hero>, state: GameState, ally: Hero|Ally) {
+    ally.addStatModifiers([{
         stat: 'incomingDamageMultiplier',
         multiplier: getFortressDamageReduction(this.abilityLevel),
     }]);
 }
-function removeFortressffect(this: AbilityEffect<Hero>, state: GameState, hero: Hero) {
-    hero.removeStatModifiers([{
+function removeFortressffect(this: AbilityEffect<Hero>, state: GameState, ally: Hero|Ally) {
+    ally.removeStatModifiers([{
         stat: 'incomingDamageMultiplier',
         multiplier: getFortressDamageReduction(this.abilityLevel),
     }]);
@@ -260,27 +261,27 @@ function removeFortressffect(this: AbilityEffect<Hero>, state: GameState, hero: 
 export const fortress: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Fortress',
-    renderUnderHero(context: CanvasRenderingContext2D, state: GameState, hero: Hero, ability: PassiveAbility) {
-        const effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+    renderUnder(context: CanvasRenderingContext2D, state: GameState, ally: Hero|Ally, ability: PassiveAbility) {
+        const effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
         if (effect?.effectType === 'abilityEffect') {
             context.lineWidth = 1;
             context.strokeStyle = 'rgba(255, 0, 128, 0.6)';
             for (let i = 0; i < effect.stacks; i++) {
-                fillCircle(context, {x: hero.x, y: hero.y, r: hero.r + 2 * (1+ i)});
+                fillCircle(context, {x: ally.x, y: ally.y, r: ally.r + 2 * (1+ i)});
                 context.stroke();
             }
         }
     },
-    update(state: GameState, hero: Hero, ability: PassiveAbility) {
+    update(state: GameState, ally: Hero|Ally, ability: PassiveAbility) {
         const maxStacks = [1, 2, 2, 3, 3][ability.level - 1];
-        let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
-        // Remove the effect from the hero when the ability level changes in order to update the buff to the new value.
+        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        // Remove the effect from the ally when the ability level changes in order to update the buff to the new value.
         if (effect?.effectType === 'abilityEffect' && effect.abilityLevel !== ability.level) {
-            removeEffectFromHero(state, effect, hero);
+            removeEffectFromAlly(state, effect, ally);
         }
         if (effect?.effectType !== 'abilityEffect' || effect.stacks < maxStacks) {
             const recoveryDuration = 1000 * [3, 3, 3, 4, 4][ability.level - 1];
-            const timeSinceDamageTaken = hero.zone.time - (hero.lastTimeDamageTaken || 0);
+            const timeSinceDamageTaken = ally.zone.time - (ally.lastTimeDamageTaken || 0);
             if (timeSinceDamageTaken >= recoveryDuration) {
                 if (effect?.effectType === 'abilityEffect') {
                     effect.stacks = maxStacks
@@ -293,17 +294,17 @@ export const fortress: PassiveAbilityDefinition = {
                         apply: applyFortressEffect,
                         remove: removeFortressffect,
                     };
-                    applyEffectToHero(state, effect, hero);
+                    applyEffectToAlly(state, effect, ally);
                 }
             }
         }
     },
-    onHit(state: GameState, hero: Hero, ability: PassiveAbility, source: AttackTarget) {
-        let effect = hero.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+    onHit(state: GameState, ally: Hero|Ally, ability: PassiveAbility, source: AttackTarget) {
+        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
         if (effect?.effectType === 'abilityEffect') {
             effect.stacks--;
             if (effect.stacks <= 0) {
-                removeEffectFromHero(state, effect, hero);
+                removeEffectFromAlly(state, effect, ally);
             }
         }
     },

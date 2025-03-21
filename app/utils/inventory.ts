@@ -1,4 +1,5 @@
-import {inventoryLabels, itemDefinitions} from 'app/definitions/itemDefinitions'
+import {itemDefinitions} from 'app/definitions/itemDefinitions'
+import {createAnimation} from 'app/utils/animations';
 
 export const toolTypes: ToolType[] = ['axe', 'hammer', 'pickaxe', 'bow', 'staff'];
 export const toolTypeLabels:{[key in ToolType]: string} = {
@@ -9,18 +10,26 @@ export const toolTypeLabels:{[key in ToolType]: string} = {
     staff: 'Staff',
 }
 
+export const [hammerIcon, axeIcon, pickaxeIcon, staffIcon, bowIcon] = createAnimation('gfx/toolTypes.png', {w: 16, h: 16}, {cols: 5}).frames;
+export const toolTypeIcons:{[key in ToolType]: Frame} = {
+    axe: axeIcon,
+    hammer: hammerIcon,
+    pickaxe: pickaxeIcon,
+    bow: bowIcon,
+    staff: staffIcon,
+}
+export function getToolIcon(toolType: ToolType): Frame {
+    return toolTypeIcons[toolType];
+}
+
 export const axeTypes: AxeType[] = ['woodHatchet', 'stoneAxe', 'ironHatchet', 'steelAxe'];
 export const hammerTypes: HammerType[] = ['woodHammer', 'stoneHammer', 'ironHammer', 'steelHammer'];
 export const pickaxeTypes: PickaxeType[] = ['stonePickaxe', 'ironPickaxe', 'steelPickaxe'];
-export const bowTypes: BowType[] = ['shortBow', 'longBow', 'crossBow'];
+export const bowTypes: BowType[] = ['shortBow', 'longBow', 'crossbow'];
 export const staffTypes: StaffType[] = ['woodStaff', 'bronzeStaff', 'steelStaff'];
 
 export function getItemLabel(itemKey: InventoryKey): string {
-    const definition = itemDefinitions[itemKey];
-    if (definition) {
-        return definition.name;
-    }
-    return inventoryLabels[itemKey] ?? itemKey;
+    return itemDefinitions[itemKey]?.name ?? itemKey;
 }
 
 export function getItemCount(state: GameState, key: InventoryKey): number {

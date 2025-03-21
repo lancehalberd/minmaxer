@@ -1,10 +1,20 @@
 
-type EnemyType = 'kobold'|'koboldCleric'
-    |'snake'|'cobra'
-    |'mummy';
-
+type EnemyType = 'kobold'| 'koboldCleric'
+    | 'snake'| 'cobra'
+    | 'mummy'
+    | 'medusa';
 
 type LootPoolGenerator = (state: GameState, enemy: Enemy) => WeightedDrop[]
+
+
+type ModifiableEnemyStat = 'speed' | 'movementSpeed' | 'attacksPerSecond';
+type ModifiableEnemyStats = {[key in ModifiableEnemyStat]: ModifiableStat<Enemy>}
+interface EnemyStatModifier {
+    stat: ModifiableEnemyStat
+    flatBonus?: number
+    percentBonus?: number
+    multiplier?: number
+}
 
 interface EnemyLevelDerivedStats {
     // Max life of the enemy
@@ -42,18 +52,22 @@ interface WeightedDrop {
     weight: number
 }
 
-interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
+interface Enemy extends Circle, ZoneLocation {
     objectType: 'enemy'
     enemyType: EnemyType
     level: number
     // Current life of the enemy
     health: number
+    stats: ModifiableEnemyStats
     getMaxHealth: (state: GameState) => number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
-    onHit: (state: GameState, attacker: Hero) => void
+    onHit: (state: GameState, attacker: Ally|Hero) => void
     onDeath?: (state: GameState) => void
+    effects: ObjectEffect<Enemy>[]
+    addStatModifiers: (modifiers?: EnemyStatModifier[]) => void
+    removeStatModifiers: (modifiers?: EnemyStatModifier[]) => void
     aggroRadius: number
     // When this enemy is aggroed, all enemies in its aggro pack will be aggroed as well.
     aggroPack: Enemy[]
@@ -66,6 +80,16 @@ interface Enemy extends Circle, ZoneLocation, EnemyLevelDerivedStats {
     isBoss?: boolean
     abilities: EnemyAbility[]
     activeAbility?: ActiveEnemyAbility<any>;
+    // Max life of the enemy
+    maxHealth: number
+    // How much damage the enemy deals on attack
+    damage: number
+    // How far away the enemy can hit targets from in pixels.
+    attackRange: number
+    // How much experience the enemy grants when defeated.
+    experienceWorth: number
+    // How much essence the enemy grants when defeated.
+    essenceWorth: number
 }
 
 interface Spawner extends Circle, ZoneLocation {
@@ -96,7 +120,7 @@ interface Spawner extends Circle, ZoneLocation {
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
-    onHit: (state: GameState, attacker: Hero) => void
+    onHit: (state: GameState, attacker: Ally|Hero) => void
     onDeath?: (state: GameState) => void
 }
 
@@ -164,6 +188,7 @@ interface WaveSpawner extends Circle, ZoneLocation {
     spawnedEnemies: Enemy[]
     // The spawner will be removed when this flag is true and the last spawned enemy is defeated.
     isFinalWave: boolean
+    essenceWorth: number
     startNewWave: (state: GameState, schedule: WaveSpawnerSchedule) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void

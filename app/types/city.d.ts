@@ -7,8 +7,15 @@ type ComputedResourceCost = {
     [key in InventoryKey]?: number
 }
 
+interface Requirements {
+    toolType?: ToolType
+    resourceCost?: {[key in InventoryKey]?: number}
+    essenceCost?: number
+}
+
 interface JobDefinition {
     key: JobKey
+    labelIcon?: Frame
     label: Computed<string, JobDefinition>
     // The level of the job for job's with multiple levels.
     level?: number

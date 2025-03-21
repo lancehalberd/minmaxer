@@ -1,12 +1,13 @@
 import {frameLength, uiSize} from 'app/gameConstants';
 import {computeValue} from 'app/utils/computed';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
-import {getItemLabel} from 'app/utils/inventory';
+import {hammerIcon, axeIcon, pickaxeIcon, staffIcon, bowIcon, getItemLabel} from 'app/utils/inventory';
 import {progressJob} from 'app/utils/job';
 import {createJobComponent} from 'app/ui/jobComponent';
 
 interface CraftingJobDefinition {
     item: InventoryKey
+    itemIcon?: Frame
     // Defaults to 1.
     amount?: Computed<number, JobDefinition>
     resourceCost: ResourceCost<JobDefinition>
@@ -20,21 +21,25 @@ interface CraftingJobDefinition {
 export const craftingJobDefinitions: CraftingJobDefinition[] = [
     {
         item: 'woodHatchet',
+        itemIcon: axeIcon,
         resourceCost: {wood: 2},
         workerSeconds: 10,
     },
     {
         item: 'woodHammer',
+        itemIcon: hammerIcon,
         resourceCost: {wood: 2},
         workerSeconds: 10,
     },
     {
         item: 'woodStaff',
+        itemIcon: staffIcon,
         resourceCost: {wood: 10},
         workerSeconds: 10,
     },
     {
         item: 'shortBow',
+        itemIcon: bowIcon,
         resourceCost: {wood: 5},
         workerSeconds: 10,
     },
@@ -49,6 +54,7 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
     },*/
     {
         item: 'stonePickaxe',
+        itemIcon: pickaxeIcon,
         resourceCost: {stone: 2},
         workerSeconds: 60,
     },
@@ -70,6 +76,7 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
     const label = getItemLabel(craftingJobDefinition.item);
     const jobDefinition: JobDefinition = {
         key: 'craft-' + craftingJobDefinition.item,
+        labelIcon: craftingJobDefinition.itemIcon,
         label: '+' + label,
         resourceCost: craftingJobDefinition.resourceCost,
         essenceCost: craftingJobDefinition.essenceCost,

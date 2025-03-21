@@ -1,6 +1,8 @@
+import {CircleEffect} from 'app/effects/circleEffect';
 import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {addProjectile} from 'app/effects/projectile';
 import {frameLength} from 'app/gameConstants';
+import {createEnemy} from 'app/objects/enemy';
 import {applyDamageOverTime, damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillCircle} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
@@ -9,7 +11,6 @@ export const groupHeal: ActiveEnemyAbilityDefinition<EnemyTarget> = {
     abilityType: 'activeEnemyAbility',
     name: 'Heal',
     getTargetingInfo(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<EnemyTarget> ) {
-        // This skill is used immediately where the hero is standing when activated.
         return {
             canTargetAlly: true,
             hitRadius: 100,
@@ -41,7 +42,6 @@ export const slam: ActiveEnemyAbilityDefinition<undefined> = {
     abilityType: 'activeEnemyAbility',
     name: 'Slam',
     getTargetingInfo(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) {
-        // This skill is used immediately where the hero is standing when activated.
         return {
             canTargetEnemy: true,
             hitRadius: enemy.r + 60,
@@ -119,7 +119,6 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeEnemyAbility',
     name: 'Poison Spit',
     getTargetingInfo(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<AbilityTarget>) {
-        // This skill is used immediately where the hero is standing when activated.
         return {
             canTargetEnemy: true,
             // This is the hit radius of the projectile, not the poison pool.
@@ -160,7 +159,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
                     y: this.y,
                     r: this.r,
                     targetsAllies: true,
-                    maxRadius: 40,
+                    maxRadius: 30,
                     duration: 2000,
                     damagePerSecond: enemy.damage,
                     source: enemy,
@@ -171,4 +170,66 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
 };
 function renderPoisonSpitProjectile(this: Projectile, context: CanvasRenderingContext2D, state: GameState) {
     fillCircle(context, {...this, color: poisonCanvasFill});
+}
+
+interface CreateSummonMinionAbilityProps{
+    name: string
+    enemyTypes: EnemyType[]
+    cooldown?: number
+    zoneCooldown?: number
+    color?: CanvasFill
+}
+export function createSummonMinionAbility(props: CreateSummonMinionAbilityProps) {
+    const ability: ActiveEnemyAbilityDefinition<AllyTarget> = {
+        abilityType: 'activeEnemyAbility',
+        name: props.name,
+        getTargetingInfo(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<AllyTarget>) {
+            return {
+                canTargetAlly: true,
+                hitRadius: 50,
+                range: 100,
+            };
+        },
+        cooldown: props.cooldown ?? 8000,
+        zoneCooldown: props.zoneCooldown ?? 1000,
+        warningTime: 0,
+        onActivate(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<AllyTarget>, target: LocationTarget) {
+            const targetingInfo = this.getTargetingInfo(state, enemy, ability);
+            const spawnCircle = {
+                x: target.x,
+                y: target.y,
+                r: Math.max(enemy.r + 10, targetingInfo.hitRadius || 0),
+            };
+            const dx = (target.x - enemy.x), dy = (target.y - enemy.y);
+            const baseTheta = Math.atan2(dy, dx) + Math.PI / 2;
+            const count = props.enemyTypes.length;
+            const aggroPack: Enemy[] = [];
+            for (let i = 0; i < count; i++) {
+                const enemyType = props.enemyTypes[i];
+                const theta = baseTheta + 2 * Math.PI * i / count;
+                const minion = createEnemy(enemyType, enemy.level, {
+                    zone: target.zone,
+                    x: count > 1 ? spawnCircle.x + Math.cos(theta) * (spawnCircle.r - 5) : spawnCircle.x,
+                    y: count > 1 ? spawnCircle.y + Math.sin(theta) * (spawnCircle.r - 5) : spawnCircle.y,
+                });
+                // TODO: prevent enemy from spawning in invalid positions.
+                aggroPack.push(minion);
+                minion.aggroPack = aggroPack;
+                if (!target.zone) {
+                    debugger;
+                    return;
+                }
+                target.zone.objects.push(minion);
+                new CircleEffect({
+                    zone: state.nexus.zone,
+                    duration: 200,
+                    x: minion.x,
+                    y: minion.y,
+                    r: minion.r + 3,
+                    color: props.color ?? 'rgba(128,128,128,0.3)',
+                });
+            }
+        },
+    };
+    return ability;
 }

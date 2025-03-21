@@ -1,5 +1,5 @@
 import {createAnimation, drawFrame} from 'app/utils/animations';
-import {groupHeal, poisonSpit, slam} from 'app/definitions/enemyAbilities';
+import {createSummonMinionAbility, groupHeal, poisonSpit, slam} from 'app/definitions/enemyAbilities';
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 
 export {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
@@ -80,7 +80,7 @@ enemyDefinitions.snake = {
         renderSimpleEnemy(context, enemy, snakeGreenUpFrame);
     },
     aggroRadius: 150,
-    getLootPool: standardLootPool(['scales'], ['largeScales'], ['hardScales']),
+    getLootPool: standardLootPool(['scales'], ['largeScales'], ['snakeFang', 'hardScales']),
 };
 
 enemyDefinitions.cobra = {
@@ -100,7 +100,7 @@ enemyDefinitions.cobra = {
     },
     aggroRadius: 150,
     lootChance: 0.15,
-    getLootPool: standardLootPool(['scales'], ['largeScales'], ['hardScales']),
+    getLootPool: standardLootPool(['scales'], ['largeScales'], ['snakeFang', 'hardScales']),
 };
 
 enemyDefinitions.kobold = {
@@ -151,6 +151,39 @@ enemyDefinitions.mummy = {
         ['chippedEmerald', 'chippedRuby', 'chippedSapphire'],
         ['lionPelt', 'bearSkin'],
         ['emeraldRing', 'rubyRing', 'sapphireRing']
+    ),
+    aggroRadius: 200,
+    isBoss: true,
+};
+
+const summonSnakes = createSummonMinionAbility({
+    name: 'Summon Snakes',
+    enemyTypes: ['snake', 'snake', 'snake'],
+    cooldown: 10000,
+    zoneCooldown: 3000,
+    color: 'rgba(0, 255, 0, 0.5)',
+});
+enemyDefinitions.medusa = {
+    name: 'Medusa',
+    color: '#8F8',
+    r: 18,
+    abilities: [summonSnakes],
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            maxHealth: (80 * baseStats.maxHealth) | 0,
+            damage: (3 * baseStats.damage) | 0,
+            attacksPerSecond: 0.5 * baseStats.attacksPerSecond,
+            attackRange: 10,
+            movementSpeed: 6,
+        };
+    },
+    lootChance: 3.5,
+    getLootPool: standardLootPool(
+        ['largeScales', 'chippedEmerald'],
+        ['snakeFang', 'hardScales'],
+        ['emeraldRing']
     ),
     aggroRadius: 200,
     isBoss: true,

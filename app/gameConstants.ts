@@ -17,3 +17,6 @@ export const levelBuffer = 2;
 
 // Size the controls how large UI elements are. Represents the size of a small square button and single line of text.
 export const uiSize = 12;
+export const uiPadding = uiSize;
+export const buttonSize = 4 * uiSize;
+export const tinyButtonSize = 2 * uiSize;

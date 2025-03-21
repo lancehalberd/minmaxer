@@ -1,16 +1,16 @@
-import {canvas, uiSize} from 'app/gameConstants';
-import {getHeroAbilityButtons, getNexusAbilityButtons} from 'app/ui/abilityButton';
+import {buttonSize, canvas, uiSize} from 'app/gameConstants';
+import {getHeroAbilityButtons} from 'app/ui/abilityButton';
 import {CraftingPanel, toggleCraftingPanel} from 'app/ui/craftingPanel';
 import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equipmentPanels';
 import {getHeroButtons} from 'app/ui/heroButton';
 import {HeroPanel, toggleHeroPanel} from 'app/ui/heroPanel';
 import {inventoryPanel, toggleInventoryPanel} from 'app/ui/inventoryPanel';
 import {CharacterIconButton} from 'app/ui/iconButton';
+import {getNexusAbilityButtons, NexusAbilityPanel} from 'app/ui/nexusAbilityPanel';
 import {requireFrame, drawFrame} from 'app/utils/animations';
 import {waveComponent} from 'app/ui/waveComponent';
 import {fillText} from 'app/utils/draw';
 
-const buttonSize = 4 * uiSize
 
 
 const characterPanelButton = new CharacterIconButton({
@@ -49,6 +49,7 @@ const craftingPanelButton = new CharacterIconButton({
 
 const heroPanel = new HeroPanel();
 const craftingPanel = new CraftingPanel();
+const nexusAbilityPanel = new NexusAbilityPanel({});
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
 export function updateHudUIElements(state: GameState) {
@@ -87,6 +88,15 @@ export function updateHudUIElements(state: GameState) {
     if (state.openInventoryPanel) {
         openPanels.push(inventoryPanel);
     }
+    state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
+
+    if (state.selectedNexusAbilitySlot !== undefined) {
+        state.hudUIElements.push(nexusAbilityPanel);
+    }
+
+    state.hudUIElements.push(playPauseButton);
+    state.hudUIElements.push(waveComponent);
+
     let x = waveComponent.x + waveComponent.w;
     for (const openPanel of openPanels) {
         openPanel.x = x;
@@ -99,10 +109,6 @@ export function updateHudUIElements(state: GameState) {
         x += panelButton.w + 5;
         state.hudUIElements.push(panelButton);
     }
-
-    state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
-    state.hudUIElements.push(playPauseButton);
-    state.hudUIElements.push(waveComponent);
 
     for (const element of state.hudUIElements) {
         if (element.update) {

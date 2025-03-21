@@ -1,44 +1,12 @@
+import {CircleEffect} from 'app/effects/circleEffect';
 import {addHealEffectToTarget} from 'app/effects/healAnimation';
-import {getValidAbilityTargets, getTargetsInCircle} from 'app/utils/combat';
-import {fillPlus} from 'app/utils/draw';
-
-
-export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
-    abilityType: 'activeNexusAbility',
-    name: 'Healing Wind',
-    renderIcon(context: CanvasRenderingContext2D, r: Rect) {
-        fillPlus(context, {x: r.x + r.w / 2 - r.w / 3, y: r.y + r.h / 2 - r.w / 8, w: r.w / 3, h: r.w / 3}, '#080');
-        fillPlus(context, {x: r.x + r.w / 2 - r.w / 5, y: r.y + r.h - 2 - r.w / 4, w: r.w / 4, h: r.w / 4}, '#0F0');
-        fillPlus(context, {x: r.x + r.w / 2 - r.w / 4, y: r.y + 2, w: r.w / 2, h: r.w / 2}, '#0F0');
-    },
-    getTargetingInfo(state: GameState, ability: NexusAbility<AbilityTarget>) {
-        // This skill is used immediately where the hero is standing when activated.
-        return {
-            canTargetAlly: true,
-            canTargetLocation: true,
-            // The attack radius is 1.1/1.2/1.3/1.4/1.5x of the base radius.
-            hitRadius: Math.floor([1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7][ability.level - 1] * 50),
-            range: 0,
-        };
-    },
-    getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
-        return Math.floor(30000 - 1000 * [1, 2, 3, 4, 6, 8, 10][ability.level - 1]);
-    },
-    onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
-        const targetingInfo = this.getTargetingInfo(state, ability);
-        const hitCircle = {x: target.x, y: target.y, r: targetingInfo.hitRadius || 0};
-        const targets = getTargetsInCircle(state, getValidAbilityTargets(state, state.camera.zone, targetingInfo), hitCircle);
-        // This attack does 25/35/45/55/65% increased base damage.
-        const healAmount = [30, 100, 200, 500, 1000, 2000, 5000][ability.level - 1];
-        for (const target of targets) {
-            if (target.objectType === 'nexus') {
-                continue;
-            }
-            target.health = Math.min(target.getMaxHealth(state), target.health + healAmount);
-            addHealEffectToTarget(state, target);
-        }
-    },
-};
+import {AllyObject} from 'app/objects/ally';
+import {frameLength} from 'app/gameConstants';
+import {applyEffectToEnemy} from 'app/utils/ability';
+import {applyDamageOverTime, damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
+import {fillCircle, fillPlus} from 'app/utils/draw';
+import {removeEffect} from 'app/utils/effect';
+import {removeFieldObject} from 'app/utils/world';
 
 export function createNexusAbility<T extends FieldTarget | undefined>(abilityDefinition: NexusAbilityDefinition<T>): NexusAbility<T> {
     return {
@@ -49,6 +17,281 @@ export function createNexusAbility<T extends FieldTarget | undefined>(abilityDef
     };
 }
 
-// TODO: add "Inferno" area DOT skill
-// TODO: add "Arctic Blast" area damage + slow skill
-// TODO: add "Summon Ents" skill to summon ally minions
+export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
+    abilityType: 'activeNexusAbility',
+    name: 'Healing Wind',
+    renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
+        fillPlus(context, {x: r.x + r.w / 2 - r.w / 3, y: r.y + r.h / 2 - r.w / 8, w: r.w / 3, h: r.w / 3}, '#080');
+        fillPlus(context, {x: r.x + r.w / 2 - r.w / 5, y: r.y + r.h - 2 - r.w / 4, w: r.w / 4, h: r.w / 4}, '#0F0');
+        fillPlus(context, {x: r.x + r.w / 2 - r.w / 4, y: r.y + 2, w: r.w / 2, h: r.w / 2}, '#0F0');
+    },
+    getTargetingInfo(state: GameState, ability: NexusAbility<AbilityTarget>) {
+        return {
+            canTargetAlly: true,
+            canTargetLocation: true,
+            hitRadius: Math.floor([1, 1.5, 2][ability.level - 1] * 50),
+            range: 0,
+        };
+    },
+    getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
+        return [30000, 25000, 20000][ability.level - 1];
+    },
+    onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
+        const targetingInfo = this.getTargetingInfo(state, ability);
+        const hitCircle = {x: target.x, y: target.y, r: targetingInfo.hitRadius || 0};
+        const targets = getTargetsInCircle(state, getAllyTargets(state, state.camera.zone), hitCircle);
+        // Heal amount increases by 50% every nexus level.
+        const healAmount = Math.floor(1.5 ** (state.nexus.level - 1) * 30);
+        for (const target of targets) {
+            if (target.objectType === 'nexus') {
+                continue;
+            }
+            target.health = Math.min(target.getMaxHealth(state), target.health + healAmount);
+            addHealEffectToTarget(state, target);
+        }
+    },
+};
+
+
+
+const fireGroundCanvasFill = 'rgba(255, 0, 0, 0.5)';
+interface FireGroundEffectProps extends ZoneLocation {
+    r: number
+    duration: number
+    damagePerSecond: number
+    maxRadius: number
+    targetsAllies?: boolean
+    targetsEnemies?: boolean
+    source: AttackTarget
+}
+class FireGroundEffect implements GenericEffect {
+    objectType = <const>'effect';
+    color = fireGroundCanvasFill;
+    zone = this.props.zone;
+    r = this.props.r;
+    maxRadius = this.props.maxRadius;
+    x = this.props.x;
+    y = this.props.y;
+    duration = this.props.duration;
+    damagePerSecond = this.props.damagePerSecond;
+    targetsAllies = this.props.targetsAllies;
+    targetsEnemies = this.props.targetsEnemies;
+    source = this.props.source;
+    constructor(public props: FireGroundEffectProps) {
+        this.zone.effects.push(this);
+    }
+    update(state: GameState) {
+        if (this.r < this.maxRadius) {
+            this.r++;
+        }
+        this.duration -= frameLength;
+        if (this.duration <= 0) {
+            removeEffect(state, this);
+        }
+        if (this.targetsAllies) {
+            const targets = getTargetsInCircle(state, getAllyTargets(state, this.zone), this);
+            for (const target of targets) {
+                applyDamageOverTime(state, target, this.damagePerSecond);
+            }
+        }
+        if (this.targetsEnemies) {
+            const targets = getTargetsInCircle(state, getEnemyTargets(state, this.zone), this);
+            for (const target of targets) {
+                applyDamageOverTime(state, target, this.damagePerSecond);
+            }
+        }
+    }
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        fillCircle(context, this)
+    }
+}
+export const inferno: NexusAbilityDefinition<AbilityTarget> = {
+    abilityType: 'activeNexusAbility',
+    name: 'Inferno',
+    renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
+        fillCircle(context, {x: r.x + r.w / 2 - r.w / 3 + r.w / 6, y: r.y + r.h / 2 - r.w / 8 + r.w / 6, r: r.w / 6, color: '#F00'});
+        fillCircle(context, {x: r.x + r.w / 2 - r.w / 5 + r.w / 8, y: r.y + r.h - 2 - r.w / 4  +r.w / 8, r: r.w / 8, color: '#F00'});
+        fillCircle(context, {x: r.x + r.w / 2 - r.w / 4 + r.w / 4, y: r.y + 2 + r.w / 4, r: r.w / 4, color: '#F00'});
+    },
+    getTargetingInfo(state: GameState, ability: NexusAbility<AbilityTarget>) {
+        return {
+            canTargetEnemy: true,
+            canTargetLocation: true,
+            hitRadius: Math.floor([1, 1.5, 2][ability.level - 1] * 50),
+            range: 0,
+        };
+    },
+    getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
+        return [30000, 25000, 20000][ability.level - 1];
+    },
+    onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
+        const targetingInfo = this.getTargetingInfo(state, ability);
+        const damagePerSecond = Math.floor(1.5 ** (state.nexus.level - 1) * 2);
+
+        // FireGroundEffect automatically adds itself to the zone in the constructor.
+        const fireGroundEffect = new FireGroundEffect({
+            zone: state.nexus.zone,
+            x: target.x,
+            y: target.y,
+            r: targetingInfo.hitRadius || 0,
+            targetsEnemies: true,
+            maxRadius: 30,
+            duration: [2000, 4000, 6000][ability.level - 1],
+            damagePerSecond,
+            source: state.nexus,
+        });
+
+        const targets = getTargetsInCircle(state, getEnemyTargets(state, state.camera.zone), fireGroundEffect);
+        const damageAmount = damagePerSecond * 2;
+        for (const target of targets) {
+            damageTarget(state, target, {damage: damageAmount, source: state.nexus});
+        }
+
+    },
+};
+
+
+
+const arcticBlastFill = 'rgba(200, 200, 255, 0.5)';
+export const arcticBlast: NexusAbilityDefinition<AbilityTarget> = {
+    abilityType: 'activeNexusAbility',
+    name: 'Arctic Blast',
+    renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
+        fillCircle(context, {x: r.x + r.w / 2, y: r.y + r.h / 2, r: r.w / 3, color: '#AAF'});
+    },
+    getTargetingInfo(state: GameState, ability: NexusAbility<AbilityTarget>) {
+        return {
+            canTargetEnemy: true,
+            canTargetLocation: true,
+            hitRadius: Math.floor([1, 1.5, 2][ability.level - 1] * 50),
+            range: 0,
+        };
+    },
+    getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
+        return [30000, 25000, 20000][ability.level - 1];
+    },
+    onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
+        const targetingInfo = this.getTargetingInfo(state, ability);
+
+        // CircleEffect automatically adds itself to the zone in the constructor.
+        const circleEffect = new CircleEffect({
+            zone: state.nexus.zone,
+            x: target.x,
+            y: target.y,
+            r: targetingInfo.hitRadius || 0,
+            color: arcticBlastFill,
+        });
+
+        const targets = getTargetsInCircle(state, getEnemyTargets(state, state.camera.zone), circleEffect);
+        const damageAmount = Math.floor(1.5 ** (state.nexus.level - 1) * 3);
+        for (const target of targets) {
+            if (target.objectType === 'spawner') {
+                continue;
+            }
+            damageTarget(state, target, {damage: damageAmount, source: state.nexus});
+            const slowEffect = new EnemyModifierEffect({
+                duration: [5, 7, 10][ability.level - 1],
+                modifiers: [{
+                    stat: 'speed',
+                    percentBonus: [-33, -50, -66][ability.level - 1],
+                }],
+                renderOver(context: CanvasRenderingContext2D, state: GameState, target: Enemy) {
+                    fillCircle(context, {x: target.x, y: target.y, r: target.r + 2, color: 'rgba(255, 255, 255, 0.4)'});
+                },
+            });
+            applyEffectToEnemy(state, slowEffect, target);
+        }
+
+    },
+};
+interface EnemyModifierEffectProps extends Partial<BaseEffect<Enemy>> {
+    duration: number
+    modifiers: EnemyStatModifier[]
+}
+class EnemyModifierEffect implements SimpleEffect<Enemy> {
+    effectType = <const>'simpleEffect'
+    duration = this.props.duration;
+    modifiers = this.props.modifiers;
+    renderOver = this.props.renderOver;
+    renderUnder = this.props.renderUnder;
+    constructor(public props: EnemyModifierEffectProps) { }
+    apply(state: GameState, target: Enemy) {
+        target.addStatModifiers(this.modifiers);
+    }
+    remove(state: GameState, target: Enemy) {
+        target.removeStatModifiers(this.modifiers);
+    }
+}
+
+
+function renderGolem(context: CanvasRenderingContext2D, state: GameState, {x, y, r}: Circle) {
+    fillCircle(context, {x, y, r, color: '#888'});
+    fillCircle(context, {x, y: y - r / 2, r: r / 3, color: '#000'});
+    fillCircle(context, {x: x + r * Math.sqrt(3) / 4, y: y + r / 4, r: r / 3, color: '#000'});
+    fillCircle(context, {x: x - r * Math.sqrt(3) / 4, y: y + r / 4, r: r / 3, color: '#000'});
+}
+
+
+export const summonGolems: NexusAbilityDefinition<LocationTarget> = {
+    abilityType: 'activeNexusAbility',
+    name: 'Summon Golems',
+    renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
+        renderGolem(context, state, {x: r.x + r.w / 2, y: r.y + r.h / 2, r: 0.45 * r.w});
+    },
+    getTargetingInfo(state: GameState, ability: NexusAbility<LocationTarget>) {
+        return {
+            canTargetLocation: true,
+            hitRadius: [30, 40, 50][ability.level - 1],
+            range: 0,
+        };
+    },
+    getCooldown(state: GameState, ability: NexusAbility<LocationTarget>) {
+        return [30000, 25000, 20000][ability.level - 1];
+    },
+    onActivate(state: GameState, ability: NexusAbility<LocationTarget>, target: LocationTarget) {
+        const targetingInfo = this.getTargetingInfo(state, ability);
+
+        // Summoning new golems replaces any existing golems.
+        for (const object of [...target.zone.objects]) {
+            if (object.objectType === 'ally' && object.source === ability) {
+                removeFieldObject(state, object);
+            }
+        }
+
+        // CircleEffect automatically adds itself to the zone in the constructor.
+        const circleEffect = new CircleEffect({
+            zone: state.nexus.zone,
+            x: target.x,
+            y: target.y,
+            r: targetingInfo.hitRadius || 0,
+            color: arcticBlastFill,
+        });
+
+        const r = 8;
+        const baseTheta = Math.atan2(target.y, target.x) + Math.PI / 2;
+        const damage = Math.floor(1.5 ** (state.nexus.level - 1) * 2);
+        const maxHealth = Math.floor(1.5 ** (state.nexus.level - 1) * 5);
+        const armor = Math.floor(1.5 ** (state.nexus.level - 1) * 1);
+        const count = [2, 3, 5][ability.level - 1];
+        for (let i = 0; i < count; i++) {
+            const theta =baseTheta + 2 * Math.PI * i / count;
+            new AllyObject(state, {
+                zone: target.zone,
+                x: count > 1 ? circleEffect.x + Math.cos(theta) * (circleEffect.r - r) : circleEffect.x,
+                y: count > 1 ? circleEffect.y + Math.sin(theta) * (circleEffect.r - r) : circleEffect.y,
+                attackRange: 10,
+                damage,
+                attacksPerSecond: 1,
+                r,
+                maxHealth,
+                armor,
+                aggroRadius: 80,
+                movementSpeed: 20,
+                renderAlly: renderGolem,
+                source: ability,
+                level: state.nexus.level,
+            });
+        }
+
+    },
+};

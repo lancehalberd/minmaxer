@@ -121,6 +121,14 @@ function update() {
     if (wasGameKeyPressed(state, gameKeys.inventoryPanel)) {
         toggleInventoryPanel(state);
     }
+    if (wasGameKeyPressed(state, gameKeys.closeAll)) {
+        toggleHeroPanel(state, false);
+        toggleCraftingPanel(state, false);
+        toggleInventoryPanel(state, false);
+        delete state.selectedNexusAbilitySlot;
+        // Also cancel any ability targeting.
+        delete state.selectedAbility;
+    }
 
     if (wasGameKeyPressed(state, gameKeys.cameraLock)) {
         state.camera.isLocked = !state.camera.isLocked;
@@ -180,6 +188,9 @@ function update() {
             }
             updateZone(state, state.world);
         }
+    } else {
+        computeIdlePopulation(state);
+        computeIdleToolCounts(state);
     }
 
     updateCamera(state);

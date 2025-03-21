@@ -1,103 +1,61 @@
-import {heroDefinitions} from 'app/definitions/heroDefinitions';
-import {frameLength, heroLevelCap} from 'app/gameConstants';
-import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {removeEffectFromHero} from 'app/utils/ability';
+import {frameLength} from 'app/gameConstants';
+import {checkForOnHitTargetAbilities, removeEffectFromAlly} from 'app/utils/ability';
 import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
-import {computeValue} from 'app/utils/computed';
-import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
+import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
-import {moveAllyTowardsTarget, summonHero} from 'app/utils/hero';
-import {applyHeroToJob} from 'app/utils/job';
+import {moveAllyTowardsTarget} from 'app/utils/hero';
 import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
-import {followCameraTarget} from 'app/utils/world';
 
-class HeroObject implements Hero {
-    objectType = <const>'hero';
-    definition = heroDefinitions[this.heroType]!;
-    level = this.definition.startingLevel;
+interface AllyObjectProps extends Partial<Ally> {
+    zone: ZoneInstance
+    x: number
+    y: number
+    attackRange: number
+    attacksPerSecond: number
+    maxHealth: number
+    damage: number
+    armor: number
+    aggroRadius: number
+    movementSpeed: number
+    renderAlly?: (context: CanvasRenderingContext2D, state: GameState, ally: Ally) => void
+    source?: any
+}
+export class AllyObject implements Ally {
+    objectType = <const>'ally';
+    level = this.props.level ?? 1;
     skills = {};
     totalSkillLevels = 0;
-    x = 0;
-    y = 0;
-    r = this.definition.radius;
-    color = this.definition.color;
-    experience = 0;
-    health = 0;
+    x = this.props.x;
+    y = this.props.y;
+    r = this.props.r ?? 10;
+    color = this.props.color ?? 'blue';
+    maxHealth = this.props.maxHealth ?? 20;
+    // This needs to be assigned in the constructor using the current game state.
+    health: number;
+    attackRange = this.props.attackRange ?? 10;
+    attacksPerSecond = this.props.attacksPerSecond ?? 1;
+    damage = this.props.damage ?? 1;
+    armor = this.props.armor ?? 0;
+    aggroRadius = this.props.aggroRadius ?? 100;
+    movementSpeed = this.props.movementSpeed ?? 20;
+    renderAlly = this.props.renderAlly;
 
     lastAttackTime?: number;
     movementTarget?: FieldTarget;
-    assignedJob?: Job;
     selectedAttackTarget?: EnemyTarget;
     attackTarget?: EnemyTarget;
     selectedAbility?: ActiveAbility;
     abilityTarget?: AbilityTarget;
     reviveCooldown?: Cooldown;
+    source = this.props.source;
 
-    equipment: HeroEquipment = {
-        charms: [undefined]
-    };
-    zone: ZoneInstance | World
+    zone = this.props.zone;
 
-    equipArmor(state: GameState, armor: Armor): boolean {
-        if (this.equipment.armor) {
-            return false;
-        }
-        this.equipment.armor = armor;
-        this.stats.armor.isDirty = true;
-        this.addStatModifiers(armor.armorStats.modifiers);
-        return true;
+    constructor(state: GameState, public props: AllyObjectProps) {
+        this.zone.objects.push(this);
+        this.health = this.getMaxHealth(state);
     }
 
-    unequipArmor(state: GameState): Armor|undefined {
-        if (!this.equipment.armor) {
-            return;
-        }
-        const armor = this.equipment.armor;
-        this.stats.armor.isDirty = true;
-        this.removeStatModifiers(armor.armorStats.modifiers);
-        delete this.equipment.armor;
-        return armor;
-    }
-
-    equipWeapon(state: GameState, weapon: Weapon): boolean {
-        if (this.equipment.weapon) {
-            return false;
-        }
-        this.equipment.weapon = weapon;
-        this.stats.damage.isDirty = true;
-        this.addStatModifiers(weapon.weaponStats.modifiers);
-        return true;
-    }
-
-    unequipWeapon(state: GameState): Weapon|undefined {
-        if (!this.equipment.weapon) {
-            return;
-        }
-        const weapon = this.equipment.weapon;
-        this.stats.damage.isDirty = true;
-        this.removeStatModifiers(weapon.weaponStats.modifiers);
-        delete this.equipment.weapon;
-        return weapon;
-    }
-
-    equipCharm(state: GameState, charm: Charm, index: number): boolean {
-        if (index >= this.equipment.charms.length || this.equipment.charms[index]) {
-            return false;
-        }
-        this.equipment.charms[index] = charm;
-        this.addStatModifiers(charm.charmStats.modifiers);
-        return true;
-    }
-
-    unequipCharm(state: GameState, index: number): Charm|undefined {
-        const charm = this.equipment.charms[index];
-        if (index >= this.equipment.charms.length || !charm) {
-            return;
-        }
-        this.removeStatModifiers(charm.charmStats.modifiers);
-        delete this.equipment.charms[index];
-        return charm;
-    }
 
     addStatModifiers(modifiers?: StatModifier[]) {
         if (!modifiers) {
@@ -154,7 +112,7 @@ class HeroObject implements Hero {
         return getModifiableStatValue(state, this, this.stats.attacksPerSecond);
     }
     getAttackRange(state: GameState): number {
-        return this.definition.attackRange;
+        return this.attackRange;
     }
     getDamageForTarget(state: GameState, target: AbilityTarget): number {
         let damage = this.getDamage(state);
@@ -168,63 +126,34 @@ class HeroObject implements Hero {
         return damage;
     }
     enemyDefeatCount = 0;
-    getChildren = getHeroFieldButtons;
     effects: ObjectEffect<Hero|Ally>[] = [];
-    onHit = onHitHero;
-    abilities = this.definition.abilities.map(abilityDefinition => {
-        if (abilityDefinition.abilityType === 'activeAbility') {
-            return {
-                abilityType: <const>'activeAbility',
-                definition: abilityDefinition,
-                level: 0,
-                cooldown: 0,
-                autocast: true,
-            }
-        }
-        return {
-            abilityType: <const>'passiveAbility',
-            definition: abilityDefinition,
-            level: 0,
-            cooldown: 0,
-            autocast: true,
-        }
-    });
-    totalSkillPoints = 1;
-    spentSkillPoints = 0;
-    stats: ModifiableHeroStats = {
-        dex: createModifiableStat<Hero>((state: GameState) => {
-            return (this.definition.coreState === 'dex') ? (2 * this.level) : this.level;
+    onHit = onHitAlly;
+    abilities = this.props.abilities ?? [];
+    stats: ModifiableAllyStats = {
+        dex: createModifiableStat<Ally>((state: GameState) => {
+            return this.level;
         }),
-        int: createModifiableStat<Hero>((state: GameState) => {
-            return (this.definition.coreState === 'int') ? (2 * this.level) : this.level;
+        int: createModifiableStat<Ally>((state: GameState) => {
+            return this.level;
         }),
-        str: createModifiableStat<Hero>((state: GameState) => {
-            return (this.definition.coreState === 'str') ? (2 * this.level) : this.level;
+        str: createModifiableStat<Ally>((state: GameState) => {
+            return this.level;
         }),
-        maxHealth: createModifiableStat<Hero>((state: GameState) => 15 + this.level * 5 + 2 * this.getStr(state)),
-        movementSpeed: createModifiableStat<Hero>((state: GameState) => this.level * 2.5 + 97.5),
-        damage: createModifiableStat<Hero>((state: GameState) => {
-            const weaponDamage = this.equipment.weapon?.weaponStats.damage ?? 0;
-            return weaponDamage + this.getPrimaryStat(state);
-        }),
-        attacksPerSecond: createModifiableStat<Hero>(this.definition.attacksPerSecond),
-        extraHitChance: createModifiableStat<Hero>((state: GameState) => this.getDex(state) / 100),
-        criticalChance: createModifiableStat<Hero>((state: GameState) => this.getInt(state) / 100),
-        criticalMultiplier: createModifiableStat<Hero>((state: GameState) => 0.5),
-        cooldownSpeed: createModifiableStat<Hero>((state: GameState) => this.getInt(state) / 100),
-        armor: createModifiableStat<Hero>((state: GameState) => this.equipment.armor?.armorStats.armor ?? 0),
-        maxDamageReduction: createModifiableStat<Hero>((state: GameState) => {
+        maxHealth: createModifiableStat<Ally>((state: GameState) => this.maxHealth + 2 * this.getStr(state)),
+        movementSpeed: createModifiableStat<Ally>(this.movementSpeed),
+        damage: createModifiableStat<Ally>((state: GameState) => this.damage),
+        attacksPerSecond: createModifiableStat<Ally>(this.attacksPerSecond),
+        extraHitChance: createModifiableStat<Ally>((state: GameState) => this.getDex(state) / 100),
+        criticalChance: createModifiableStat<Ally>((state: GameState) => this.getInt(state) / 100),
+        criticalMultiplier: createModifiableStat<Ally>((state: GameState) => 0.5),
+        cooldownSpeed: createModifiableStat<Ally>((state: GameState) => this.getInt(state) / 100),
+        armor: createModifiableStat<Ally>((state: GameState) => this.armor),
+        maxDamageReduction: createModifiableStat<Ally>((state: GameState) => {
             const n = (4 * this.getArmor(state) + this.getDex(state)) / 100;
             return 0.6 + 0.4 * (1 - 1 / (1 + n));
         }),
-        incomingDamageMultiplier: createModifiableStat<Hero>(1),
+        incomingDamageMultiplier: createModifiableStat<Ally>(1),
     };
-    // derivedStats = this.definition.getStatsForLevel(this.level);
-    constructor(public heroType: HeroType, {zone, x, y}: ZoneLocation) {
-        this.zone = zone;
-        this.x = x;
-        this.y = y;
-    }
     markStatsDirty() {
         for (const stat of Object.values(this.stats)) {
             stat.isDirty = true;
@@ -247,15 +176,6 @@ class HeroObject implements Hero {
     }
     getInt(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.int);
-    }
-    getPrimaryStat(state: GameState) {
-        if (this.definition.coreState === 'dex') {
-            return this.getDex(state);
-        } else if (this.definition.coreState === 'str') {
-            return this.getStr(state);
-        } else {
-            return this.getInt(state);
-        }
     }
     getArmor(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.armor);
@@ -291,18 +211,6 @@ class HeroObject implements Hero {
         // Prevent health from exceeding max health.
         const maxHealth = this.getMaxHealth(state);
         this.health = Math.min(this.health, maxHealth);
-        // Calculate Hero level increase
-        const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
-        if (newHeroLevel > this.level) {
-            // Level up hero
-            this.level = newHeroLevel;
-            // Update hero stats based on level
-            this.markStatsDirty();
-            // Fully heal hero
-            this.health = this.getMaxHealth(state);
-        }
-        this.totalSkillPoints = Math.min(state.maxHeroSkillPoints, this.level);
-
         // Update ability cooldown and autocast any abilities that make sense.
         for (const ability of this.abilities) {
             if (ability.level > 0 && ability.abilityType === 'activeAbility') {
@@ -323,7 +231,7 @@ class HeroObject implements Hero {
             if (effect.duration) {
                 effect.duration -= frameLength / 1000;
                 if (effect.duration <= 0) {
-                    removeEffectFromHero(state, this.effects[i--], this);
+                    removeEffectFromAlly(state, this.effects[i--], this);
                 }
             }
         }
@@ -354,13 +262,18 @@ class HeroObject implements Hero {
         }
         // Replace the current attack target with the selected attack taret(if any)
         // if it is becomes invalid (it dies, for example).
-        if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
+        if (this.attackTarget && (
+            !isTargetAvailable(state, this.attackTarget)
+            // Cancel targeting an enemy outside of attack range each frame so that we potentially can choose
+            // a new closer target.
+            || getDistance(this, this.attackTarget) - this.r - this.attackTarget.r > this.attackRange
+        )) {
             this.attackTarget = this.selectedAttackTarget
         }
         // The hero will automatically attack an enemy within its range if it is idle.
         if (!this.attackTarget && !this.movementTarget) {
             // Choose the closest valid target within the aggro radius as an attack target.
-            let closestDistance = this.getAttackRange(state);
+            let closestDistance = Math.max(this.aggroRadius, this.getAttackRange(state));
             for (const object of this.zone.objects) {
                 if (object.objectType === 'enemy') {
                     const distance = getDistance(this, object) - this.r - object.r;
@@ -407,139 +320,59 @@ class HeroObject implements Hero {
             }
             return;
         }
-        if (this.assignedJob) {
-            this.movementTarget = this.assignedJob.getHeroTarget?.(state);
-            // If there is not target associated with the job, the hero should attempt to start the job
-            // immediately.
-            if (!this.movementTarget) {
-                applyHeroToJob(state, this.assignedJob.definition, this);
-            }
-        }
         if (this.movementTarget) {
             const distance = this.movementTarget.objectType === 'point' ? 0 : this.r + this.movementTarget.r;
             if (moveAllyTowardsTarget(state, this, this.movementTarget, distance)) {
-                if (this.movementTarget.objectType === 'structure' || this.movementTarget.objectType === 'nexus') {
-                    this.movementTarget.onHeroInteraction?.(state, this);
-                } else {
-                    delete this.movementTarget;
-                }
+                delete this.movementTarget;
             }
         }
     }
 
     render(context: CanvasRenderingContext2D, state: GameState): void {
-        // Draw a small dot indicating where the hero is currently moving towards.
-        if (this.movementTarget) {
-            fillCircle(context, {
-                ...this.movementTarget,
-                r: 2,
-                color: 'blue',
-            });
-        }
-        // Debug code to render a ring at the hero's attack range.
+        // Debug code to render a ring at the ally's attack range.
         //fillRing(context, {...this, r: this.r + this.getAttackRange(state) - 1, r2: this.r + this.getAttackRange(state), color: '#FFF'});
-        if (this.attackTarget) {
-            fillRing(context, {...this.attackTarget, r: this.attackTarget.r + 2, r2: this.attackTarget.r - 2, color: '#FFF'});
-        }
-
         for (const ability of this.abilities) {
             if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
                 ability.definition.renderUnder?.(context, state, this, ability);
             }
         }
 
-        // Draw a circle for the hero centered at their location, with their radius and color.
-        fillCircle(context, this);
-
-        // Render a pie chart that fills in as the player approaches their next level.
-        // This just looks like a light ring over their color since the middle is covered up by the black circle.
-        const totalExperienceForCurrentLevel = totalExperienceForLevel(this.level);
-        const totalExperienceForNextLevel = totalExperienceForLevel(this.level + 1);
-        const xpProgressForNextLevel = this.experience - totalExperienceForCurrentLevel;
-        const xpRequiredForNextLevel = totalExperienceForNextLevel - totalExperienceForCurrentLevel;
-        const p = xpProgressForNextLevel / xpRequiredForNextLevel;
-        context.save();
-            context.globalAlpha *= 0.6;
-            context.fillStyle = '#FFF';
-            const r = this.r;
-            const endTheta = p * 2 * Math.PI - Math.PI / 2;
-            context.beginPath();
-            context.moveTo(this.x, this.y);
-            context.arc(this.x, this.y, r, -Math.PI / 2, endTheta);
-            context.fill();
-        context.restore();
-
-        // Render the black circle
-        fillCircle(context, {...this, r: this.r - 2, color: 'black'});
+        if (this.renderAlly) {
+            this.renderAlly(context, state, this);
+        } else {
+            // Draw a circle for the hero centered at their location, with their radius and color.
+            fillCircle(context, this);
+            // Render the black circle
+            fillCircle(context, {...this, r: this.r - 2, color: 'black'});
+        }
 
         const isInvincible = this.getIncomingDamageMultiplier(state) === 0;
         renderLifeBarOverCircle(context, this, this.health, this.getMaxHealth(state), isInvincible ? '#FF0' : undefined);
-        if (this.assignedJob) {
-            const job = this.assignedJob;
-            const totalSeconds = computeValue(state, job.definition, job.definition.workerSeconds, 0);
-            // If the job doesn't have a completiong time, just render the bar filling up so we can still see the
-            // hero is assigned a job.
-            const p = totalSeconds ? job.workerSecondsCompleted / totalSeconds : (this.zone.time % 1000) / 1000;
-            const r = {x: this.x - this.r, y: this.y - this.r - 5, w: Math.floor(2 * this.r * p), h: 2};
-            fillRect(context, r, '#0AF');
-            fillRect(context, {...r, x: r.x + r.w - 1, w: 1}, '#8FF');
-        }
-        // Draw hero level
-        fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});
     }
 }
 
 
-
-export function addBasicHeroes(state: GameState) {
-    const warrior: Hero = new HeroObject('warrior', {zone: state.world, x: -60, y: 45});
-    const ranger: Hero = new HeroObject('ranger', {zone: state.world, x: 60, y: 45});
-    const wizard: Hero = new HeroObject('wizard', {zone: state.world, x: 0, y: -75});
-    state.availableHeroes.push(warrior);
-    state.availableHeroes.push(ranger);
-    state.availableHeroes.push(wizard);
-}
-
-function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
+function onHitAlly(this: Ally, state: GameState, attacker: Enemy) {
     this.lastTimeDamageTaken = this.zone.time;
     for (const ability of this.abilities) {
         if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
             ability.definition.onHit?.(state, this, ability, attacker);
         }
     }
-    // Hero will ignore being attacked if they are completing a movement command.
+    // Ally will ignore being attacked if they are completing a movement command.
     if (this.movementTarget) {
         return;
     }
-    // Heroes will prioritize attacking an enemy over an enemy spawner or other targets.
+    // Allyes will prioritize attacking an enemy over an enemy spawner or other targets.
     if (this.attackTarget?.objectType !== 'enemy') {
         this.attackTarget = attacker;
     }
 }
 
-function getHeroFieldButtons(this: Hero, state: GameState): UIButton[] {
-    const buttons: UIButton[] = [];
-    const firstEmptyIndex = state.heroSlots.indexOf(undefined);
-    // If we can choose this hero as a champion, add a button for selecting them.
-    if (firstEmptyIndex >= 0 && !state.heroSlots.includes(this)) {
-        const button = createPointerButtonForTarget(this);
-        button.y += 2 * this.r;
-        button.disabled = state.nexus.essence <= this.definition.cost;
-        button.onPress = (state: GameState) => {
-            summonHero(state, this);
-            return true;
-        }
-        button.onHover = (state: GameState) => {
-            state.nexus.previewEssenceChange = -this.definition.cost;
-            return true;
-        }
-        buttons.push(button);
-    }
-    return buttons;
-}
+
 
 // Automatically use ability if there is a target in range.
-function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbility) {
+function checkToAutocastAbility(state: GameState, hero: Ally, ability: ActiveAbility) {
     const targetingInfo = ability.definition.getTargetingInfo(state, hero, ability);
     // prioritize the current attack target over other targets.
     // TODO: prioritize the closest target out of other targets.
@@ -558,55 +391,4 @@ function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbi
             return;
         }
     }
-}
-
-function checkForOnHitTargetAbilities(state: GameState, hero: Hero, target: AttackTarget) {
-    for (const ability of hero.abilities) {
-        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
-            ability.definition.onHitTarget?.(state, hero, ability, target);
-        }
-    }
-}
-
-function totalExperienceForLevel(level: number) {
-    return 10 * (level - 1) * level * (2 * (level - 1) + 1) / 6;
-}
-
-function heroLevel(exp: number, currentLevel: number, levelCap: number): number {
-    let level = currentLevel;
-    // Find level using 10x sum of first n squares = 10*n*(n+1)*(2n+1)/6
-    while (level < levelCap && exp >= totalExperienceForLevel(level + 1)) {
-        level++;
-    }
-    return level;
-}
-
-export function getReviveCost(state: GameState, hero: Hero): number {
-    if (!hero.reviveCooldown) {
-        return 0;
-    }
-    return Math.ceil(hero.reviveCooldown.remaining) * hero.level * 3;
-}
-
-export function reviveHero(state: GameState, hero: Hero) {
-    hero.health = hero.getMaxHealth(state);
-    hero.zone = state.nexus.zone;
-    hero.x = state.nexus.x;
-    hero.y = state.nexus.y;
-    delete hero.reviveCooldown;
-    delete hero.attackTarget;
-    delete hero.abilityTarget;
-    delete hero.selectedAttackTarget;
-    delete hero.selectedAbility;
-    delete hero.movementTarget;
-    for (let i = 0; i < hero.effects.length; i++) {
-        const effect = hero.effects[i];
-        hero.effects.splice(i--, 1);
-        effect.remove(state, hero);
-    }
-    if (!state.selectedHero) {
-        state.selectedHero = hero;
-        followCameraTarget(state, hero);
-    }
-    state.world.objects.push(hero);
 }

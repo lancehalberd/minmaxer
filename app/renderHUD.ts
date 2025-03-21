@@ -1,9 +1,7 @@
-import {canvas} from 'app/gameConstants';
 import {playPauseButton} from 'app/hud';
 import {getNextEssenceGoal} from 'app/utils/essence';
 import {fillCircle, fillRect, fillText, renderLifeBar} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
-import {getAvailableToolCount, getItemLabel, toolTypeLabels} from 'app/utils/inventory';
 import {millisecondsToTime} from 'app/utils/time';
 
 const waveBarWidth = 40;
@@ -22,15 +20,15 @@ export function renderHUD(context: CanvasRenderingContext2D, state: GameState) {
         element.render(context, state);
     }
 
-    const inventorySize = {w: 200, h: 300};
-    renderInventory(context, state, {...inventorySize, x: canvas.width - inventorySize.w, y: 70});
+    //const inventorySize = {w: 200, h: 300};
+    //renderInventory(context, state, {...inventorySize, x: canvas.width - inventorySize.w, y: 70});
 
     if (state.hoverToolTip) {
         state.hoverToolTip.render(context, state);
     }
 }
 
-export function renderInventory(context: CanvasRenderingContext2D, state: GameState, container: Rect) {
+/*export function renderInventory(context: CanvasRenderingContext2D, state: GameState, container: Rect) {
     fillRect(context, container, '#FFF');
     fillRect(context, pad(container, -2), '#666');
     const text: Partial<FillTextProperties> = {
@@ -40,16 +38,6 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
         textBaseline: 'top',
     };
     let y = container.y + 10, x = container.x + 5;
-
-    /*for (const [key, value] of [['population', state.city.population]]) {
-        if (value > 0) {
-
-            y += 20;
-            if (y + 20 >= container.y + container.h) {
-                break;
-            }
-        }
-    }*/
     if (state.previewRequiredToolType) {
         const hasTool = !!getAvailableToolCount(state, state.previewRequiredToolType)
         const color = hasTool ? '#0F0' : '#F00';
@@ -88,7 +76,7 @@ export function renderInventory(context: CanvasRenderingContext2D, state: GameSt
             break;
         }
     }
-}
+}*/
 
 
 export function renderEssenceBar(context: CanvasRenderingContext2D, state: GameState, bar: Rect) {
@@ -98,7 +86,7 @@ export function renderEssenceBar(context: CanvasRenderingContext2D, state: GameS
     const previewEssenceChange = state.nexus.previewEssenceChange | 0;
     let displayedEssence = essence - gainedEssence;
     //const essence = (99 + 99 * Math.sin(state.world.time / 1000)) | 0;
-    const goal = getNextEssenceGoal(state) ?? essence;
+    const goal = Math.max(essence, getNextEssenceGoal(state) ?? essence);
     const p = displayedEssence / goal;
     let gradient: CanvasFill;
 
@@ -107,7 +95,7 @@ export function renderEssenceBar(context: CanvasRenderingContext2D, state: GameS
     drawPill(context, pad(bar, -1), '#888');
     drawPill(context, pad(bar, -2), '#000');
     // Don't draw any of the fill effects if essence is not greater than 0.
-    if (state.nexus.essence > 0) {
+    if (essence > 0) {
         // Draw gained/lost indicators underneath the main fill indicator.
         context.save();
             context.globalAlpha *= 0.6

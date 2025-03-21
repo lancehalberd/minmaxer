@@ -1,9 +1,12 @@
 import {canvas, context, uiSize} from 'app/gameConstants';
+import {drawFrame} from 'app/utils/animations';
 import {fillBorderedRect, fillText, measureText} from 'app/utils/draw';
 import {getModifierLines} from 'app/utils/inventory';
+import {getAvailableToolCount, getItemLabel, getToolIcon, toolTypeLabels} from 'app/utils/inventory';
+import {typedKeys} from 'app/utils/types';
 
 interface TooltipProps extends Partial<UIContainer> {
-    lines: (string|number)[]
+    lines: (string|number|FillTextProperties&{icon?: Frame})[]
     textProps?: Partial<FillTextProperties>
     color?: CanvasFill
     backgroundColor?: CanvasFill
@@ -35,8 +38,6 @@ export class ToolTip implements UIButton {
         }
     }
     resize() {
-        let x = this.x + uiSize / 2;
-        let y = this.y + uiSize / 2;
         let w = 0, h = 0;
 
         for (const line of this.lines) {
@@ -44,14 +45,23 @@ export class ToolTip implements UIButton {
                 h += uiSize / 2;
                 continue;
             }
-            const measurements = measureText(context, {
-                text: line,
-                x, y,
-                textAlign: 'left', textBaseline: 'top',
-                ...this.textProps,
-            });
-            w = Math.max(w, measurements.width);
-            h += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
+            if (typeof line === 'number' || typeof line === 'string') {
+                const measurements = measureText(context, {
+                    text: line,
+                    textAlign: 'left', textBaseline: 'top',
+                    ...this.textProps,
+                });
+                w = Math.max(w, measurements.width);
+                h += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
+            } else {
+                const measurements = measureText(context, {
+                    ...this.textProps,
+                    ...line,
+                    textAlign: 'left', textBaseline: 'top',
+                });
+                w = Math.max(w, measurements.width + (line.icon ? line.icon.w + 2 : 0));
+                h += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
+            }
         }
         this.w = uiSize + w;
         this.h = uiSize + h;
@@ -71,24 +81,42 @@ export class ToolTip implements UIButton {
                 y += uiSize / 2;
                 continue;
             }
-            const measurements = fillText(context, {
-                text: line,
-                x,
-                y,
-                textAlign: 'left',
-                textBaseline: 'top',
-                color: this.color,
-                ...this.textProps,
-                measure: true,
-            });
-            if (measurements) {
-                y += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
+            if (typeof line === 'number' || typeof line === 'string') {
+                const measurements = fillText(context, {
+                    text: line,
+                    x,
+                    y,
+                    textAlign: 'left',
+                    textBaseline: 'top',
+                    color: this.color,
+                    ...this.textProps,
+                    measure: true,
+                });
+                if (measurements) {
+                    y += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
+                }
+            } else {
+                const measurements = fillText(context, {
+                    x, y,
+                    textAlign: 'left', textBaseline: 'top',
+                    color: this.color,
+                    ...this.textProps,
+                    ...line,
+                    measure: true,
+                });
+                if (measurements) {
+                    const height = measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent;
+                    if (line.icon) {
+                        drawFrame(context, line.icon, {...line.icon, x: x + measurements.width + 2, y: y + (height - line.icon.h) / 2 - 2});
+                    }
+                    y += height + 2;
+                }
             }
         }
     }
 }
 
-const toolTipText: Partial<FillTextProperties> = {
+export const toolTipText: Partial<FillTextProperties> = {
     size: 20,
 }
 
@@ -127,5 +155,46 @@ export function showCharmTooltip(state: GameState, item?: Charm) {
         '',
         ...getModifierLines(state, item.charmStats.modifiers),
     ]});
+    return true;
+}
+
+
+export function showRequirementsTooltip(state: GameState, {essenceCost, toolType, resourceCost}: Requirements) {
+    const requirementLines: (string|number|FillTextProperties&{icon?: Frame})[] = [];
+    if (toolType) {
+        const hasTool = !!getAvailableToolCount(state, toolType)
+        const color = hasTool ? '#0F0' : '#F00';
+        const label = toolTypeLabels[toolType] ?? toolType;
+        requirementLines.push({bold: true, color, text: 'Need ' + label, icon: getToolIcon(toolType)});
+    }
+    for (const key of typedKeys(resourceCost ?? {})) {
+        const value = state.inventory[key] ?? 0;
+        const previewCost = resourceCost?.[key];
+        if (!previewCost) {
+            continue;
+        }
+        const label = getItemLabel(key);
+        requirementLines.push({text: label + ': ' + value, strikeColor: 'red'});
+        const result = value - previewCost;
+        const color = result < 0 ? '#F00' : '#FF0';
+        requirementLines.push({text: label + ': ' + result, color});
+
+        // TODO: Add strike color to FillTextProperties and use that to add red line through this text.
+        /*
+        const metrics = fillText(context, {...text, measure: !!previewCost, text: label + ': ' + value});
+        context.save();
+            context.globalAlpha *= 0.5;
+            context.beginPath();
+            context.moveTo(x, y + 7);
+            context.lineTo(x + metrics.width, y + 7);
+            context.lineWidth = 6;
+            context.strokeStyle = '#F00';
+            context.stroke();
+        context.restore();*/
+    }
+    if (!requirementLines.length) {
+        return;
+    }
+    state.hoverToolTip = new ToolTip(state, {textProps: toolTipText, lines: requirementLines});
     return true;
 }

@@ -1,9 +1,11 @@
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 import {frameLength, framesPerSecond} from 'app/gameConstants';
+import {removeEffectFromEnemy} from 'app/utils/ability';
 import {damageTarget, isEnemyAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
+import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
 
 export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: ZoneLocation): Enemy {
     const definition = enemyDefinitions[enemyType]!;
@@ -20,6 +22,11 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         health: derivedStats.maxHealth,
         getMaxHealth(state: GameState) {
             return derivedStats.maxHealth;
+        },
+        stats: {
+            speed: createModifiableStat<Enemy>(1),
+            movementSpeed: createModifiableStat<Enemy>(derivedStats.movementSpeed),
+            attacksPerSecond: createModifiableStat<Enemy>(derivedStats.attacksPerSecond),
         },
         abilities: (definition.abilities ?? []).map((abilityDefinition): EnemyAbility => {
             if (abilityDefinition.abilityType === 'activeEnemyAbility') {
@@ -45,11 +52,66 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         update: updateEnemy,
         render: renderEnemy,
         onHit: onHitEnemy,
+        effects: [],
+        addStatModifiers(modifiers?: EnemyStatModifier[]) {
+            if (!modifiers) {
+                return;
+            }
+            // TODO: remove this once we correctly mark derived stats as dirty.
+            markEnemyStatsAsDirty(this);
+            for (const modifier of modifiers) {
+                const stat = this.stats[modifier.stat];
+                if (modifier.flatBonus) {
+                    stat.addedBonus += modifier.flatBonus;
+                    stat.isDirty = true;
+                }
+                if (modifier.percentBonus) {
+                    stat.percentBonus += modifier.percentBonus;
+                    stat.isDirty = true;
+                }
+                if (modifier.multiplier !== undefined && modifier.multiplier !== 1) {
+                    stat.multipliers.push(modifier.multiplier);
+                    stat.isDirty = true;
+                }
+            }
+        },
+        removeStatModifiers(modifiers?: EnemyStatModifier[]) {
+            if (!modifiers) {
+                return;
+            }
+            markEnemyStatsAsDirty(this);
+            for (const modifier of modifiers) {
+                const stat = this.stats[modifier.stat];
+                if (modifier.flatBonus) {
+                    stat.addedBonus -= modifier.flatBonus;
+                    stat.isDirty = true;
+                }
+                if (modifier.percentBonus) {
+                    stat.percentBonus -= modifier.percentBonus;
+                    stat.isDirty = true;
+                }
+                if (modifier.multiplier !== undefined && modifier.multiplier !== 1) {
+                    const index = stat.multipliers.indexOf(modifier.multiplier);
+                    if (index >= 0) {
+                        stat.multipliers.splice(index, 1);
+                        stat.isDirty = true;
+                    } else {
+                        console.error('Failed to remove multiplier', stat, modifier);
+                    }
+                }
+            }
+        }
     };
     return enemy;
 }
 
-function onHitEnemy(this: Enemy, state: GameState, attacker: Hero) {
+function markEnemyStatsAsDirty(enemy: Enemy) {
+    for (const stat of Object.values(enemy.stats)) {
+        stat.isDirty = true;
+    }
+}
+
+function onHitEnemy(this: Enemy, state: GameState, attacker: Hero|Ally) {
     // Bosses ignore attacks from heroes.
     if (this.isBoss) {
         return;
@@ -71,6 +133,16 @@ function aggroEnemyPack(enemy: Enemy, target: AllyTarget) {
 }
 
 export function updateEnemy(this: Enemy, state: GameState) {
+    // Update any effects being applied to this hero and remove them if their duration elapses.
+    for (let i = 0; i < this.effects.length; i++) {
+        const effect = this.effects[i];
+        if (effect.duration) {
+            effect.duration -= frameLength / 1000;
+            if (effect.duration <= 0) {
+                removeEffectFromEnemy(state, this.effects[i--], this);
+            }
+        }
+    }
     if (this.activeAbility?.target) {
         this.activeAbility.warningTime += frameLength;
         if (this.activeAbility.warningTime > this.activeAbility.warningDuration) {
@@ -123,14 +195,10 @@ export function updateEnemy(this: Enemy, state: GameState) {
         this.movementTarget = this.defaultTarget;
     }
     if (this.attackTarget) {
-        //const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        // Move this until it reaches the target.
-        //const dx = this.attackTarget.x - this.x, dy = this.attackTarget.y - this.y;
-        //const mag = Math.sqrt(dx * dx + dy * dy);
         // Attack the target when it is in range.
         if (moveEnemyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.attackRange)) {
             // Attack the target if the enemy's attack is not on cooldown.
-            const attackCooldown = 1000 / this.attacksPerSecond;
+            const attackCooldown = 1000 / getEnemyAttacksPerSecond(state, this);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
                 damageTarget(state, this.attackTarget, {damage: this.damage, source: this});
                 this.attackTarget.onHit?.(state, this);
@@ -138,37 +206,27 @@ export function updateEnemy(this: Enemy, state: GameState) {
             }
             return;
         }
-        /*if (mag < pixelsPerFrame) {
-            this.x = this.attackTarget.x;
-            this.y = this.attackTarget.y;
-        } else {
-            this.x += pixelsPerFrame * dx / mag;
-            this.y += pixelsPerFrame * dy / mag;
-        }*/
         return;
     }
     if (!this.attackTarget && this.movementTarget) {
-        // Move enemy until it reaches the target.
-        /*const pixelsPerFrame = this.movementSpeed / framesPerSecond;
-        const dx = this.movementTarget.x - this.x, dy = this.movementTarget.y - this.y;
-        const mag = Math.sqrt(dx * dx + dy * dy);
-        if (mag < pixelsPerFrame) {
-            this.x = this.movementTarget.x;
-            this.y = this.movementTarget.y;
-        } else {
-            this.x += pixelsPerFrame * dx / mag;
-            this.y += pixelsPerFrame * dy / mag;
-        }*/
-
         // Remove the target once they reach their destination.
         if (moveEnemyTowardsTarget(state, this, this.movementTarget)) {
             delete this.movementTarget;
         }
     }
 }
-
+function getEnemyMovementSpeed(state: GameState, enemy: Enemy): number {
+    const movementSpeed = getModifiableStatValue(state, enemy, enemy.stats.movementSpeed);
+    const speed = getModifiableStatValue(state, enemy, enemy.stats.speed);
+    return movementSpeed * speed;
+}
+function getEnemyAttacksPerSecond(state: GameState, enemy: Enemy): number {
+    const attacksPerSecond = getModifiableStatValue(state, enemy, enemy.stats.attacksPerSecond);
+    const speed = getModifiableStatValue(state, enemy, enemy.stats.speed);
+    return attacksPerSecond * speed;
+}
 function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityTarget, distance = 0): boolean {
-    const pixelsPerFrame = enemy.movementSpeed / framesPerSecond;
+    const pixelsPerFrame = getEnemyMovementSpeed(state, enemy) / framesPerSecond;
     // Move this until it reaches the target.
     // Slightly perturb the target so enemies don't get stacked with the exact same heading.
     const dx = target.x - 0.5 + Math.random() - enemy.x;
@@ -214,20 +272,33 @@ function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityT
 }
 
 export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, state: GameState) {
+    // Render effects behind the enemy
+    for (const effect of this.effects) {
+        effect.renderUnder?.(context, state, this);
+    }
+    // Warnings should appear under the enemy but over effects, for clarity.
     if (this.activeAbility) {
         renderAbilityWarning(context, state, this, this.activeAbility);
     }
+    // Render the enemy
     const definition = enemyDefinitions[this.enemyType];
     if (definition?.render) {
         definition.render(context, state, this);
     } else {
         fillCircle(context, this);
     }
+
+    // Render effects over the enemy
+    for (const effect of this.effects) {
+        effect.renderOver?.(context, state, this);
+    }
+
+    // Render the enemy lifebar.
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
 }
 
 
-function prepareToUseAbilityOnTarget<T extends FieldTarget|undefined>(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) {
+function prepareToUseAbilityOnTarget<T extends FieldTarget>(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) {
     enemy.activeAbility = ability;
     ability.warningTime = 0;
     ability.warningDuration = computeValue(state, ability, ability.definition.warningTime, 0);
@@ -235,6 +306,9 @@ function prepareToUseAbilityOnTarget<T extends FieldTarget|undefined>(state: Gam
         ability.target = {objectType: 'point', zone: target.zone, x: target.x, y: target.y, r: 0};
     } else {
         ability.target = {objectType: 'point', zone: enemy.zone, x: enemy.x, y: enemy.y, r: 0};
+    }
+    if (!ability.target?.zone) {
+        debugger;
     }
     if (ability.definition.zoneCooldown) {
         enemy.zone.zoneEnemyCooldowns.set(ability.definition, ability.definition.zoneCooldown);
@@ -302,9 +376,9 @@ function checkToAutocastAbility(state: GameState, enemy: Enemy, ability: ActiveE
         const distance = Math.sqrt(dx * dx + dy * dy);
         const range = targetingInfo.range;
         if (distance < object.r + range + (targetingInfo.hitRadius ?? 0)) {
-            const target = distance < range
+            const target: FieldTarget = distance < range
                 ? object
-                : {x: enemy.x + dx * range / distance, y: enemy.y + dy * range / distance};
+                : {objectType: 'point', zone: enemy.zone, x: enemy.x + dx * range / distance, y: enemy.y + dy * range / distance};
             prepareToUseAbilityOnTarget(state, enemy, ability, target);
             return;
         }

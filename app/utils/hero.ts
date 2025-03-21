@@ -1,3 +1,4 @@
+import {framesPerSecond} from 'app/gameConstants';
 import {spendEssence} from 'app/utils/essence';
 
 export function getHeroSkill(state: GameState, hero: Hero, skillType: HeroSkillType): HeroSkill {
@@ -103,4 +104,51 @@ export function activateNexusAbility(state: GameState, ability: NexusAbility<any
         definition.onActivate(state, ability, undefined)
         ability.cooldown = definition.getCooldown(state, ability);
     }
+}
+
+
+export function moveAllyTowardsTarget(state: GameState, ally: Hero|Ally, target: AbilityTarget, distance = 0): boolean {
+    const pixelsPerFrame = ally.getMovementSpeed(state) / framesPerSecond;
+    // Move this until it reaches the target.
+    const dx = target.x - ally.x, dy = target.y - ally.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    // Attack the target when it is in range.
+    if (mag <= distance) {
+        return true;
+    }
+    if (mag < pixelsPerFrame) {
+        ally.x = target.x;
+        ally.y = target.y;
+    } else {
+        ally.x += pixelsPerFrame * dx / mag;
+        ally.y += pixelsPerFrame * dy / mag;
+    }
+    // Push the ally away from any objects they get too close to.
+    for (const object of ally.zone.objects) {
+        if (object === ally) {
+            continue;
+        }
+        let minDistance = ally.r + object.r - 8;
+        // This will make the min distance slightly smaller than it is for bosses,
+        // to prevent pushing them around.
+        if (object.objectType === 'enemy' && object.isBoss) {
+            minDistance += 4;
+        }
+        if (minDistance <= 0) {
+            continue;
+        }
+        //if (object.objectType === 'ally') {
+        //    minDistance = ally.r + object.r - 10;
+        //} else if (object.objectType === '')
+        const dx = ally.x - object.x, dy = ally.y - object.y;
+        if (!dx && !dy) {
+            continue;
+        }
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        if (mag < minDistance) {
+            ally.x = object.x + dx * minDistance / mag;
+            ally.y = object.y + dy * minDistance / mag;
+        }
+    }
+    return false;
 }

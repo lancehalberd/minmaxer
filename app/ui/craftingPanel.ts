@@ -14,7 +14,7 @@ export function toggleCraftingPanel(state: GameState, open = !state.openCrafting
     state.openChooseCharmPanel = false;
 }
 
-const itemsPerPage = 6;
+const itemsPerPage = 7;
 export class CraftingPanel implements UIContainer {
     objectType = <const>'uiContainer';
     w = 250;
@@ -39,7 +39,8 @@ export class CraftingPanel implements UIContainer {
             if (!craftingJobDefinition.jobDefinition || !craftingJobDefinition.element || !isJobDiscovered(state, craftingJobDefinition.jobDefinition)) {
                 continue;
             }
-            this.craftingElements .push(craftingJobDefinition.element);
+            this.craftingElements.push(craftingJobDefinition.element);
+            craftingJobDefinition.element.update?.(state);
         }
     }
     totalPages(state: GameState) {

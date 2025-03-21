@@ -1,9 +1,7 @@
 
 /*
 type MaterialType =
-    | 'leatherStrap' | 'leather' | 'fineLeather'
-    | 'wood' | 'hardwood'
-    | 'stone'
+    |
 */
 
 export const itemDefinitions: {[key in InventoryKey]?: GenericItem} = {};
@@ -46,6 +44,41 @@ addItemDefinition({
     charmStats: {modifiers: [armor(5)]},
     extraArmorModifiers: [armor(3)],
 });
+
+addItemDefinition({
+    key: 'snakeFang',
+    name: 'Snake Fang',
+    // TODO: Reduce damage and add DOT effect.
+    weaponStats: {damage: 20, modifiers: [dex(5)]},
+});
+
+addItemDefinition({
+    key: 'leatherStrap',
+    name: 'Leath Strap',
+    baseCharmStats: {modifiers: [armor(1)]},
+    charmStats: {modifiers: [armor(3)]},
+    extraArmorModifiers: [armor(1)],
+});
+addItemDefinition({
+    key: 'leather',
+    name: 'Leather',
+    armorStats: {
+        armor: 4,
+    },
+    baseArmorStats: {armor: 1, armorCap: 5},
+    extraArmorModifiers: [armor(2)],
+});
+addItemDefinition({
+    key: 'fineLeather',
+    name: 'Fine Leather',
+    armorStats: {
+        armor: 10,
+        modifiers: [health(50)],
+    },
+    baseArmorStats: {armor: 8, armorCap: 30},
+    extraArmorModifiers: [armor(5)],
+});
+
 addItemDefinition({
     key: 'hideScraps',
     name: 'Hide Scraps',
@@ -115,11 +148,22 @@ addItemDefinition({
     weaponStats: {damage: 1},
 });
 addItemDefinition({
+    key: 'hardwood',
+    name: 'Hardwood',
+    weaponStats: {damage: 10},
+});
+addItemDefinition({
     key: 'stone',
     name: 'Stone',
     weaponStats: {damage: 3},
     charmStats: {modifiers: [damage(1), armor(1)]},
 });
+addItemDefinition({
+    key: 'ironOre',
+    name: 'Iron Ore',
+    charmStats: {modifiers: [damage(2), armor(2)]},
+});
+
 
 addItemDefinition({
     key: 'bronze',
@@ -255,6 +299,7 @@ addItemDefinition({
     charmStats: {modifiers: [int(50)]},
 });
 
+// Logging tools
 addItemDefinition({
     key: 'woodHatchet',
     name: 'Hatchet',
@@ -266,6 +311,18 @@ addItemDefinition({
     weaponStats: {damage: 15, modifiers: [str(3), dex(3)]},
 });
 addItemDefinition({
+    key: 'ironHatchet',
+    name: 'Iron Hatchet',
+    weaponStats: {damage: 50, modifiers: [str(10), dex(10)]},
+});
+addItemDefinition({
+    key: 'steelAxe',
+    name: 'Steel Axe',
+    weaponStats: {damage: 150, modifiers: [str(25), dex(25)]},
+});
+
+// Building/crafting tools
+addItemDefinition({
     key: 'woodHammer',
     name: 'Mallet',
     weaponStats: {damage: 5, modifiers: [str(2)]},
@@ -276,39 +333,63 @@ addItemDefinition({
     weaponStats: {damage: 15, modifiers: [str(6)]},
 });
 addItemDefinition({
-    key: 'stoneAxe',
-    name: 'Stone Axe',
-    weaponStats: {damage: 15, modifiers: [str(3), dex(3)]},
+    key: 'ironHammer',
+    name: 'Iron Hammer',
+    weaponStats: {damage: 50, modifiers: [str(20)]},
 });
+addItemDefinition({
+    key: 'steelHammer',
+    name: 'Steel Hammer',
+    weaponStats: {damage: 150, modifiers: [str(50)]},
+});
+
+// Archer tools
 addItemDefinition({
     key: 'shortBow',
     name: 'Short Bow',
     weaponStats: {damage: 5, modifiers: [dex(2)]},
 });
 addItemDefinition({
+    key: 'longBow',
+    name: 'Long Bow',
+    weaponStats: {damage: 15, modifiers: [dex(6)]},
+});
+addItemDefinition({
+    key: 'crossbow',
+    name: 'Crossbow',
+    weaponStats: {damage: 50, modifiers: [dex(20)]},
+});
+
+// Mage tools
+addItemDefinition({
     key: 'woodStaff',
     name: 'Wood Staff',
     weaponStats: {damage: 5, modifiers: [int(2)]},
 });
+addItemDefinition({
+    key: 'bronzeStaff',
+    name: 'Bronze Staff',
+    weaponStats: {damage: 50, modifiers: [int(20)]},
+});
+addItemDefinition({
+    key: 'steelStaff',
+    name: 'Steel Staff',
+    weaponStats: {damage: 150, modifiers: [int(50)]},
+});
 
-// TODO: stop using this once item definitions are added for each of these.
-export const inventoryLabels: {[key in InventoryKey]?: string} = {
-    hardwood: 'Hardwood',
-    ironOre: 'Iron Ore',
-    // Wood chopping tools
-    ironHatchet: 'Iron Hatchet',
-    steelAxe: 'Steel Axe',
-    // Mining tools
-    stonePickaxe: 'Stone Pickaxe',
-    ironPickaxe: 'Iron Pickaxe',
-    steelPickaxe: 'Steel Pickaxe',
-    // Building tools
-    ironHammer: 'Iron Hammer',
-    steelHammer: 'Steel Hammer',
-    // Archery weapons
-    longBow: 'Long Bow',
-    crossBow: 'Crossbow',
-    // Staff weapons
-    bronzeStaff: 'Bronze Staff',
-    steelStaff: 'Steel Staff',
-};
+// Mining tools.
+addItemDefinition({
+    key: 'stonePickaxe',
+    name: 'Stone Pickaxe',
+    weaponStats: {damage: 15, modifiers: [int(3), str(3)]},
+});
+addItemDefinition({
+    key: 'ironPickaxe',
+    name: 'Iron Pickaxe',
+    weaponStats: {damage: 50, modifiers: [int(10), str(10)]},
+});
+addItemDefinition({
+    key: 'steelPickaxe',
+    name: 'Steel Pickaxe',
+    weaponStats: {damage: 150, modifiers: [int(25), str(25)]},
+});

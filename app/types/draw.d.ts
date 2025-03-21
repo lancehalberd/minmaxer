@@ -50,7 +50,9 @@ interface CreateAnimationOptions {
     frameMap?: number[]
 }
 
-interface FillTextProperties extends Point {
+
+
+interface FillTextProperties {
     text: number|string
     textBaseline?: 'top' | 'middle' | 'bottom'
     textAlign?: 'left' | 'center' | 'right'
@@ -58,5 +60,10 @@ interface FillTextProperties extends Point {
     font?: 'san-serif'
     color?: CanvasFill
     bold?: boolean
+    strikeColor?: CanvasFill
     measure?: boolean
+}
+
+interface FillTextPropertiesAndLocation extends FillTextProperties, Point {
+
 }

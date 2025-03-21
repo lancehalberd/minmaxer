@@ -14,6 +14,10 @@ export function applyDamageOverTime(state: GameState, target: AttackTarget, dama
     if (target.objectType === 'nexus') {
         return;
     }
+    // Ignore damage against targets that have already been defeated.
+    if (target.health <= 0) {
+        return;
+    }
     let damage = damagePerSecond * frameLength / 1000;
     if (target.objectType === 'hero') {
         damage *= target.getIncomingDamageMultiplier(state);
@@ -41,6 +45,10 @@ export function damageTarget(state: GameState, target: AttackTarget, {damage, is
             }
         }
         loseEssence(state, damage);
+        return;
+    }
+    // Ignore damage against targets that have already been defeated.
+    if (target.health <= 0) {
         return;
     }
     if (target.objectType === 'hero') {
@@ -220,7 +228,7 @@ export function isEnemyAbilityTargetValid(state: GameState, targetingInfo: Abili
     }
     // Abilities that don't specify any target type are assumed to target enemies.
     if (!targetingInfo.canTargetLocation && !targetingInfo.canTargetEnemy && !targetingInfo.canTargetAlly) {
-        return target.objectType === 'hero' || target.objectType === 'nexus';
+        return target.objectType === 'hero' || target.objectType === 'ally' || target.objectType === 'nexus';
     }
     if (target.objectType === 'point') {
         return !!targetingInfo.canTargetLocation;
@@ -228,7 +236,7 @@ export function isEnemyAbilityTargetValid(state: GameState, targetingInfo: Abili
     if (target.objectType === 'enemy' || target.objectType === 'spawner') {
         return !!targetingInfo.canTargetAlly;
     }
-    if (target.objectType === 'hero') {
+    if (target.objectType === 'hero' || target.objectType === 'ally') {
         return !!targetingInfo.canTargetEnemy;
     }
     return false;

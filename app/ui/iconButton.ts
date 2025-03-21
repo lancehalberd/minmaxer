@@ -1,6 +1,8 @@
-import {fillBorderedRect, fillCircle, fillRect, fillText, strokeX} from 'app/utils/draw';
 import {isMouseOverTarget} from 'app/mouse';
-import {uiSize} from 'app/gameConstants';
+import {tinyButtonSize, uiSize} from 'app/gameConstants';
+import {fillBorderedRect, fillCircle, fillPlus, fillRect, fillText, strokeX} from 'app/utils/draw';
+import {pad} from 'app/utils/geometry'
+
 
 interface IconButtonProps extends Partial<UIButton> {
     color?: CanvasFill
@@ -118,5 +120,23 @@ export class RepeatToggle extends IconButton {
         context.lineTo(x + dy * h, y  - dx * h);
         context.fillStyle = iconColor;
         context.fill();
+    }
+}
+
+export class PlusButton implements UIButton {
+    objectType = <const>'uiButton';
+    uniqueId = this.props.uniqueId;
+    x = this.props.x ?? 0;
+    y = this.props.y ?? 0;
+    w = this.props.w ?? tinyButtonSize;
+    h = this.props.h ?? tinyButtonSize;
+    onPress = this.props.onPress;
+    constructor(public props: Partial<UIButton>) {}
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        // Draw a red square with a white border and white plus on it.
+        const showHover = isMouseOverTarget(state, this);
+        fillRect(context, this, '#FFF');
+        fillRect(context, pad(this, -1), showHover ? '#F88' : '#F00');
+        fillPlus(context, pad(this, -4), '#FFF');
     }
 }

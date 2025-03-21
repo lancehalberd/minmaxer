@@ -13,7 +13,7 @@ const archerJobDefinition: JobDefinition = {
     //workerSeconds: 1,
     //repeat: true,
 };
-export const archerJobElement = createJobComponent({jobDefinition: archerJobDefinition, x: -11 * uiSize, y: -uiSize});
+export const archerJobElement = createJobComponent({jobDefinition: archerJobDefinition, x: -6.5 * uiSize, y: -3.5 * uiSize});
 
 function updateArchers(state: GameState, archerJob: Job) {
     // Distance is measured from the center of the nexus, so add the radius of the nexus.

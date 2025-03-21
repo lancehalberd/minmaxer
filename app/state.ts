@@ -1,13 +1,12 @@
-import {healingWind, createNexusAbility} from 'app/definitions/nexusAbilities';
+import {arcticBlast, inferno, healingWind, summonGolems, createNexusAbility} from 'app/definitions/nexusAbilities';
 import {snakePit} from 'app/definitions/zones/snakePit';
 import {Cave} from 'app/objects/structure';
 import {addBasicHeroes} from 'app/objects/hero';
 import {createNexus} from 'app/objects/nexus';
 import {initializeSpawners} from 'app/objects/spawner';
 
-
-const tempAbility = createNexusAbility(healingWind);
-tempAbility.level = 1;
+//const testAbility = createNexusAbility(summonGolems);
+//testAbility.level = 1;
 
 const world: World = {
     name: 'World',
@@ -25,9 +24,16 @@ world.objects.push(snakePitCave);
 
 export const state: GameState = {
     nexus,
+    maxHeroSkillPoints: 7,
     heroSlots: [undefined],
-    nexusAbilities: [tempAbility],
-    nexusAbilitySlots: [tempAbility],
+    maxNexusAbilityLevel: 1,
+    nexusAbilities: [
+        createNexusAbility(healingWind),
+        createNexusAbility(inferno),
+        createNexusAbility(arcticBlast),
+        createNexusAbility(summonGolems),
+    ],
+    nexusAbilitySlots: [],
     city: {
         maxPopulation: 5,
         population: 0,

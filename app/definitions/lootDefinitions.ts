@@ -16,11 +16,11 @@ lootDefinitions.potion = {
 };
 
 
-function applyInvulnerabilityEffect(this: SimpleEffect<Hero>, state: GameState, hero: Hero) {
+function applyInvulnerabilityEffect(this: SimpleEffect<Hero|Ally>, state: GameState, hero: Hero|Ally) {
     hero.stats.incomingDamageMultiplier.multipliers.push(0);
     hero.stats.incomingDamageMultiplier.isDirty = true;
 }
-function removeInvulnerabilityEffect(this: SimpleEffect<Hero>, state: GameState, hero: Hero) {
+function removeInvulnerabilityEffect(this: SimpleEffect<Hero|Ally>, state: GameState, hero: Hero|Ally) {
     const index = hero.stats.incomingDamageMultiplier.multipliers.indexOf(0);
     if (index >= 0) {
         hero.stats.incomingDamageMultiplier.multipliers.splice(index, 1);
@@ -33,7 +33,7 @@ lootDefinitions.invincibilityPotion = {
     color: 'yellow',
     r: 5,
     onPickup(state: GameState, hero: Hero) {
-        const invincibilityEffect: SimpleEffect<Hero> = {
+        const invincibilityEffect: SimpleEffect<Hero|Ally> = {
             effectType: 'simpleEffect',
             duration: 10,
             apply: applyInvulnerabilityEffect,

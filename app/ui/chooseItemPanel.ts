@@ -1,15 +1,56 @@
 import {canvas, uiSize} from 'app/gameConstants';
+import {isMouseOverTarget} from 'app/mouse';
 import {CharacterIconButton, CloseIconButton} from 'app/ui/iconButton';
-import {TextButton} from 'app/ui/textButton';
 import {computeValue} from 'app/utils/computed';
 import {fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 
-const itemsPerPage = 15;
+
+interface ItemButtonProps<T extends InventoryItem> extends Partial<UIButton> {
+    item: T;
+    itemLabel: string
+    itemQuantity?: number
+    onHoverItem?: (state: GameState, item: T) => void
+    onSelectItem: (state: GameState, item: T) => void
+}
+export class ItemButton<T extends InventoryItem> implements UIButton {
+    objectType = <const>'uiButton';
+    item: T = this.props.item;
+    itemLabel = this.props.itemLabel;
+    itemQuantity = this.props.itemQuantity;
+    onHoverItem = this.props.onHoverItem;
+    onSelectItem = this.props.onSelectItem;
+    x = this.props.x ?? 0;
+    y = this.props.y ?? 0;
+    w = this.props.w ?? 100;
+    h = this.props.h ?? 2 * uiSize;
+    disabled = this.props.disabled;
+    uniqueId = this.props.uniqueId;
+    constructor(public props: ItemButtonProps<T>) {}
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        if (isMouseOverTarget(state, this)) {
+            fillRect(context, this, 'rgba(255, 255, 255, 0.3)');
+        }
+        fillText(context, {text: this.itemLabel, x: this.x + 2, y: this.y + this.h / 2, color: '#FFF', size: 16, textAlign: 'left', textBaseline: 'middle'});
+        if (this.itemQuantity !== undefined) {
+            fillText(context, {text: 'x' + this.itemQuantity, x: this.x + this.w - 2, y: this.y + this.h / 2, color: '#FFF', size: 16, textAlign: 'right', textBaseline: 'middle'});
+        }
+    }
+    onClick(state: GameState) {
+        this.onSelectItem?.(state, this.item);
+        return true;
+    }
+    onHover(state: GameState) {
+        this.onHoverItem?.(state, this.item);
+        return true;
+    }
+}
+
+
+const itemsPerPage = 12;
 interface ChooseItemPanelProps<T extends InventoryItem> extends Partial<UIContainer> {
     title: string
     items: Computed<T[], ChooseItemPanel<T>>
-    showQuantity?: boolean
     onHoverItem?: (state: GameState, item: T) => void
     onSelectItem: (state: GameState, item: T) => void
     onClose?: (state: GameState) => void
@@ -21,7 +62,6 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     items = this.props.items;
     onHoverItem = this.props.onHoverItem;
     onSelectItem = this.props.onSelectItem;
-    showQuantity = this.props.showQuantity ?? true;
     w = this.props.w ?? 250;
     h = this.props.h ?? 400;
     x = this.props.x ?? 300;
@@ -58,11 +98,54 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
             return true;
         },
     });
+    itemButtons: ItemButton<T>[] = [];
+    children: UIElement[] = [];
     constructor(public props: ChooseItemPanelProps<T>) {}
     totalPages(state: GameState) {
         return Math.ceil(this.getItems(state).length / itemsPerPage);
     }
-    update(state: GameState) {}
+    update(state: GameState) {
+        this.children = [];
+        if (this.onClose) {
+            this.children.push(this.closeButton);
+        }
+        let y = 45;
+        const items = this.getItems(state);
+        const totalPages = this.totalPages(state);
+        this.page = totalPages ? this.page % totalPages : 0;
+        for (let i = 0; i < itemsPerPage; i++) {
+            const item = items[this.page * itemsPerPage + i];
+            if (!item) {
+                break;
+            }
+            const itemLabel = item.name;
+            const itemQuantity = item.key ? state.inventory[item.key] ?? 0 : undefined;
+            const w = this.w - 2 * uiSize;
+            if (!this.itemButtons[i]) {
+                this.itemButtons[i] = new ItemButton<T>({
+                    x: uiSize,
+                    y,
+                    w,
+                    item,
+                    itemLabel,
+                    itemQuantity,
+                    onHoverItem: this.onHoverItem,
+                    onSelectItem: this.onSelectItem,
+                });
+            } else {
+                this.itemButtons[i].item = item;
+                this.itemButtons[i].itemLabel = itemLabel
+                this.itemButtons[i].itemQuantity = itemQuantity;
+                this.itemButtons[i].w = w;
+            }
+            this.children.push(this.itemButtons[i]);
+            y += 2 * uiSize;
+        }
+        if (totalPages > 1) {
+            this.children.push(this.prevButton);
+            this.children.push(this.nextButton);
+        }
+    }
     render(context: CanvasRenderingContext2D, state: GameState) {
         const hero = state.selectedHero;
         if (!hero) {
@@ -84,38 +167,6 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
         return computeValue(state, this, this.items, []);
     }
     getChildren(state: GameState) {
-        const children: UIElement[] = [];
-        if (this.onClose) {
-            children.push(this.closeButton);
-        }
-        let y = 45;
-        for (const item of this.getItems(state)) {
-            const itemButton = new TextButton({
-                y,
-                uniqueId: 'choose-item-' + this.title + y,
-                text: (state: GameState) => {
-                    if (this.showQuantity && item.key && state.inventory[item.key]) {
-                        return state.inventory[item.key] + ' ' + item.name;
-                    }
-                    return item.name;
-                },
-                onHover: (state: GameState) => {
-                    this.onHoverItem?.(state, item);
-                    return true;
-                },
-                onClick: (state: GameState) => {
-                    this.onSelectItem(state, item);
-                    return true;
-                },
-            });
-            itemButton.x = (this.w - itemButton.w) / 2;
-            children.push(itemButton);
-            y += 2.5 * uiSize;
-        }
-        if (this.totalPages(state) > 1) {
-            children.push(this.prevButton);
-            children.push(this.nextButton);
-        }
-        return children;
+        return this.children;
     }
 }

@@ -3,21 +3,29 @@ const nexusLevels = [
         goal:  200,
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
-            // TODO: allow building simple towers.
+            state.nexusAbilitySlots.push(undefined);
         }
     },
     {
         goal:  1000,
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
-            // TODO: allow forging hero equipment
+            // TODO: Allow forging weapons+armor here.
+        }
+    },
+    {
+        goal:  2000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            // TODO: Allow forging charms here.
         }
     },
     {
         goal:  5000,
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
-            // TODO: allow convering essence to hero experience.
+            // Old idea: Allow converting essence into hero XP.
+            state.nexusAbilitySlots.push(undefined);
         }
     },
     {
@@ -26,6 +34,51 @@ const nexusLevels = [
             state.nexus.essenceGrowth++;
             // Gain an extra hero slot.
             state.heroSlots.push(undefined);
+            state.maxHeroSkillPoints = 8;
+        }
+    },
+    {
+        goal:  20000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            state.maxNexusAbilityLevel = 2;
+        }
+    },
+    {
+        goal:  50000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            state.nexusAbilitySlots.push(undefined);
+        }
+    },
+    {
+        goal:  100000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            // Gain an extra hero slot.
+            state.heroSlots.push(undefined);
+            state.maxHeroSkillPoints = 9;
+        }
+    },
+    {
+        goal:  200000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            state.maxNexusAbilityLevel = 3;
+        }
+    },
+    {
+        goal:  500000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            // TODO: Additional bonus here.
+        }
+    },
+    {
+        goal:  1000000,
+        applyChanges(state: GameState) {
+            state.nexus.essenceGrowth++;
+            state.maxHeroSkillPoints = 10;
         }
     },
 ];

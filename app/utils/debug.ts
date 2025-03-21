@@ -51,11 +51,12 @@ export function advanceDebugGameState(state: GameState) {
             spawner.startNewWave(state, spawnerSchedule);
             for (const spawn of spawner.scheduledSpawns) {
                 const enemy = createEnemy(spawn.enemyType, spawn.level, {zone: state.world, x: 0, y: 0});
-                gainEssence(state, 10 * enemy.essenceWorth);
+                gainEssence(state, enemy.essenceWorth);
                 mainHero.experience += enemy.experienceWorth;
             }
             spawner.scheduledSpawns = [];
         }
+        state.world.time += nextWave.duration - 10000;
         state.nextWaveIndex++;
     }
 }

@@ -4,11 +4,11 @@ interface LocationTarget extends ZoneLocation {
     r?: 0
 }
 
-type AllyTarget = Hero | Nexus;
+type AllyTarget = Hero | Ally | Nexus;
 type EnemyTarget = Enemy | Spawner;
 
 // Any target on the field.
-type FieldTarget = LocationTarget | Hero | Enemy | Spawner | WaveSpawner | Nexus | Loot | Structure;
+type FieldTarget = LocationTarget | AllyTarget | EnemyTarget | WaveSpawner | Loot | Structure;
 
 // Any target that an ability could theoretically target.
 type AbilityTarget = FieldTarget;

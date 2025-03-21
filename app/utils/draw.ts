@@ -63,7 +63,7 @@ export function fillPlus(context: CanvasRenderingContext2D, {x, y, w, h}: Rect, 
     fillRect(context, {x, y: y + h / 3, w: w, h: h / 3}, color);
 }
 
-export function fillText(context: CanvasRenderingContext2D, props: FillTextProperties): TextMetrics|null {
+export function fillText(context: CanvasRenderingContext2D, props: FillTextPropertiesAndLocation): TextMetrics|null {
     const {
         x, y, text,
         size = 12,
@@ -71,6 +71,7 @@ export function fillText(context: CanvasRenderingContext2D, props: FillTextPrope
         font = 'san-serif',
         color = '#000',
         measure = false,
+        strikeColor,
         textBaseline = 'middle',
         textAlign = 'center',
     } = props;
@@ -80,12 +81,17 @@ export function fillText(context: CanvasRenderingContext2D, props: FillTextPrope
         context.textAlign = textAlign;
         context.fillStyle = color;
         context.fillText('' + text, x, y);
-        const textMeasure = measure ? context.measureText('' + text) : null;
+        const textMeasure = (measure || strikeColor) ? context.measureText('' + text) : null;
+        if (textMeasure && strikeColor) {
+            context.fillStyle = strikeColor;
+            const top = y - textMeasure.fontBoundingBoxAscent, bottom = y + textMeasure.fontBoundingBoxDescent;
+            context.fillRect(x - textMeasure.actualBoundingBoxLeft - 1, (top + bottom) / 2 - 1, textMeasure.width + 2, 2);
+        }
     context.restore();
     return textMeasure
 }
 // This should match the logic above exactly so the text measurement is accurate.
-export function measureText(context: CanvasRenderingContext2D, props: FillTextProperties): TextMetrics {
+export function measureText(context: CanvasRenderingContext2D, props: FillTextProperties & Partial<Point>): TextMetrics {
     const {
         x, y, text,
         size = 12,
@@ -100,7 +106,7 @@ export function measureText(context: CanvasRenderingContext2D, props: FillTextPr
         context.textBaseline = textBaseline;
         context.textAlign = textAlign;
         context.fillStyle = color;
-        context.fillText('' + text, x, y);
+        context.fillText('' + text, x ?? 0, y ?? 0);
         const textMeasure = context.measureText('' + text);
     context.restore();
     return textMeasure

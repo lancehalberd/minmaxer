@@ -1,6 +1,8 @@
 import {uiSize} from 'app/gameConstants';
-import {MinusIconButton, PlusIconButton, RepeatToggle} from 'app/ui/iconButton';
 import {isMouseOverTarget} from 'app/mouse';
+import {MinusIconButton, PlusIconButton, RepeatToggle} from 'app/ui/iconButton';
+import {showRequirementsTooltip} from 'app/ui/tooltip';
+import {drawFrame} from 'app/utils/animations';
 import {computeResourceCost, computeValue} from 'app/utils/computed';
 import {drawNumberFillBar, fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
@@ -86,6 +88,11 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
                 const job = getOrCreateJob(state, jobDefinition);
                 job.getHeroTarget = getHeroTarget;
             }
+            if (state.city.population) {
+                this.h = 2 * scaledSize
+            } else {
+                this.h = scaledSize;
+            }
         },
         render(context: CanvasRenderingContext2D, state: GameState) {
             context.save();
@@ -96,7 +103,12 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
                 }
                 fillRect(context, {...this, x:0, y: 0, h: scaledSize}, '#000');
                 const label = computeValue(state, jobDefinition, jobDefinition.label, '???');
-                fillText(context, {text: label, x: this. w / 2, y: scaledSize / 2 + 1 * scale, size: scaledSize - 4 * scale, color: '#FFF'});
+                const y = scaledSize / 2;
+                const measurements = fillText(context, {text: label, x: this.w / 2, y: y + 1 * scale, size: scaledSize - 4 * scale, color: '#FFF', measure: true});
+                if (measurements && jobDefinition.labelIcon) {
+                    const x = this.w / 2 - measurements.width / 2 - 2 - jobDefinition.labelIcon.w;
+                    drawFrame(context, jobDefinition.labelIcon, {...jobDefinition.labelIcon, x, y: y - jobDefinition.labelIcon.h / 2});
+                }
 
                 // Draw population controls only once the city has a population.
                 if (state.city.population > 0) {
@@ -152,34 +164,38 @@ export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarge
 
 function showJobPreviewForPopulation(state: GameState, jobDefinition: JobDefinition) {
     const job = getOrCreateJob(state, jobDefinition);
+    const requirements: Requirements = {};
     // Always show job resource cost for repeated jobs.
     if (!job.isPaidFor || job.shouldRepeatJob) {
         if (jobDefinition.essenceCost) {
-            state.nexus.previewEssenceChange = -jobDefinition.essenceCost;
+            const essenceCost = computeValue(state, jobDefinition, jobDefinition.essenceCost, 0);
+            state.nexus.previewEssenceChange = -essenceCost;
+            requirements.essenceCost = essenceCost;
         }
         if (jobDefinition.resourceCost) {
-            state.previewResourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
+            requirements.resourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
         }
     }
     if (jobDefinition.requiredToolType) {
-        state.previewRequiredToolType = jobDefinition.requiredToolType;
+        requirements.toolType = jobDefinition.requiredToolType;
     }
+    showRequirementsTooltip(state, requirements);
 }
 
 function showJobPreviewForHero(state: GameState, jobDefinition: JobDefinition) {
     const job = getOrCreateJob(state, jobDefinition);
+    const requirements: Requirements = {};
     // Always show job resource cost for repeated jobs.
     if (!job.isPaidFor || job.shouldRepeatJob) {
         if (jobDefinition.essenceCost) {
-            state.nexus.previewEssenceChange = -jobDefinition.essenceCost;
+            const essenceCost = computeValue(state, jobDefinition, jobDefinition.essenceCost, 0);
+            state.nexus.previewEssenceChange = -essenceCost;
+            requirements.essenceCost = essenceCost;
         }
         if (jobDefinition.resourceCost) {
-            state.previewResourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
+            requirements.resourceCost = computeResourceCost(state, jobDefinition, jobDefinition.resourceCost);
         }
-        // Currently heroes do not require tools.
-        //if (jobDefinition.requiredToolType) {
-        //    state.previewRequiredToolType = jobDefinition.requiredToolType;
-        //}
     }
+    showRequirementsTooltip(state, requirements);
 }
 

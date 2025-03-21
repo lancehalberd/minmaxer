@@ -2,7 +2,7 @@ type ToolType = 'hammer' | 'axe' | 'pickaxe' | 'bow' | 'staff';
 type HammerType = 'woodHammer' | 'stoneHammer' | 'ironHammer' | 'steelHammer';
 type AxeType = 'woodHatchet' | 'stoneAxe' | 'ironHatchet' | 'steelAxe';
 type PickaxeType = 'stonePickaxe' | 'ironPickaxe' | 'steelPickaxe';
-type BowType = 'shortBow' | 'longBow' | 'crossBow';
+type BowType = 'shortBow' | 'longBow' | 'crossbow';
 type StaffType = 'woodStaff' | 'bronzeStaff' | 'steelStaff';
 type AmmoType = 'arrow';
 
@@ -11,6 +11,7 @@ type MaterialType =
     | 'furScraps' | 'fur' | 'lionPelt' | 'bearSkin'
     | 'leatherStrap' | 'leather' | 'fineLeather'
     | 'scales' | 'largeScales' | 'hardScales'
+    | 'snakeFang'
     | 'wood' | 'hardwood'
     | 'stone'
     | 'ironOre' | 'iron'

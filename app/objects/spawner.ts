@@ -2,6 +2,7 @@ import {frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
 import {Forest, Quary, Village} from 'app/objects/structure';
 import {fillCircle, fillRing, renderCooldownCircle} from 'app/utils/draw';
+import {gainEssence} from 'app/utils/essence';
 import {removeFieldObject} from 'app/utils/world';
 
 /*class EnemySpawner implements Spawner {
@@ -122,6 +123,7 @@ class EnemyWaveSpawner implements WaveSpawner {
     isFinalWave = false;
     spawnAngle = 0;
     lastSpawnTime = 0;
+    essenceWorth = 0;
 
     constructor(props: EnemyWaveSpawnerProps) {
         // Set any properties from props onto this instance.
@@ -188,6 +190,7 @@ class EnemyWaveSpawner implements WaveSpawner {
                 state.world.objects.push(this.structure);
                 this.structure.onDiscover?.(state);
             }
+            gainEssence(state, this.essenceWorth);
             removeFieldObject(state, this);
             return;
         }
@@ -242,7 +245,7 @@ export function checkToAddNewSpawner(state: GameState) {
         } else {
             structure = new Village({zone: state.world, population: 5, x, y});
         }
-        const newSpawner = new EnemyWaveSpawner({zone: state.world, structure});
+        const newSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 500 * level, structure});
         state.world.objects.push(newSpawner);
         state.world.nextSpawnerLevel++;
         const easyEnemyType = easyEnemyTypes[(Math.random() * easyEnemyTypes.length) | 0];
@@ -341,18 +344,18 @@ const koboldCleric: SpacedSpawnProps = {type: 'koboldCleric', level: 5, count: 1
 export function initializeSpawners(state: GameState) {
 
     const smallSnakeForest = new Forest({jobKey: 'smallSnakeForest', wood: 100, zone: state.world, x: 190, y: 150, r: 20});
-    const smallSnakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, structure: smallSnakeForest});
+    const smallSnakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 150, structure: smallSnakeForest});
 
     const snakeForest = new Forest({jobKey: 'snakeForest', wood: 1000, zone: state.world,x: 200, y: 200});
-    const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, structure: snakeForest});
+    const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: snakeForest});
 
     const smallVillage = new Village({population: 20, zone: state.world,x: -200, y: 200});
-    const koboldSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, structure: smallVillage});
+    const koboldSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: smallVillage});
 
 
     // TODO: Make this a bridge or something that allows seeing more of the map when completed.
     const town = new Village({population: 50, zone: state.world,x: 200, y: -200});
-    const mummySpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, structure: town});
+    const mummySpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 1000, structure: town});
     // Test forest code.
     state.world.objects.push(smallSnakeSpawner);
     state.world.objects.push(snakeSpawner);
@@ -499,9 +502,9 @@ export function initializeSpawners(state: GameState) {
             duration: 60,
             spawners: [
                 {spawner: mummySpawner, spawns: [
-                    ...spacedSpawns({...snake, count: 5, amount: 2}),
-                    ...spacedSpawns({...cobra, count: 2}),
-                    ...spacedSpawns({...kobold, count: 5, amount: 2}),
+                    ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
+                    ...spacedSpawns({...cobra, count: 2, spacing: 3}),
+                    ...spacedSpawns({...kobold, count: 5, amount: 2, spacing: 3}),
                     ...spacedSpawns({...koboldCleric, count: 1}),
                 ]},
             ],
@@ -510,9 +513,9 @@ export function initializeSpawners(state: GameState) {
             duration: 60,
             spawners: [
                 {spawner: mummySpawner, spawns: [
-                    ...spacedSpawns({...snake, count: 5, amount: 2}),
-                    ...spacedSpawns({...cobra, count: 4}),
-                    ...spacedSpawns({...kobold, count: 5, amount: 2}),
+                    ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
+                    ...spacedSpawns({...cobra, count: 4, spacing: 3}),
+                    ...spacedSpawns({...kobold, count: 5, amount: 2, spacing: 3}),
                     ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
@@ -521,9 +524,9 @@ export function initializeSpawners(state: GameState) {
             duration: 60,
             spawners: [
                 {spawner: mummySpawner, spawns: [
-                    ...spacedSpawns({...snake, count: 5, amount: 2}),
-                    ...spacedSpawns({...cobra, count: 6}),
-                    ...spacedSpawns({...kobold, count: 5, amount: 2}),
+                    ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
+                    ...spacedSpawns({...cobra, count: 6, spacing: 3}),
+                    ...spacedSpawns({...kobold, count: 5, amount: 2, spacing: 3}),
                     ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],

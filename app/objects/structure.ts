@@ -182,7 +182,7 @@ export class Cave implements Structure {
        if (!this.zoneDefinition && hero.zone.exit) {
             enterZone(state, hero.zone.exit, hero);
        } else if (this.zoneDefinition) {
-           enterNewZoneInstance(state, this.zoneDefinition, this, hero);
+           enterNewZoneInstance(state, this.zoneDefinition, {x: hero.x, y: hero.y, zone: hero.zone}, hero);
        }
     }
     update(state: GameState) {}
@@ -232,6 +232,7 @@ export class HealingPool implements Structure {
     x = this.props.x;
     y = this.props.y;
     r = this.props.r ?? 20;
+    color = 'rgba(0, 0, 0, 0.5)';
     zoneDefinition = this.props.zoneDefinition;
     cooldown = 0;
 

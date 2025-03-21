@@ -10,6 +10,7 @@ type ModifiableHeroStat = CoreStat | 'maxHealth' | 'movementSpeed'
     | 'damage' | 'attacksPerSecond' | 'extraHitChance' | 'criticalChance' | 'criticalMultiplier'
     | 'cooldownSpeed'
     | 'armor' | 'maxDamageReduction' | 'incomingDamageMultiplier'
+type ModifiableHeroStats = {[key in ModifiableHeroStat]: ModifiableStat<Hero>}
 
 interface HeroDefinition {
     // Name of the hero.
@@ -35,7 +36,6 @@ interface HeroDefinition {
     abilities: AbilityDefinition[]
 }
 
-type ModifiableHeroStats = {[key in ModifiableHeroStat]: ModifiableStat<Hero>}
 
 interface Hero extends Circle, ZoneLocation {
     objectType: 'hero'
@@ -76,7 +76,7 @@ interface Hero extends Circle, ZoneLocation {
     // create effects that cause the hero to take increased or decreased damage.
     getIncomingDamageMultiplier: (state: GameState) => number
 
-    effects: ObjectEffect<Hero>[]
+    effects: ObjectEffect<Hero|Ally>[]
 
     equipment: HeroEquipment
     equipArmor(state: GameState, armor: Armor): boolean
@@ -171,23 +171,23 @@ interface AbilityTargetingInfo {
 interface ActiveAbilityDefinition<T=AbilityTarget|undefined> {
     abilityType: 'activeAbility'
     name: string
-    getTargetingInfo: (state: GameState, hero: Hero, ability: ActiveAbility) => AbilityTargetingInfo
-    canActivate?: (state: GameState, hero: Hero, ability: ActiveAbility) => boolean
-    onActivate: (state: GameState, hero: Hero, ability: ActiveAbility, target: T) => void
+    getTargetingInfo: (state: GameState, ally: Hero|Ally, ability: ActiveAbility) => AbilityTargetingInfo
+    canActivate?: (state: GameState, ally: Hero|Ally, ability: ActiveAbility) => boolean
+    onActivate: (state: GameState, ally: Hero|Ally, ability: ActiveAbility, target: T) => void
     // Returns the cooldown for this ability in milliseconds.
-    getCooldown: (state: GameState, hero: Hero, ability: ActiveAbility) => number
+    getCooldown: (state: GameState, ally: Hero|Ally, ability: ActiveAbility) => number
 }
 
 interface PassiveAbilityDefinition {
     abilityType: 'passiveAbility'
     name: string
-    update?: (state: GameState, hero: Hero, ability: PassiveAbility) => void
-    renderUnderHero?: (context: CanvasRenderingContext2D, state: GameState, hero: Hero, ability: PassiveAbility) => void
+    update?: (state: GameState, ally: Hero|Ally, ability: PassiveAbility) => void
+    renderUnder?: (context: CanvasRenderingContext2D, state: GameState, ally: Hero|Ally, ability: PassiveAbility) => void
     // Called when the ability user is hit by something.
-    onHit?: (state: GameState, hero: Hero, ability: PassiveAbility, source: AttackTarget) => void
+    onHit?: (state: GameState, ally: Hero|Ally, ability: PassiveAbility, source: AttackTarget) => void
     // Called when the ability user hits any target.
-    onHitTarget?: (state: GameState, hero: Hero, ability: PassiveAbility, target: AttackTarget) => void
-    modifyDamage?: (state: GameState, hero: Hero, ability: PassiveAbility, target: AbilityTarget|undefined, damage: number) => number
+    onHitTarget?: (state: GameState, ally: Hero|Ally, ability: PassiveAbility, target: AttackTarget) => void
+    modifyDamage?: (state: GameState, ally: Hero|Ally, ability: PassiveAbility, target: AbilityTarget|undefined, damage: number) => number
 }
 
 type AbilityDefinition = ActiveAbilityDefinition<any> | PassiveAbilityDefinition;
@@ -214,6 +214,8 @@ interface BaseEffect<T> {
     duration?: number
     apply: (state: GameState, target: T) => void
     remove: (state: GameState, target: T) => void
+    renderUnder?: (context: CanvasRenderingContext2D, state: GameState, target: T) => void
+    renderOver?: (context: CanvasRenderingContext2D, state: GameState, target: T) => void
 }
 interface AbilityEffect<T> extends BaseEffect<T> {
     effectType: 'abilityEffect'
@@ -246,7 +248,7 @@ interface NexusAbilityDefinition<T extends AbilityTarget|undefined> {
     getTargetingInfo: (state: GameState, ability: NexusAbility<T>) => AbilityTargetingInfo
     onActivate: (state: GameState, ability: NexusAbility<T>, target: T) => void
     getCooldown: (state: GameState, ability: NexusAbility<T>) => number
-    renderIcon: (context: CanvasRenderingContext2D, r: Rect) => void
+    renderIcon: (context: CanvasRenderingContext2D, state: GameState, r: Rect) => void
 }
 interface NexusAbility<T extends AbilityTarget|undefined> {
     abilityType: 'activeNexusAbility'

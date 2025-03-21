@@ -19,10 +19,15 @@ interface GameState {
     selectedCharmIndex?: number
     hoveredAbility?: Ability
     hoverToolTip?: UIElement
+    maxHeroSkillPoints: number
     selectedAbility?: ActiveAbility | NexusAbility<any>
     heroSlots: (Hero | undefined)[]
+    maxNexusAbilityLevel: number
     nexusAbilities: NexusAbility<any>[]
     nexusAbilitySlots: (NexusAbility<any> | undefined)[]
+    // This is set when the user clicks the button on a Nexus ability slot to assign an ability to it.
+    // The Nexus Ability Panel is displayed while this is set.
+    selectedNexusAbilitySlot?: number
     hudUIElements: UIElement[]
     camera: Camera
     world: World
