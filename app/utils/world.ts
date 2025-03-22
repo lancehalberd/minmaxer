@@ -14,6 +14,10 @@ export function removeFieldObject(state: GameState, object: FieldObject) {
     const objectIndex = object.zone.objects.indexOf(object);
     if (objectIndex >= 0) {
         object.zone.objects.splice(objectIndex, 1);
+        // Peform any cleanup associated with removing this object, such as removing related effects/projectiles.
+        if (object.objectType === 'enemy') {
+            object.cleanup(state);
+        }
     }
 }
 

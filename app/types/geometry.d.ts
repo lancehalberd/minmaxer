@@ -6,6 +6,7 @@ interface Point {
 interface Circle extends Point {
     r: number
     color?: CanvasFill
+    theta?: number
 }
 
 interface Rect extends Point {

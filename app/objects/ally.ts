@@ -1,5 +1,5 @@
 import {frameLength} from 'app/gameConstants';
-import {checkForOnHitTargetAbilities, removeEffectFromAlly} from 'app/utils/ability';
+import {checkForOnHitTargetAbilities, removeEffectFromTarget} from 'app/utils/ability';
 import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
@@ -126,7 +126,7 @@ export class AllyObject implements Ally {
         return damage;
     }
     enemyDefeatCount = 0;
-    effects: ObjectEffect<Hero|Ally>[] = [];
+    effects: ObjectEffect[] = [];
     onHit = onHitAlly;
     abilities = this.props.abilities ?? [];
     stats: ModifiableAllyStats = {
@@ -153,6 +153,7 @@ export class AllyObject implements Ally {
             return 0.6 + 0.4 * (1 - 1 / (1 + n));
         }),
         incomingDamageMultiplier: createModifiableStat<Ally>(1),
+        speed: createModifiableStat<Ally>(1),
     };
     markStatsDirty() {
         for (const stat of Object.values(this.stats)) {
@@ -231,7 +232,7 @@ export class AllyObject implements Ally {
             if (effect.duration) {
                 effect.duration -= frameLength / 1000;
                 if (effect.duration <= 0) {
-                    removeEffectFromAlly(state, this.effects[i--], this);
+                    removeEffectFromTarget(state, this.effects[i--], this);
                 }
             }
         }
@@ -288,6 +289,7 @@ export class AllyObject implements Ally {
             // Attack the target when it is in range.
             if (moveAllyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.getAttackRange(state))) {
                 // Attack the target if the enemy's attack is not on cooldown.
+                // Note that this could be `Infinity` so don't use this in any assignments.
                 const attackCooldown = 1000 / this.getAttacksPerSecond(state);
                 if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
                     let hitCount = 1;

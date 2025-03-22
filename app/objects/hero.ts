@@ -1,7 +1,7 @@
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {frameLength, heroLevelCap} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {removeEffectFromHero} from 'app/utils/ability';
+import {removeEffectFromTarget} from 'app/utils/ability';
 import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
@@ -151,7 +151,7 @@ class HeroObject implements Hero {
     }
 
     getAttacksPerSecond(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.attacksPerSecond);
+        return getModifiableStatValue(state, this, this.stats.attacksPerSecond) * getModifiableStatValue(state, this, this.stats.speed);
     }
     getAttackRange(state: GameState): number {
         return this.definition.attackRange;
@@ -169,7 +169,7 @@ class HeroObject implements Hero {
     }
     enemyDefeatCount = 0;
     getChildren = getHeroFieldButtons;
-    effects: ObjectEffect<Hero|Ally>[] = [];
+    effects: ObjectEffect[] = [];
     onHit = onHitHero;
     abilities = this.definition.abilities.map(abilityDefinition => {
         if (abilityDefinition.abilityType === 'activeAbility') {
@@ -211,13 +211,14 @@ class HeroObject implements Hero {
         extraHitChance: createModifiableStat<Hero>((state: GameState) => this.getDex(state) / 100),
         criticalChance: createModifiableStat<Hero>((state: GameState) => this.getInt(state) / 100),
         criticalMultiplier: createModifiableStat<Hero>((state: GameState) => 0.5),
-        cooldownSpeed: createModifiableStat<Hero>((state: GameState) => this.getInt(state) / 100),
+        cooldownSpeed: createModifiableStat<Hero>((state: GameState) => 1 + this.getInt(state) / 100),
         armor: createModifiableStat<Hero>((state: GameState) => this.equipment.armor?.armorStats.armor ?? 0),
         maxDamageReduction: createModifiableStat<Hero>((state: GameState) => {
             const n = (4 * this.getArmor(state) + this.getDex(state)) / 100;
             return 0.6 + 0.4 * (1 - 1 / (1 + n));
         }),
         incomingDamageMultiplier: createModifiableStat<Hero>(1),
+        speed: createModifiableStat<Hero>(1, {minValue: 0}),
     };
     // derivedStats = this.definition.getStatsForLevel(this.level);
     constructor(public heroType: HeroType, {zone, x, y}: ZoneLocation) {
@@ -234,7 +235,7 @@ class HeroObject implements Hero {
         return getModifiableStatValue(state, this, this.stats.maxHealth);
     }
     getMovementSpeed(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.movementSpeed);
+        return getModifiableStatValue(state, this, this.stats.movementSpeed) * getModifiableStatValue(state, this, this.stats.speed);
     }
     getDamage(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.damage);
@@ -275,7 +276,7 @@ class HeroObject implements Hero {
         return getModifiableStatValue(state, this, this.stats.criticalChance);
     }
     getCooldownSpeed(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.cooldownSpeed);
+        return getModifiableStatValue(state, this, this.stats.cooldownSpeed) * getModifiableStatValue(state, this, this.stats.speed);
     }
     getCriticalMultipler(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.criticalMultiplier);
@@ -323,7 +324,7 @@ class HeroObject implements Hero {
             if (effect.duration) {
                 effect.duration -= frameLength / 1000;
                 if (effect.duration <= 0) {
-                    removeEffectFromHero(state, this.effects[i--], this);
+                    removeEffectFromTarget(state, this.effects[i--], this);
                 }
             }
         }
@@ -375,6 +376,7 @@ class HeroObject implements Hero {
             // Attack the target when it is in range.
             if (moveAllyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.getAttackRange(state))) {
                 // Attack the target if the enemy's attack is not on cooldown.
+                // Note that this could be `Infinity` so don't use this in any assignments.
                 const attackCooldown = 1000 / this.getAttacksPerSecond(state);
                 if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
                     let hitCount = 1;
@@ -447,6 +449,9 @@ class HeroObject implements Hero {
                 ability.definition.renderUnder?.(context, state, this, ability);
             }
         }
+        for (const effect of this.effects) {
+            effect.renderUnder?.(context, state, this);
+        }
 
         // Draw a circle for the hero centered at their location, with their radius and color.
         fillCircle(context, this);
@@ -471,6 +476,18 @@ class HeroObject implements Hero {
 
         // Render the black circle
         fillCircle(context, {...this, r: this.r - 2, color: 'black'});
+        // Draw hero level
+        fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});
+
+
+        for (const ability of this.abilities) {
+            if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
+                ability.definition.renderOver?.(context, state, this, ability);
+            }
+        }
+        for (const effect of this.effects) {
+            effect.renderOver?.(context, state, this);
+        }
 
         const isInvincible = this.getIncomingDamageMultiplier(state) === 0;
         renderLifeBarOverCircle(context, this, this.health, this.getMaxHealth(state), isInvincible ? '#FF0' : undefined);
@@ -484,8 +501,6 @@ class HeroObject implements Hero {
             fillRect(context, r, '#0AF');
             fillRect(context, {...r, x: r.x + r.w - 1, w: 1}, '#8FF');
         }
-        // Draw hero level
-        fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});
     }
 }
 

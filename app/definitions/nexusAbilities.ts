@@ -1,8 +1,9 @@
+import {ModifierEffect} from 'app/definitions/modifierEffects';
 import {CircleEffect} from 'app/effects/circleEffect';
 import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {AllyObject} from 'app/objects/ally';
 import {frameLength} from 'app/gameConstants';
-import {applyEffectToEnemy} from 'app/utils/ability';
+import {applyEffectToTarget} from 'app/utils/ability';
 import {applyDamageOverTime, damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillCircle, fillPlus} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
@@ -43,9 +44,9 @@ export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
         // Heal amount increases by 50% every nexus level.
         const healAmount = Math.floor(1.5 ** (state.nexus.level - 1) * 30);
         for (const target of targets) {
-            if (target.objectType === 'nexus') {
+            /*if (target.objectType === 'nexus') {
                 continue;
-            }
+            }*/
             target.health = Math.min(target.getMaxHealth(state), target.health + healAmount);
             addHealEffectToTarget(state, target);
         }
@@ -189,39 +190,21 @@ export const arcticBlast: NexusAbilityDefinition<AbilityTarget> = {
                 continue;
             }
             damageTarget(state, target, {damage: damageAmount, source: state.nexus});
-            const slowEffect = new EnemyModifierEffect({
+            const slowEffect = new ModifierEffect({
                 duration: [5, 7, 10][ability.level - 1],
                 modifiers: [{
                     stat: 'speed',
                     percentBonus: [-33, -50, -66][ability.level - 1],
                 }],
-                renderOver(context: CanvasRenderingContext2D, state: GameState, target: Enemy) {
+                renderOver(context: CanvasRenderingContext2D, state: GameState, target: ModifiableTarget) {
                     fillCircle(context, {x: target.x, y: target.y, r: target.r + 2, color: 'rgba(255, 255, 255, 0.4)'});
                 },
             });
-            applyEffectToEnemy(state, slowEffect, target);
+            applyEffectToTarget(state, slowEffect, target);
         }
 
     },
 };
-interface EnemyModifierEffectProps extends Partial<BaseEffect<Enemy>> {
-    duration: number
-    modifiers: EnemyStatModifier[]
-}
-class EnemyModifierEffect implements SimpleEffect<Enemy> {
-    effectType = <const>'simpleEffect'
-    duration = this.props.duration;
-    modifiers = this.props.modifiers;
-    renderOver = this.props.renderOver;
-    renderUnder = this.props.renderUnder;
-    constructor(public props: EnemyModifierEffectProps) { }
-    apply(state: GameState, target: Enemy) {
-        target.addStatModifiers(this.modifiers);
-    }
-    remove(state: GameState, target: Enemy) {
-        target.removeStatModifiers(this.modifiers);
-    }
-}
 
 
 function renderGolem(context: CanvasRenderingContext2D, state: GameState, {x, y, r}: Circle) {

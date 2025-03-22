@@ -116,6 +116,9 @@ export function moveAllyTowardsTarget(state: GameState, ally: Hero|Ally, target:
     if (mag <= distance) {
         return true;
     }
+    if (pixelsPerFrame <= 0) {
+        return false;
+    }
     if (mag < pixelsPerFrame) {
         ally.x = target.x;
         ally.y = target.y;

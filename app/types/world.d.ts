@@ -22,6 +22,7 @@ interface GenericEffect extends ZoneLocation {
     objectType: 'effect'
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
+    creator?: any
 }
 
 // Used for simple animations the don't have complex interactions.
@@ -29,6 +30,7 @@ interface FieldAnimationEffect extends ZoneLocation {
     objectType: 'animation'
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
+    creator?: any
 }
 
 
@@ -42,7 +44,12 @@ interface Projectile extends Circle, ZoneLocation {
     hit: AttackHit
     hitsEnemies?: boolean
     hitsAllies?: boolean
+    hitsNexus?: boolean
     target?: AbilityTarget
+    // Set of targets not hit during the current frame.
+    missedTargets: Set<AbilityTarget>
+    // Set of targets hit by this projectile. May be updated to allow a projectile
+    // to hit the same target multiple times.
     hitTargets: Set<AbilityTarget>
     update: (state: GameState) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
@@ -50,6 +57,7 @@ interface Projectile extends Circle, ZoneLocation {
     onHit?: (state: GameState, target: AttackTarget) => void
     // Called when the projectile duration expires.
     onExpire?: (state: GameState) => void
+    creator?: any
 }
 
 type FieldEffect = GenericEffect | FieldAnimationEffect | Projectile;

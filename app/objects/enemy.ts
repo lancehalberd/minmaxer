@@ -1,11 +1,11 @@
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 import {frameLength, framesPerSecond} from 'app/gameConstants';
-import {removeEffectFromEnemy} from 'app/utils/ability';
+import {createActiveEnemyAbilityInstance, prepareToUseEnemyAbilityOnTarget, removeEffectFromTarget} from 'app/utils/ability';
 import {damageTarget, isEnemyAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
 import {getDistance} from 'app/utils/geometry';
-import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
+import {createModifiableStat, applyStatModifier, isEnemyStat, removeStatModifier, getModifiableStatValue} from 'app/utils/modifiableStat';
 
 export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: ZoneLocation): Enemy {
     const definition = enemyDefinitions[enemyType]!;
@@ -18,26 +18,22 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         color: definition.color,
         r: definition.r,
         aggroRadius: definition.aggroRadius,
+        props: {...(definition.initialProps ?? {})},
         aggroPack: [],
         health: derivedStats.maxHealth,
         getMaxHealth(state: GameState) {
             return derivedStats.maxHealth;
         },
         stats: {
+            damage: createModifiableStat<Enemy>(derivedStats.damage),
             speed: createModifiableStat<Enemy>(1),
             movementSpeed: createModifiableStat<Enemy>(derivedStats.movementSpeed),
             attacksPerSecond: createModifiableStat<Enemy>(derivedStats.attacksPerSecond),
+            incomingDamageMultiplier: createModifiableStat<Enemy>(1),
         },
         abilities: (definition.abilities ?? []).map((abilityDefinition): EnemyAbility => {
             if (abilityDefinition.abilityType === 'activeEnemyAbility') {
-                const activeAbility: ActiveEnemyAbility<any> = {
-                    abilityType: <const>'activeEnemyAbility',
-                    definition: abilityDefinition,
-                    cooldown: 0,
-                    warningTime: 0,
-                    warningDuration: 0,
-                };
-                return activeAbility;
+                return createActiveEnemyAbilityInstance(abilityDefinition);
             }
             const passiveAbility: PassiveEnemyAbility = {
                 abilityType: <const>'passiveEnemyAbility',
@@ -50,54 +46,32 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         x,
         y,
         update: updateEnemy,
+        afterUpdate: definition.afterUpdate,
         render: renderEnemy,
         onHit: onHitEnemy,
+        cleanup: cleanupEnemy,
         effects: [],
-        addStatModifiers(modifiers?: EnemyStatModifier[]) {
+        addStatModifiers(modifiers?: StatModifier[]) {
             if (!modifiers) {
                 return;
             }
             // TODO: remove this once we correctly mark derived stats as dirty.
             markEnemyStatsAsDirty(this);
             for (const modifier of modifiers) {
-                const stat = this.stats[modifier.stat];
-                if (modifier.flatBonus) {
-                    stat.addedBonus += modifier.flatBonus;
-                    stat.isDirty = true;
-                }
-                if (modifier.percentBonus) {
-                    stat.percentBonus += modifier.percentBonus;
-                    stat.isDirty = true;
-                }
-                if (modifier.multiplier !== undefined && modifier.multiplier !== 1) {
-                    stat.multipliers.push(modifier.multiplier);
-                    stat.isDirty = true;
+                if (isEnemyStat(modifier.stat)) {
+                    applyStatModifier(this.stats[modifier.stat], modifier);
                 }
             }
         },
-        removeStatModifiers(modifiers?: EnemyStatModifier[]) {
+        removeStatModifiers(modifiers?: StatModifier[]) {
             if (!modifiers) {
                 return;
             }
+            // TODO: remove this once we correctly mark derived stats as dirty.
             markEnemyStatsAsDirty(this);
             for (const modifier of modifiers) {
-                const stat = this.stats[modifier.stat];
-                if (modifier.flatBonus) {
-                    stat.addedBonus -= modifier.flatBonus;
-                    stat.isDirty = true;
-                }
-                if (modifier.percentBonus) {
-                    stat.percentBonus -= modifier.percentBonus;
-                    stat.isDirty = true;
-                }
-                if (modifier.multiplier !== undefined && modifier.multiplier !== 1) {
-                    const index = stat.multipliers.indexOf(modifier.multiplier);
-                    if (index >= 0) {
-                        stat.multipliers.splice(index, 1);
-                        stat.isDirty = true;
-                    } else {
-                        console.error('Failed to remove multiplier', stat, modifier);
-                    }
+                if (isEnemyStat(modifier.stat)) {
+                    removeStatModifier(this.stats[modifier.stat], modifier);
                 }
             }
         }
@@ -119,7 +93,7 @@ function onHitEnemy(this: Enemy, state: GameState, attacker: Hero|Ally) {
     aggroEnemyPack(this, attacker);
 }
 
-function aggroEnemyPack(enemy: Enemy, target: AllyTarget) {
+function aggroEnemyPack(enemy: Enemy, target: Nexus | AllyTarget) {
     // Heroes will prioritize attacking a hero over other targets.
     if (enemy.attackTarget?.objectType !== 'hero') {
         enemy.attackTarget = target;
@@ -132,14 +106,24 @@ function aggroEnemyPack(enemy: Enemy, target: AllyTarget) {
     }
 }
 
+
 export function updateEnemy(this: Enemy, state: GameState) {
+    updateEnemyMain.apply(this, [state]);
+    this.afterUpdate?.(state, this);
+}
+
+export function updateEnemyMain(this: Enemy, state: GameState) {
+    // Stop updating after death.
+    if (this.health <= 0) {
+        return;
+    }
     // Update any effects being applied to this hero and remove them if their duration elapses.
     for (let i = 0; i < this.effects.length; i++) {
         const effect = this.effects[i];
         if (effect.duration) {
             effect.duration -= frameLength / 1000;
             if (effect.duration <= 0) {
-                removeEffectFromEnemy(state, this.effects[i--], this);
+                removeEffectFromTarget(state, this.effects[i--], this);
             }
         }
     }
@@ -147,7 +131,8 @@ export function updateEnemy(this: Enemy, state: GameState) {
         this.activeAbility.warningTime += frameLength;
         if (this.activeAbility.warningTime > this.activeAbility.warningDuration) {
             this.activeAbility.definition.onActivate(state, this, this.activeAbility, this.activeAbility.target);
-            this.activeAbility.cooldown = computeValue(state, this.activeAbility, this.activeAbility.definition.cooldown, 5000);
+            // this.activeAbility.cooldown = computeValue(state, this.activeAbility, this.activeAbility.definition.cooldown, 5000);
+            this.activeAbility.charges--;
             delete this.activeAbility;
         }
         return;
@@ -178,13 +163,24 @@ export function updateEnemy(this: Enemy, state: GameState) {
         }
     }
     // Update ability cooldown and autocast any abilities that make sense.
+    const cooldownDelta = frameLength * getEnemyCooldownSpeed(state, this);
     for (const ability of this.abilities) {
         if (ability.abilityType === 'activeEnemyAbility') {
-            if (ability.cooldown > 0) {
-                ability.cooldown -= frameLength;
-            } else if ((this.zone.zoneEnemyCooldowns.get(ability.definition) ?? 0) <= 0) {
+            if (ability.cooldown <= 0) {
+                ability.cooldown = computeValue(state, ability, ability.definition.cooldown, 1000);
+            }
+            if (ability.charges < ability.maxCharges) {
+                ability.cooldown -= cooldownDelta;
+                if (ability.cooldown <= 0) {
+                    ability.charges++;
+                }
+            }
+            if (ability.charges > 0 && (this.zone.zoneEnemyCooldowns.get(ability.definition) ?? 0) <= 0) {
                 checkToAutocastAbility(state, this, ability);
             }
+        }
+        if (ability.abilityType === 'passiveEnemyAbility') {
+            ability.definition.update?.(state, this, ability);
         }
     }
     if (this.activeAbility) {
@@ -224,6 +220,9 @@ function getEnemyAttacksPerSecond(state: GameState, enemy: Enemy): number {
     const attacksPerSecond = getModifiableStatValue(state, enemy, enemy.stats.attacksPerSecond);
     const speed = getModifiableStatValue(state, enemy, enemy.stats.speed);
     return attacksPerSecond * speed;
+}
+function getEnemyCooldownSpeed(state: GameState, enemy: Enemy): number {
+    return getModifiableStatValue(state, enemy, enemy.stats.speed);
 }
 function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityTarget, distance = 0): boolean {
     const pixelsPerFrame = getEnemyMovementSpeed(state, enemy) / framesPerSecond;
@@ -271,6 +270,15 @@ function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityT
     return false;
 }
 
+export function cleanupEnemy(this: Enemy, state: GameState) {
+    for (const ability of this.abilities) {
+        if (ability.abilityType === 'passiveEnemyAbility') {
+            ability.definition.cleanup?.(state, this, ability);
+        }
+    }
+    this.abilities = [];
+}
+
 export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, state: GameState) {
     // Render effects behind the enemy
     for (const effect of this.effects) {
@@ -295,24 +303,6 @@ export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, stat
 
     // Render the enemy lifebar.
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
-}
-
-
-function prepareToUseAbilityOnTarget<T extends FieldTarget>(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) {
-    enemy.activeAbility = ability;
-    ability.warningTime = 0;
-    ability.warningDuration = computeValue(state, ability, ability.definition.warningTime, 0);
-    if (target) {
-        ability.target = {objectType: 'point', zone: target.zone, x: target.x, y: target.y, r: 0};
-    } else {
-        ability.target = {objectType: 'point', zone: enemy.zone, x: enemy.x, y: enemy.y, r: 0};
-    }
-    if (!ability.target?.zone) {
-        debugger;
-    }
-    if (ability.definition.zoneCooldown) {
-        enemy.zone.zoneEnemyCooldowns.set(ability.definition, ability.definition.zoneCooldown);
-    }
 }
 
 function renderAbilityWarning(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<any>) {
@@ -379,7 +369,7 @@ function checkToAutocastAbility(state: GameState, enemy: Enemy, ability: ActiveE
             const target: FieldTarget = distance < range
                 ? object
                 : {objectType: 'point', zone: enemy.zone, x: enemy.x + dx * range / distance, y: enemy.y + dy * range / distance};
-            prepareToUseAbilityOnTarget(state, enemy, ability, target);
+            prepareToUseEnemyAbilityOnTarget(state, enemy, ability, target);
             return;
         }
     }

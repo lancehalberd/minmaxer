@@ -7,14 +7,6 @@ type EnemyType = 'kobold'| 'koboldCleric'
 type LootPoolGenerator = (state: GameState, enemy: Enemy) => WeightedDrop[]
 
 
-type ModifiableEnemyStat = 'speed' | 'movementSpeed' | 'attacksPerSecond';
-type ModifiableEnemyStats = {[key in ModifiableEnemyStat]: ModifiableStat<Enemy>}
-interface EnemyStatModifier {
-    stat: ModifiableEnemyStat
-    flatBonus?: number
-    percentBonus?: number
-    multiplier?: number
-}
 
 interface EnemyLevelDerivedStats {
     // Max life of the enemy
@@ -32,7 +24,7 @@ interface EnemyLevelDerivedStats {
     // This is in pixels per second.
     movementSpeed: number
 }
-interface EnemyDefinition {
+interface EnemyDefinition<EnemyProps=any> {
     // Indicates the type of enemy
     name: string
     r: number
@@ -40,11 +32,13 @@ interface EnemyDefinition {
     getStatsForLevel: (level: number) => EnemyLevelDerivedStats
     aggroRadius: number
     isBoss?: boolean
-    render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy) => void
+    render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy<EnemyProps>) => void
+    afterUpdate?: (state: GameState, enemy: Enemy<EnemyProps>) => void
     abilities?: EnemyAbilityDefinition[]
     // Defaults to 0.1= 10%
     lootChance?: number
     getLootPool: LootPoolGenerator
+    initialProps?: EnemyProps
 }
 
 interface WeightedDrop {
@@ -52,7 +46,7 @@ interface WeightedDrop {
     weight: number
 }
 
-interface Enemy extends Circle, ZoneLocation {
+interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     objectType: 'enemy'
     enemyType: EnemyType
     level: number
@@ -62,21 +56,22 @@ interface Enemy extends Circle, ZoneLocation {
     getMaxHealth: (state: GameState) => number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
     update: (state: GameState) => void
+    afterUpdate?: (state: GameState, enemy: Enemy<EnemyProps>) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Ally|Hero) => void
     onDeath?: (state: GameState) => void
-    effects: ObjectEffect<Enemy>[]
-    addStatModifiers: (modifiers?: EnemyStatModifier[]) => void
-    removeStatModifiers: (modifiers?: EnemyStatModifier[]) => void
+    effects: ObjectEffect[]
+    addStatModifiers: (modifiers?: StatModifier[]) => void
+    removeStatModifiers: (modifiers?: StatModifier[]) => void
     aggroRadius: number
     // When this enemy is aggroed, all enemies in its aggro pack will be aggroed as well.
-    aggroPack: Enemy[]
+    aggroPack: Enemy<any>[]
     // The last time the enemy attacked.
     lastAttackTime?: number
     movementTarget?: AbilityTarget
-    attackTarget?: AllyTarget
+    attackTarget?: Nexus | AllyTarget
     // If set the enemy will attack this target when idle.
-    defaultTarget?: AllyTarget
+    defaultTarget?:  Nexus | AllyTarget
     isBoss?: boolean
     abilities: EnemyAbility[]
     activeAbility?: ActiveEnemyAbility<any>;
@@ -90,6 +85,8 @@ interface Enemy extends Circle, ZoneLocation {
     experienceWorth: number
     // How much essence the enemy grants when defeated.
     essenceWorth: number
+    props: EnemyProps
+    cleanup: (state: GameState) => void
 }
 
 interface Spawner extends Circle, ZoneLocation {
@@ -140,14 +137,18 @@ interface ActiveEnemyAbilityDefinition<T extends AbilityTarget|undefined> {
     zoneCooldown?: number
     warningTime?: Computed<number, ActiveEnemyAbility<T>>
     renderWarning?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: LocationTarget) => void
+    initialCharges?: number
+    maxCharges?: number
 }
 
 interface PassiveEnemyAbilityDefinition {
     abilityType: 'passiveEnemyAbility'
     name: string
+    update?: (state: GameState, enemy: Enemy, ability: PassiveEnemyAbility) => void
     // Called when the ability user hits any target.
     onHitTarget?: (state: GameState, enemy: Enemy, target: AttackTarget, ability: PassiveEnemyAbility) => void
     modifyDamage?: (state: GameState, enemy: Enemy, target: AbilityTarget|undefined, ability: PassiveEnemyAbility, damage: number) => number
+    cleanup?: (state: GameState, enemy: Enemy, ability: PassiveEnemyAbility) => void
 }
 
 type EnemyAbilityDefinition = ActiveEnemyAbilityDefinition<any> | PassiveEnemyAbilityDefinition;
@@ -165,6 +166,8 @@ interface ActiveEnemyAbility<T extends AbilityTarget|undefined> {
     warningTime: number
     warningDuration: number
     target?: LocationTarget
+    charges: number
+    maxCharges: number
 }
 
 type EnemyAbility = PassiveEnemyAbility | ActiveEnemyAbility<any>;

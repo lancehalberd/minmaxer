@@ -26,10 +26,11 @@ export function applyDamageOverTime(state: GameState, target: AttackTarget, dama
     checkIfTargetIsDefeated(state, target, source);
 }
 
-export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source, showDamageNumber = true, delayDamageNumber = 0}: AttackHit) {
+export function damageTarget(state: GameState, target: AttackTarget, {damage, isCrit, source, showDamageNumber = true, delayDamageNumber = 0, onHit}: AttackHit) {
     if (damage < 0) {
         return
     }
+    onHit?.(state, target);
     if (target.objectType === 'nexus') {
         if (state.city.wall.health > 0) {
             // Wall cannot take more damage than its current health.
@@ -228,7 +229,7 @@ export function isEnemyAbilityTargetValid(state: GameState, targetingInfo: Abili
     }
     // Abilities that don't specify any target type are assumed to target enemies.
     if (!targetingInfo.canTargetLocation && !targetingInfo.canTargetEnemy && !targetingInfo.canTargetAlly) {
-        return target.objectType === 'hero' || target.objectType === 'ally' || target.objectType === 'nexus';
+        return target.objectType === 'hero' || target.objectType === 'ally';
     }
     if (target.objectType === 'point') {
         return !!targetingInfo.canTargetLocation;
@@ -245,7 +246,7 @@ export function isEnemyAbilityTargetValid(state: GameState, targetingInfo: Abili
 export function getValidAbilityTargets(state: GameState, zone: ZoneInstance, targetingInfo: AbilityTargetingInfo): AttackTarget[] {
     const validTargets: AttackTarget[] = [];
     for (const object of zone.objects) {
-        if (!object || object.objectType === 'waveSpawner' || object.objectType === 'loot' || object.objectType === 'structure') {
+        if (!object || object.objectType === 'nexus' || object.objectType === 'waveSpawner' || object.objectType === 'loot' || object.objectType === 'structure') {
             continue;
         }
         // Skip this object if the ability doesn't target this type of object.
@@ -260,7 +261,7 @@ export function getValidAbilityTargets(state: GameState, zone: ZoneInstance, tar
 export function getAllyTargets(state: GameState, zone: ZoneInstance): AllyTarget[] {
     const allies: AllyTarget[] = [];
     for (const object of zone.objects) {
-        if (object.objectType === 'hero' || object.objectType === 'nexus') {
+        if (object.objectType === 'hero' || object.objectType === 'ally') {
             allies.push(object);
         }
     }

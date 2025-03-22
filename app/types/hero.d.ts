@@ -3,14 +3,6 @@ type HeroType = 'warrior' | 'ranger' | 'wizard';
 
 type HeroSkillType = 'logging' | 'mining' | 'building' | 'crafting';
 
-type CoreStat = 'dex' | 'str' | 'int';
-
-
-type ModifiableHeroStat = CoreStat | 'maxHealth' | 'movementSpeed'
-    | 'damage' | 'attacksPerSecond' | 'extraHitChance' | 'criticalChance' | 'criticalMultiplier'
-    | 'cooldownSpeed'
-    | 'armor' | 'maxDamageReduction' | 'incomingDamageMultiplier'
-type ModifiableHeroStats = {[key in ModifiableHeroStat]: ModifiableStat<Hero>}
 
 interface HeroDefinition {
     // Name of the hero.
@@ -76,7 +68,7 @@ interface Hero extends Circle, ZoneLocation {
     // create effects that cause the hero to take increased or decreased damage.
     getIncomingDamageMultiplier: (state: GameState) => number
 
-    effects: ObjectEffect<Hero|Ally>[]
+    effects: ObjectEffect[]
 
     equipment: HeroEquipment
     equipArmor(state: GameState, armor: Armor): boolean
@@ -140,17 +132,6 @@ interface HeroSkill {
     experience: number
 }
 
-
-interface ModifiableStat<T> {
-    baseValue: Computed<number, T>
-    addedBonus: number
-    percentBonus: number
-    multipliers: number[]
-    finalValue: number
-    isDirty?: boolean
-}
-
-
 interface AbilityTargetingInfo {
     // Ability can target an enemy unit.
     canTargetEnemy?: boolean
@@ -183,6 +164,7 @@ interface PassiveAbilityDefinition {
     name: string
     update?: (state: GameState, ally: Hero|Ally, ability: PassiveAbility) => void
     renderUnder?: (context: CanvasRenderingContext2D, state: GameState, ally: Hero|Ally, ability: PassiveAbility) => void
+    renderOver?: (context: CanvasRenderingContext2D, state: GameState, ally: Hero|Ally, ability: PassiveAbility) => void
     // Called when the ability user is hit by something.
     onHit?: (state: GameState, ally: Hero|Ally, ability: PassiveAbility, source: AttackTarget) => void
     // Called when the ability user hits any target.
@@ -209,28 +191,33 @@ interface ActiveAbility {
 
 type Ability = PassiveAbility | ActiveAbility;
 
-interface BaseEffect<T> {
+interface BaseEffect {
     // How much longer the effect will last in seconds.
     duration?: number
-    apply: (state: GameState, target: T) => void
-    remove: (state: GameState, target: T) => void
-    renderUnder?: (context: CanvasRenderingContext2D, state: GameState, target: T) => void
-    renderOver?: (context: CanvasRenderingContext2D, state: GameState, target: T) => void
+    apply: (state: GameState, target: ModifiableTarget) => void
+    remove: (state: GameState, target: ModifiableTarget) => void
+    renderUnder?: (context: CanvasRenderingContext2D, state: GameState, target: ModifiableTarget) => void
+    renderOver?: (context: CanvasRenderingContext2D, state: GameState, target: ModifiableTarget) => void
+    creator?: any
 }
-interface AbilityEffect<T> extends BaseEffect<T> {
+interface AbilityEffect extends BaseEffect {
     effectType: 'abilityEffect'
-    // The ability that caused this effect, if any.
-    // An ability might use this to check if it is currently effecting a target.
-    ability: Ability
     // The level of the ability when it was applied.
     abilityLevel: number
     // How many stacks the effect has, if the effect stacks.
     stacks: number
 }
-interface SimpleEffect<T> extends BaseEffect<T> {
+interface SimpleEffect extends BaseEffect {
     effectType: 'simpleEffect'
 }
-type ObjectEffect<T> = AbilityEffect<T> | SimpleEffect<T>;
+interface StackingEffect extends BaseEffect {
+    effectType: 'stackingEffect'
+    stacks: number
+    // Some stacking effects may track the level of the ability that created
+    // them if this is necessary to calculate the effect of the buff.
+    abilityLevel?: number
+}
+type ObjectEffect = AbilityEffect | StackingEffect | SimpleEffect;
 
 interface AttackHit {
     damage: number
@@ -238,6 +225,7 @@ interface AttackHit {
     source?: AttackTarget
     showDamageNumber?: boolean
     delayDamageNumber?: number
+    onHit?: (state: GameState, target: AttackTarget) => void
 }
 
 

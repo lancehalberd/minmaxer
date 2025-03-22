@@ -1,8 +1,7 @@
 import {createAnimation, drawFrame} from 'app/utils/animations';
-import {createSummonMinionAbility, groupHeal, poisonSpit, slam} from 'app/definitions/enemyAbilities';
+import {createSummonMinionAbility, groupHeal, petrifyingBarrier, petrifyingGaze, poisonSpit, stunningSlam} from 'app/definitions/enemyAbilities';
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
-
-export {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
+import {createActiveEnemyAbilityInstance, prepareToUseEnemyAbilityOnTarget} from 'app/utils/ability';
 
 function getBasicEnemyStatsForLevel(level: number): EnemyLevelDerivedStats {
     return {
@@ -17,12 +16,22 @@ function getBasicEnemyStatsForLevel(level: number): EnemyLevelDerivedStats {
 }
 
 function renderSimpleEnemy(context: CanvasRenderingContext2D, enemy: Enemy, frame: Frame) {
-    drawFrame(context, frame, {...frame, x: enemy.x - frame.w / 2, y: enemy.y - frame.h / 2});
+    const content = frame.content ?? {x: 0, y: 0, w: frame.w, h: frame.h};
+    const scale = 2 * enemy.r / Math.min(content.w, content.h);
+    drawFrame(context, frame, {
+        x: enemy.x - (content.x + content.w / 2) * scale,
+        y: enemy.y - (content.y + content.h / 2) * scale,
+        w: frame.w * scale,
+        h: frame.h * scale,
+    });
 }
 
 
 const [/*snakeGreenLeftFrame*/, /*snakeGreenDownFrame*/, snakeGreenUpFrame] = createAnimation('gfx/enemies/snek.png', {w: 18, h: 18}, {cols: 3}).frames;
 const [/*snakeYellowLeftFrame*/, /*snakeYellowDownFrame*/, snakeYellowUpFrame] = createAnimation('gfx/enemies/snekStorm.png', {w: 18, h: 18}, {cols: 3}).frames;
+
+
+const [stethnoFrame] = createAnimation('gfx/enemies/stethno.png', {w: 96, h: 96, content: {x: 12, y: 7, w: 76, h: 82}}, {cols: 1}).frames;
 
 // This is set to 100 so that increases of 1% effect the chance of dropping the item.
 // 10 * 50 * 20 = 10,000, so by default there is roughly a 1 in  10,000 chance of dropping a legendary item.
@@ -67,7 +76,7 @@ function standardLootPool(
 enemyDefinitions.snake = {
     name: 'Snake',
     color: 'green',
-    r: 6,
+    r: 8,
     getStatsForLevel(level: number): EnemyLevelDerivedStats {
         const baseStats = getBasicEnemyStatsForLevel(level);
         return {
@@ -86,7 +95,7 @@ enemyDefinitions.snake = {
 enemyDefinitions.cobra = {
     name: 'Cobra',
     color: '#0F0',
-    r: 6,
+    r: 8,
     abilities: [poisonSpit],
     getStatsForLevel(level: number): EnemyLevelDerivedStats {
         const baseStats = getBasicEnemyStatsForLevel(level);
@@ -134,7 +143,7 @@ enemyDefinitions.mummy = {
     name: 'The Mummy',
     color: 'white',
     r: 20,
-    abilities: [slam],
+    abilities: [stunningSlam],
     getStatsForLevel(level: number): EnemyLevelDerivedStats {
         const baseStats = getBasicEnemyStatsForLevel(level);
         return {
@@ -163,11 +172,24 @@ const summonSnakes = createSummonMinionAbility({
     zoneCooldown: 3000,
     color: 'rgba(0, 255, 0, 0.5)',
 });
-enemyDefinitions.medusa = {
+const summonCobras = createSummonMinionAbility({
+    name: 'Summon Cobras',
+    enemyTypes: ['cobra', 'cobra', 'cobra'],
+    cooldown: 10000,
+    zoneCooldown: 3000,
+    color: 'rgba(0, 255, 0, 0.5)',
+});
+interface MedusaProps {
+    cobrasSummoned: number
+}
+const medusa: EnemyDefinition<MedusaProps> = {
     name: 'Medusa',
     color: '#8F8',
-    r: 18,
-    abilities: [summonSnakes],
+    r: 20,
+    initialProps: {
+        cobrasSummoned: 0,
+    },
+    abilities: [summonSnakes, petrifyingBarrier, petrifyingGaze],
     getStatsForLevel(level: number): EnemyLevelDerivedStats {
         const baseStats = getBasicEnemyStatsForLevel(level);
         return {
@@ -179,6 +201,16 @@ enemyDefinitions.medusa = {
             movementSpeed: 6,
         };
     },
+    afterUpdate(state: GameState, enemy: Enemy<MedusaProps>) {
+        if (
+            (enemy.props.cobrasSummoned === 0 && enemy.health <= 2 * enemy.getMaxHealth(state) / 3)
+            || (enemy.props.cobrasSummoned === 1 && enemy.health <= 1 * enemy.getMaxHealth(state) / 3)
+        ) {
+            const cobraAbilityInstance = createActiveEnemyAbilityInstance(summonCobras);
+            prepareToUseEnemyAbilityOnTarget(state, enemy, cobraAbilityInstance, enemy);
+            enemy.props.cobrasSummoned++;
+        }
+    },
     lootChance: 3.5,
     getLootPool: standardLootPool(
         ['largeScales', 'chippedEmerald'],
@@ -187,4 +219,8 @@ enemyDefinitions.medusa = {
     ),
     aggroRadius: 200,
     isBoss: true,
+    render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
+        renderSimpleEnemy(context, enemy, stethnoFrame);
+    },
 };
+enemyDefinitions.medusa = medusa;

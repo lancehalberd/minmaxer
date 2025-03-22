@@ -462,7 +462,7 @@ export function initializeSpawners(state: GameState) {
                 {spawner: snakeSpawner, isFinalWave: true, spawns: [
                     ...spacedSpawns({...snake, count: 3, amount: 3, spacing: 3}),
                     ...spacedSpawns({...cobra, count: 3}),
-                    ...spacedSpawns({type: 'snake', level: 8, count: 1, offset: 15}),
+                    ...spacedSpawns({type: 'medusa', level: 1, count: 1, offset: 15}),
                 ]},
                 {spawner: koboldSpawner, spawns: [
                     ...spacedSpawns({...kobold, count: 3}),

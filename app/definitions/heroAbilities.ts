@@ -1,5 +1,6 @@
+import {StackingAllyEffectDefinition} from 'app/definitions/modifierEffects';
 import {addProjectile} from 'app/effects/projectile';
-import {applyEffectToAlly, removeEffectFromAlly} from 'app/utils/ability';
+import {applyEffectToTarget, removeEffectFromTarget} from 'app/utils/ability';
 import {damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillCircle} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
@@ -36,28 +37,27 @@ export const spinStrike: ActiveAbilityDefinition = {
     },
 };
 
-function getBattleRagerBonusValue(abilityLevel: number, stacks: number): number {
+
+
+function getBattleRagerBonusValue(stacks: number, abilityLevel = 1): number {
     // Attack speed increase by 5%/6%/7%/8%/10% per hit up to 30%/35/40/45/50 increased attack speed
     return Math.min([5, 6, 7, 8, 10][abilityLevel - 1] * stacks, [30, 35, 40, 45, 50][abilityLevel - 1]);
 }
-function applyBattleRagerEffect(this: AbilityEffect<Hero|Ally>, state: GameState, ally: Hero|Ally) {
-    ally.addStatModifiers([{
-        stat: 'attacksPerSecond',
-        percentBonus: getBattleRagerBonusValue(this.abilityLevel, this.stacks),
-    }]);
-}
-function removeBattleRagerEffect(this: AbilityEffect<Hero|Ally>, state: GameState, ally: Hero|Ally) {
-    ally.removeStatModifiers([{
-        stat: 'attacksPerSecond',
-        percentBonus: getBattleRagerBonusValue(this.abilityLevel, this.stacks),
-    }]);
-}
-
+const battleRagerStackingEffect = new StackingAllyEffectDefinition({
+    duration: 2,
+    getModifiers(state: GameState, effect: StackingEffect) {
+        return [{
+            stat: 'attacksPerSecond',
+            percentBonus: getBattleRagerBonusValue(effect.stacks, effect.abilityLevel),
+        }];
+    },
+});
 export const battleRager: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Battle Rager',
     onHitTarget(state: GameState, ally: Hero|Ally, ability: PassiveAbility, target: AttackTarget) {
-        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        battleRagerStackingEffect.applyStacks(state, ally, 1, ability.level);
+        /*let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.creator === ability);
         if (effect?.effectType === 'abilityEffect') {
             effect.remove(state, ally);
             effect.stacks!++;
@@ -68,16 +68,18 @@ export const battleRager: PassiveAbilityDefinition = {
         }
         effect = {
             effectType: 'abilityEffect',
-            ability,
+            creator: ability,
             abilityLevel: ability.level,
             stacks: 1,
             duration: 2,
             apply: applyBattleRagerEffect,
             remove: removeBattleRagerEffect,
         }
-        applyEffectToAlly(state, effect, ally);
+        applyEffectToTarget(state, effect, ally);*/
     },
 };
+
+
 
 // Ranger skills
 function getPiercingShotRange(state: GameState, ally: Hero|Ally, ability: ActiveAbility): number {
@@ -246,13 +248,13 @@ function renderFireballProjectile(this: Projectile, context: CanvasRenderingCont
 function getFortressDamageReduction(abilityLevel: number): number {
     return [0.5, .45, .4, .35, .3][abilityLevel - 1]
 }
-function applyFortressEffect(this: AbilityEffect<Hero>, state: GameState, ally: Hero|Ally) {
+function applyFortressEffect(this: AbilityEffect, state: GameState, ally: Hero|Ally) {
     ally.addStatModifiers([{
         stat: 'incomingDamageMultiplier',
         multiplier: getFortressDamageReduction(this.abilityLevel),
     }]);
 }
-function removeFortressffect(this: AbilityEffect<Hero>, state: GameState, ally: Hero|Ally) {
+function removeFortressffect(this: AbilityEffect, state: GameState, ally: Hero|Ally) {
     ally.removeStatModifiers([{
         stat: 'incomingDamageMultiplier',
         multiplier: getFortressDamageReduction(this.abilityLevel),
@@ -262,7 +264,7 @@ export const fortress: PassiveAbilityDefinition = {
     abilityType: 'passiveAbility',
     name: 'Fortress',
     renderUnder(context: CanvasRenderingContext2D, state: GameState, ally: Hero|Ally, ability: PassiveAbility) {
-        const effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        const effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.creator === ability);
         if (effect?.effectType === 'abilityEffect') {
             context.lineWidth = 1;
             context.strokeStyle = 'rgba(255, 0, 128, 0.6)';
@@ -274,10 +276,10 @@ export const fortress: PassiveAbilityDefinition = {
     },
     update(state: GameState, ally: Hero|Ally, ability: PassiveAbility) {
         const maxStacks = [1, 2, 2, 3, 3][ability.level - 1];
-        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.creator === ability);
         // Remove the effect from the ally when the ability level changes in order to update the buff to the new value.
         if (effect?.effectType === 'abilityEffect' && effect.abilityLevel !== ability.level) {
-            removeEffectFromAlly(state, effect, ally);
+            removeEffectFromTarget(state, effect, ally);
         }
         if (effect?.effectType !== 'abilityEffect' || effect.stacks < maxStacks) {
             const recoveryDuration = 1000 * [3, 3, 3, 4, 4][ability.level - 1];
@@ -288,23 +290,23 @@ export const fortress: PassiveAbilityDefinition = {
                 } else {
                     effect = {
                         effectType: 'abilityEffect',
-                        ability,
+                        creator: ability,
                         abilityLevel: ability.level,
                         stacks: maxStacks,
                         apply: applyFortressEffect,
                         remove: removeFortressffect,
                     };
-                    applyEffectToAlly(state, effect, ally);
+                    applyEffectToTarget(state, effect, ally);
                 }
             }
         }
     },
     onHit(state: GameState, ally: Hero|Ally, ability: PassiveAbility, source: AttackTarget) {
-        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.ability === ability);
+        let effect = ally.effects.find(e => e.effectType === 'abilityEffect' && e.creator === ability);
         if (effect?.effectType === 'abilityEffect') {
             effect.stacks--;
             if (effect.stacks <= 0) {
-                removeEffectFromAlly(state, effect, ally);
+                removeEffectFromTarget(state, effect, ally);
             }
         }
     },

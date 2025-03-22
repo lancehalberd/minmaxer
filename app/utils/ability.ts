@@ -1,51 +1,17 @@
-export function applyEffectToHero(state: GameState, effect: ObjectEffect<Hero|Ally>, hero: Hero|Ally) {
-    hero.effects.push(effect);
-    effect.apply(state, hero);
-}
+import {computeValue} from 'app/utils/computed';
 
-export function removeEffectFromHero(state: GameState, effect: ObjectEffect<Hero|Ally>, hero: Hero|Ally) {
-    const index = hero.effects.indexOf(effect);
-    if (index < 0) {
-        return;
-    }
-    hero.effects.splice(index, 1);
-    effect.remove(state, hero);
-}
-
-export function applyEffectToAlly(state: GameState, effect: ObjectEffect<Hero|Ally>, ally: Hero|Ally) {
-    ally.effects.push(effect);
-    effect.apply(state, ally);
-}
-
-export function removeEffectFromAlly(state: GameState, effect: ObjectEffect<Hero|Ally>, ally: Hero|Ally) {
-    const index = ally.effects.indexOf(effect);
-    if (index < 0) {
-        return;
-    }
-    ally.effects.splice(index, 1);
-    effect.remove(state, ally);
-}
-
-/*
-This doesn't work because T could be a specific sub type of Enemy or Hero not satisfied by a generic Enemy or Hero...
-export function applyEffectToTarget<T extends Enemy|Hero>(state: GameState, effect: ObjectEffect<T>, target: T) {
+export function applyEffectToTarget(state: GameState, effect: ObjectEffect, target: ModifiableTarget) {
     target.effects.push(effect);
     effect.apply(state, target);
 }
-*/
 
-export function applyEffectToEnemy(state: GameState, effect: ObjectEffect<Enemy>, enemy: Enemy) {
-    enemy.effects.push(effect);
-    effect.apply(state, enemy);
-}
-
-export function removeEffectFromEnemy(state: GameState, effect: ObjectEffect<Enemy>, enemy: Enemy) {
-    const index = enemy.effects.indexOf(effect);
+export function removeEffectFromTarget(state: GameState, effect: ObjectEffect, target: ModifiableTarget) {
+    const index = target.effects.indexOf(effect);
     if (index < 0) {
         return;
     }
-    enemy.effects.splice(index, 1);
-    effect.remove(state, enemy);
+    target.effects.splice(index, 1);
+    effect.remove(state, target);
 }
 
 export function checkForOnHitTargetAbilities(state: GameState, ally: Hero|Ally, target: AttackTarget) {
@@ -54,4 +20,33 @@ export function checkForOnHitTargetAbilities(state: GameState, ally: Hero|Ally, 
             ability.definition.onHitTarget?.(state, ally, ability, target);
         }
     }
+}
+
+export function prepareToUseEnemyAbilityOnTarget<T extends FieldTarget>(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<T>, target: T) {
+    enemy.activeAbility = ability;
+    ability.warningTime = 0;
+    ability.warningDuration = computeValue(state, ability, ability.definition.warningTime, 0);
+    if (target) {
+        ability.target = {objectType: 'point', zone: target.zone, x: target.x, y: target.y, r: 0};
+    } else {
+        ability.target = {objectType: 'point', zone: enemy.zone, x: enemy.x, y: enemy.y, r: 0};
+    }
+    if (!ability.target?.zone) {
+        debugger;
+    }
+    if (ability.definition.zoneCooldown) {
+        enemy.zone.zoneEnemyCooldowns.set(ability.definition, ability.definition.zoneCooldown);
+    }
+}
+
+export function createActiveEnemyAbilityInstance<T extends FieldTarget|undefined>(abilityDefinition: ActiveEnemyAbilityDefinition<T>): ActiveEnemyAbility<T>  {
+    return {
+        abilityType: <const>'activeEnemyAbility',
+        definition: abilityDefinition,
+        cooldown: 0,
+        warningTime: 0,
+        warningDuration: 0,
+        charges: abilityDefinition.initialCharges ?? 1,
+        maxCharges: abilityDefinition.maxCharges ?? 1,
+    };
 }
