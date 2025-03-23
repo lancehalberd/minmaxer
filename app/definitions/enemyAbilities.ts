@@ -285,6 +285,7 @@ export function createSummonMinionAbility(props: CreateSummonMinionAbilityProps)
                 });
                 // TODO: prevent enemy from spawning in invalid positions.
                 aggroPack.push(minion);
+                minion.defaultTarget = enemy.defaultTarget;
                 minion.aggroPack = aggroPack;
                 if (!target.zone) {
                     debugger;

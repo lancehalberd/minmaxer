@@ -12,7 +12,7 @@ type MaterialType =
     | 'leatherStrap' | 'leather' | 'fineLeather'
     | 'scales' | 'largeScales' | 'hardScales'
     | 'snakeFang'
-    | 'wood' | 'hardwood'
+    | 'wood' | 'hardwood' | 'silverwood' | 'enchantedWood'
     | 'stone'
     | 'ironOre' | 'iron'
     | 'bronze'

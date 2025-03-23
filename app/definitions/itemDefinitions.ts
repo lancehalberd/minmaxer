@@ -153,6 +153,16 @@ addItemDefinition({
     weaponStats: {damage: 10},
 });
 addItemDefinition({
+    key: 'silverwood',
+    name: 'Silverwood',
+    weaponStats: {damage: 30},
+});
+addItemDefinition({
+    key: 'enchantedWood',
+    name: 'Enchanted Wood',
+    weaponStats: {damage: 100},
+});
+addItemDefinition({
     key: 'stone',
     name: 'Stone',
     weaponStats: {damage: 3},

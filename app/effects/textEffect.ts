@@ -7,6 +7,8 @@ interface TextEffectProps {
     text: string
     color?: CanvasFill
     delay?: number
+    duration?: number
+    creator?: any
 }
 class TextEffect implements FieldAnimationEffect {
     objectType = <const>'animation';
@@ -17,7 +19,8 @@ class TextEffect implements FieldAnimationEffect {
     target = this.props.target;
     color = this.props.color ?? '#FFF';
     delay = this.props.delay ?? 0;
-    duration = 500;
+    duration = this.props.duration ?? 500
+    creator = this.props.creator;
     time = 0;
     constructor(public props: TextEffectProps) {
         this.zone.effects.push(this);

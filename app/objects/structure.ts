@@ -5,6 +5,7 @@ import {drawFrame, requireFrame} from 'app/utils/animations';
 import {fillCircle, fillText} from 'app/utils/draw';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {applyHeroToJob, progressJob} from 'app/utils/job'
+import {gainLoot, rollLoot} from 'app/utils/lootPool'
 import {followCameraTarget, removeFieldObject} from 'app/utils/world';
 
 
@@ -19,6 +20,7 @@ interface StructureProps extends Partial<Structure> {
 interface ForestProps extends StructureProps {
     jobKey: string
     wood: number
+    drops: WeightedDrop[]
 }
 export class Forest implements Structure {
     objectType = <const>'structure';
@@ -27,6 +29,7 @@ export class Forest implements Structure {
     y = this.props.y;
     r = this.props.r ?? 40;
     color = this.props.color ?? '#080';
+    drops = this.props.drops;
     wood = this.props.wood;
     jobDefinition: JobDefinition = {
         key: this.props.jobKey,
@@ -41,9 +44,10 @@ export class Forest implements Structure {
             return this.wood > 0
         },
         onComplete: (state: GameState) => {
+            gainLoot(state, rollLoot(this.drops), this);
             this.wood--;
-            state.discoveredItems.add('wood');
-            state.inventory.wood = (state.inventory.wood ?? 0) + 1;
+            //state.discoveredItems.add('wood');
+            //state.inventory.wood = (state.inventory.wood ?? 0) + 1;
         },
         applyHeroProgress(state: GameState, job: Job, hero: Hero) {
             const skill = getHeroSkill(state, hero, 'logging');
@@ -83,6 +87,7 @@ export class Forest implements Structure {
 interface QuaryProps extends StructureProps {
     jobKey: string
     stone: number
+    drops: WeightedDrop[]
 }
 export class Quary implements Structure {
     objectType = <const>'structure';
@@ -92,6 +97,7 @@ export class Quary implements Structure {
     r = this.props.r ?? 40;
     jobKey = this.props.jobKey;
     color = this.props.color ?? '#888';
+    drops = this.props.drops;
     stone = this.props.stone;
     jobDefinition: JobDefinition = {
         key: this.jobKey,
@@ -106,9 +112,10 @@ export class Quary implements Structure {
             return this.stone > 0
         },
         onComplete: (state: GameState) => {
+            gainLoot(state, rollLoot(this.drops), this);
             this.stone--;
-            state.discoveredItems.add('stone');
-            state.inventory.stone = (state.inventory.stone ?? 0) + 1;
+            //state.discoveredItems.add('stone');
+            //state.inventory.stone = (state.inventory.stone ?? 0) + 1;
         },
         applyHeroProgress(state: GameState, job: Job, hero: Hero) {
             const skill = getHeroSkill(state, hero, 'mining');

@@ -4,6 +4,7 @@ import {Forest, Quary, Village} from 'app/objects/structure';
 import {fillCircle, fillRing, renderCooldownCircle} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
 import {removeFieldObject} from 'app/utils/world';
+import {generateLootPool} from 'app/utils/lootPool'
 
 /*class EnemySpawner implements Spawner {
     objectType = 'spawner' as const;
@@ -224,7 +225,7 @@ class EnemyWaveSpawner implements WaveSpawner {
 
 const easyEnemyTypes: EnemyType[] = ['snake', 'kobold'];
 const advancedEnemyTypes: EnemyType[] = ['cobra', 'koboldCleric'];
-const bossEnemyTypes: EnemyType[] = ['mummy'];
+const bossEnemyTypes: EnemyType[] = ['medusa', 'mummy'];
 export function checkToAddNewSpawner(state: GameState) {
     // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
     const numSpawners = state.world.objects.filter(o => o.objectType === 'waveSpawner').length;
@@ -237,13 +238,30 @@ export function checkToAddNewSpawner(state: GameState) {
         const spawnRadius = 300 + 20 * level;
         const x = state.nexus.x + spawnRadius * Math.cos(theta);
         const y = state.nexus.y - spawnRadius * Math.sin(theta);
-        let structure: Structure;
+        let structure: Structure, bossEnemyType: EnemyType = 'mummy';
         if (level % 3 === 0) {
-            structure = new Quary({zone: state.world, jobKey: 'quary-' + level, stone: level * 1000, x, y});
+            structure = new Quary({
+                zone: state.world,
+                jobKey: 'quary-' + level,
+                drops: generateLootPool(['stone'], ['ironOre'], ['bronze', 'chippedRuby', 'iron'], ['gold', 'steel'], level),
+                stone: level * 1000,
+                x,
+                y,
+            });
+            bossEnemyType = bossEnemyTypes[(Math.random() * bossEnemyTypes.length) | 0];
         } else if (level % 3 === 1) {
-            structure = new Forest({zone: state.world, jobKey: 'forest-' + level, wood: 5 * level * 1000, x, y});
+            structure = new Forest({
+                zone: state.world,
+                jobKey: 'forest-' + level,
+                drops: forestLootPool(level),
+                wood: 5 * level * 1000,
+                x,
+                y,
+            });
+            bossEnemyType = 'medusa';
         } else {
             structure = new Village({zone: state.world, population: 5, x, y});
+            bossEnemyType = 'mummy';
         }
         const newSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 500 * level, structure});
         state.world.objects.push(newSpawner);
@@ -252,8 +270,7 @@ export function checkToAddNewSpawner(state: GameState) {
         const easyEnemy: SpacedSpawnProps = {type: easyEnemyType, level: Math.floor(3 + level / 2), count: 3};
         const advancedEnemyType = advancedEnemyTypes[(Math.random() * advancedEnemyTypes.length) | 0];
         const advancedEnemy: SpacedSpawnProps = {type: advancedEnemyType, level: Math.floor(5 + level / 2), count: 3};
-        const bossEnemyType = bossEnemyTypes[(Math.random() * bossEnemyTypes.length) | 0];
-        const bossEnemy: SpacedSpawnProps = {type: bossEnemyType, level: Math.floor(2 + level), count: 3, offset: 20 + level * 2};
+        const bossEnemy: SpacedSpawnProps = {type: bossEnemyType, level: Math.floor(2 + level), count: 3, offset: 15 + level};
         processWaveDefinitions(state, [
             {
                 duration: 60 + level * 5,
@@ -341,12 +358,16 @@ const cobra: SpacedSpawnProps = <const>{type: 'cobra', level: 4, count: 1, offse
 const kobold: SpacedSpawnProps = {type: 'kobold', level: 3, count: 2, spacing: 3};
 const koboldCleric: SpacedSpawnProps = {type: 'koboldCleric', level: 5, count: 1, offset: 2, spacing: 4};
 
+function forestLootPool(bonus: number) {
+    return generateLootPool(['wood'], ['hardwood'], ['chippedEmerald', 'silverwood'], ['enchantedWood']);
+}
+
 export function initializeSpawners(state: GameState) {
 
-    const smallSnakeForest = new Forest({jobKey: 'smallSnakeForest', wood: 100, zone: state.world, x: 190, y: 150, r: 20});
+    const smallSnakeForest = new Forest({jobKey: 'smallSnakeForest', wood: 100, drops: forestLootPool(0), zone: state.world, x: 190, y: 150, r: 20});
     const smallSnakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 150, structure: smallSnakeForest});
 
-    const snakeForest = new Forest({jobKey: 'snakeForest', wood: 1000, zone: state.world,x: 200, y: 200});
+    const snakeForest = new Forest({jobKey: 'snakeForest', wood: 1000, drops: forestLootPool(1), zone: state.world,x: 200, y: 200});
     const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: snakeForest});
 
     const smallVillage = new Village({population: 20, zone: state.world,x: -200, y: 200});

@@ -25,7 +25,6 @@ Add a way to farm materials from enemies/content:
         Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
 
 Basic Crafting Improvements
-    Add HUD button for opening crafting panel.
     Add crafting bench structure to open crafting panel on interaction.
     Allow viewing but not using crafting panel when away from the crafting bench.
     Later add job to build crafting bench for 10 wood (revealed on obtaining 1 wood)
@@ -36,12 +35,6 @@ Make sure CDR is working and add overcharge mechanic to abilities
 
 Nexus button:
     At top of hero, click to return camera to the nexus.
-
-Nexus abilities:
-    Unlock first nexus ability slot at first nexus threshold
-    Add 3-4 nexus abilities to choose from.
-    Leveling an ability to level 1 costs 100 essence.
-    Equipping an ability puts it on cooldown.
 
 Wave previews:
     By default show details for next wave over the field, including pointers to active spawners.
@@ -110,8 +103,6 @@ function update() {
     if (wasGameKeyPressed(state, gameKeys.pause)) {
         state.isPaused = !state.isPaused;
     }
-
-
     if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
         toggleHeroPanel(state);
     }

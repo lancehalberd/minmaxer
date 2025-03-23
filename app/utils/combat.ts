@@ -6,6 +6,7 @@ import {frameLength, levelBuffer} from 'app/gameConstants';
 import {gainEssence, loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
 import {getItemLabel} from 'app/utils/inventory';
+import {rollLoot} from 'app/utils/lootPool';
 import {removeFieldObject} from 'app/utils/world';
 
 
@@ -130,18 +131,6 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
     }
 }
 
-export function rollLoot(weightedDrops: WeightedDrop[]): InventoryKey {
-    let total = weightedDrops.map(d => d.weight).reduce((sum, weight) => sum + weight, 0);
-    let roll = Math.floor(Math.random() * total);
-    for (const drop of weightedDrops) {
-        roll -= drop.weight;
-        if (roll < 0) {
-            return drop.keys[Math.floor(Math.random() * drop.keys.length)];
-        }
-    }
-    console.error('Returning default drop');
-    return 'wood';
-}
 
 // Returns whether a target is still available to target with an ability.
 export function isTargetAvailable(state: GameState, target: AbilityTarget): boolean {
