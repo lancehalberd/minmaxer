@@ -51,9 +51,7 @@ interface CreateAnimationOptions {
 }
 
 
-
-interface FillTextProperties {
-    text: number|string
+interface TextStyle {
     textBaseline?: 'top' | 'middle' | 'bottom'
     textAlign?: 'left' | 'center' | 'right'
     size?: number
@@ -61,6 +59,10 @@ interface FillTextProperties {
     color?: CanvasFill
     bold?: boolean
     strikeColor?: CanvasFill
+}
+
+interface FillTextProperties extends TextStyle {
+    text: number|string
     measure?: boolean
 }
 

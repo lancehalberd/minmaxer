@@ -6,8 +6,8 @@ type BowType = 'shortBow' | 'longBow' | 'crossbow';
 type StaffType = 'woodStaff' | 'bronzeStaff' | 'steelStaff';
 type AmmoType = 'arrow';
 
-type MaterialType =
-    'hideScraps' | 'hide' | 'largeHide'
+type MaterialType = '???'
+    | 'hideScraps' | 'hide' | 'largeHide'
     | 'furScraps' | 'fur' | 'lionPelt' | 'bearSkin'
     | 'leatherStrap' | 'leather' | 'fineLeather'
     | 'scales' | 'largeScales' | 'hardScales'
@@ -19,6 +19,8 @@ type MaterialType =
     | 'silver' | 'gold'
     | 'steel'
     | 'chippedEmerald' | 'chippedRuby' | 'chippedSapphire'
+    | 'emerald' | 'ruby' | 'sapphire'
+    | 'flawlessEmerald' | 'flawlessRuby' | 'flawlessSapphire'
 
 type CharmType =
     'emeraldRing' | 'emeraldBracelet' | 'emeraldNecklace'
@@ -42,18 +44,26 @@ interface StatModifier {
     multiplier?: number
 }
 
-interface BaseArmorStats {
+interface BaseCraftingStats {
+    maxDecorations: number
+    modifiers?: StatModifier[]
+    itemLabel?: string
+    // Higher is better
+    // defaults to the damageCap/armorCap value for weapons/armors.
+    // defaults to the maxDecorations for charms.
+    itemLabelPriority?: number
+}
+
+interface BaseArmorStats extends BaseCraftingStats {
     armor: number
     armorCap: number
-    modifiers?: StatModifier[]
 }
-interface BaseWeaponStats {
+interface BaseWeaponStats extends BaseCraftingStats {
     damage: number
     damageCap: number
-    modifiers?: StatModifier[]
+    maxDecorations: number
 }
-interface BaseCharmStats {
-    modifiers?: StatModifier[]
+interface BaseCharmStats extends BaseCraftingStats {
 }
 interface WeaponStats {
     damage: number
@@ -68,6 +78,10 @@ interface CharmStats {
 }
 interface ModifierStats {
     modifiers?: StatModifier[]
+}
+
+interface DecorationCraftingStats {
+    modifiers: StatModifier[]
 }
 
 interface GenericItem {
@@ -89,30 +103,58 @@ interface GenericItem {
     // TODO: Possible include price information here if we allow purchasing materials.
 }
 
+interface Armor {
+    key?: InventoryKey
+    name: string
+    armorStats: ArmorStats
+}
+interface Weapon {
+    key?: InventoryKey
+    name: string
+    weaponStats: WeaponStats
+}
+interface Charm {
+    key?: InventoryKey
+    name: string
+    charmStats: CharmStats
+}
+
 interface CraftableEquipment {
     name: string
     // If this equipment was crafted, there recipe is stored here.
     // This could be displayed to the user if they want to know how equipment was made.
     // Also allows us to start equipment as recipes on save and recreate the specific stats on load.
-    materials?: MaterialType[]
-    decorations?: MaterialType[]
+    materials: InventoryKey[]
+    decorations: InventoryKey[]
 }
 
-interface Armor extends CraftableEquipment {
+interface CraftedArmor extends CraftableEquipment {
     // This will be set on armor that corresponds to a generic item.
     key?: InventoryKey
     armorStats: ArmorStats
 }
-interface Weapon extends CraftableEquipment {
+interface CraftedWeapon extends CraftableEquipment {
     // This will be set on weapons that corresponds to a generic item.
     key?: InventoryKey
     weaponStats: WeaponStats
 }
-interface Charm extends CraftableEquipment {
+interface CraftedCharm extends CraftableEquipment {
     // This will be set on charms that corresponds to a generic item.
     key?: InventoryKey
     charmStats: CharmStats
 }
-type CustomItem = Armor|Weapon|Charm;
+type CraftedItem = CraftedArmor|CraftedWeapon|CraftedCharm;
 
-type InventoryItem = GenericItem|CustomItem;
+type InventoryItem = GenericItem|CraftedItem;
+
+type EquipmentType = 'weapon'|'armor'|'charm';
+type CraftingSlotType = 'base'|'decoration';
+
+interface CraftingBench {
+    equipmentType: EquipmentType
+    baseMaterialSlots: (GenericItem|undefined)[]
+    decorationSlots: (GenericItem|undefined)[]
+    // Max decoration slots allowed by the current base materials.
+    maxDecorationSlots: number
+    previewItem?: CraftedWeapon|CraftedArmor|CraftedCharm
+}

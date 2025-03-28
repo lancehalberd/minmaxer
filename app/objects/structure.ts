@@ -1,5 +1,6 @@
 import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {frameLength, uiSize} from 'app/gameConstants';
+import {toggleCraftingBenchPanel} from 'app/ui/craftingBenchPanel';
 import {createJobComponent} from 'app/ui/jobComponent';
 import {drawFrame, requireFrame} from 'app/utils/animations';
 import {fillCircle, fillText} from 'app/utils/draw';
@@ -263,5 +264,26 @@ export class HealingPool implements Structure {
             fillCircle(context, {...this, r: this.r -5, color: '#08F'});
             fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text: 'Heal', color: '#FFF'});
         }
+    }
+}
+
+export class CraftingBench implements Structure {
+    objectType = <const>'structure';
+    zone = this.props.zone;
+    x = this.props.x;
+    y = this.props.y;
+    r = this.props.r ?? 20;
+    color = this.props.color ?? '#999';
+
+    constructor(public props: StructureProps) {}
+    onHeroInteraction(state: GameState, hero: Hero) {
+        toggleCraftingBenchPanel(state, true);
+        delete hero.movementTarget;
+    }
+    update(state: GameState) {}
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        fillCircle(context, this);
+        fillCircle(context, {...this, r: this.r -5, color: '#000'});
+        fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text: 'Craft', color: '#FFF'});
     }
 }

@@ -24,9 +24,14 @@ const heroStatMap: {[key in ModifiableHeroStat]: boolean} = {
     cooldownSpeed: true,
     maxDamageReduction: true,
 }
+const anyStatMap: {[key in ModifiableHeroStat]: boolean} = {
+    ...enemyStatMap,
+    ...heroStatMap,
+}
 
 const allEnemyStats = new Set<ModifiableEnemyStat>(typedKeys(enemyStatMap));
 const allHeroStats = new Set<ModifiableHeroStat>(typedKeys(heroStatMap));
+const allStats = new Set<AnyModifiableStat>(typedKeys(anyStatMap));
 
 export function isEnemyStat(stat: AnyModifiableStat): stat is ModifiableEnemyStat {
     return allEnemyStats.has(stat as ModifiableEnemyStat);
@@ -99,4 +104,48 @@ export function removeStatModifier(stat: ModifiableStat<any>, modifier: StatModi
             console.error('Failed to remove multiplier', stat, modifier);
         }
     }
+}
+
+export function statModifierStrings(modifiers?: StatModifier[]): string[] {
+    if (!modifiers) {
+        return [];
+    }
+    const lines: string[] = [];
+    const combinedStats: {[key in AnyModifiableStat]?: StatModifier} = {};
+    // First aggregate all modifiers for the same stats.
+    for (const modifier of modifiers) {
+        const combinedStat = combinedStats[modifier.stat];
+        if (!combinedStat) {
+            combinedStats[modifier.stat] = {
+                ...modifier,
+            };
+        } else {
+            if (modifier.flatBonus) {
+                combinedStat.flatBonus = (combinedStat.flatBonus ?? 0 ) + modifier.flatBonus;
+            }
+            if (modifier.percentBonus) {
+                combinedStat.percentBonus = (combinedStat.percentBonus ?? 0 ) + modifier.percentBonus;
+            }
+            if (modifier.multiplier) {
+                combinedStat.multiplier = (combinedStat.multiplier ?? 1) * modifier.multiplier;
+            }
+        }
+    }
+    // Next iterate over the modifiers in a standard order and convert to strings.
+    for (const stat of allStats) {
+        const combinedStat = combinedStats[stat];
+        if (!combinedStat) {
+            continue;
+        }
+        if (combinedStat.flatBonus) {
+            lines.push((combinedStat.flatBonus >= 0 ? '+' : '-') + combinedStat.flatBonus.toFixed(0) + ' ' + combinedStat.stat);
+        }
+        if (combinedStat.percentBonus) {
+            lines.push(combinedStat.percentBonus.toFixed(0) + '%' + (combinedStat.percentBonus >= 0 ? ' increased ' : ' reduced ') + combinedStat.stat);
+        }
+        if (combinedStat.multiplier) {
+            lines.push(combinedStat.multiplier.toFixed(2) + 'x ' + combinedStat.stat);
+        }
+    }
+    return lines;
 }

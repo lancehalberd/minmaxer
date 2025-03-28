@@ -128,6 +128,7 @@ class HeroObject implements Hero {
         if (!modifiers) {
             return;
         }
+        this.markStatsDirty();
         for (const modifier of modifiers) {
             const stat = this.stats[modifier.stat];
             if (modifier.flatBonus) {
@@ -600,7 +601,7 @@ export function getReviveCost(state: GameState, hero: Hero): number {
     if (!hero.reviveCooldown) {
         return 0;
     }
-    return Math.ceil(hero.reviveCooldown.remaining) * hero.level * 3;
+    return Math.ceil(hero.reviveCooldown.remaining) * (3 + 2 * hero.level);
 }
 
 export function reviveHero(state: GameState, hero: Hero) {

@@ -51,7 +51,7 @@ enemyDefinitions.snake = {
         renderSimpleEnemy(context, enemy, snakeGreenUpFrame);
     },
     aggroRadius: 150,
-    getLootPool: standardEnemyLootPool(['scales'], ['largeScales'], ['snakeFang', 'hardScales']),
+    getLootPool: standardEnemyLootPool(['scales'], ['largeScales', 'chippedEmerald'], ['snakeFang', 'hardScales', 'emerald'], ['flawlessEmerald']),
 };
 
 enemyDefinitions.cobra = {
@@ -71,7 +71,7 @@ enemyDefinitions.cobra = {
     },
     aggroRadius: 150,
     lootChance: 0.15,
-    getLootPool: standardEnemyLootPool(['scales'], ['largeScales'], ['snakeFang', 'hardScales']),
+    getLootPool: standardEnemyLootPool(['scales'], ['largeScales', 'chippedEmerald'], ['snakeFang', 'hardScales', 'emerald'], ['flawlessEmerald']),
 };
 
 enemyDefinitions.kobold = {
@@ -80,7 +80,7 @@ enemyDefinitions.kobold = {
     r: 9,
     getStatsForLevel: getBasicEnemyStatsForLevel,
     aggroRadius: 150,
-    getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather'], ['fineLeather']),
+    getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather', 'chippedRuby'], ['fineLeather', 'ruby'], ['flawlessRuby']),
 };
 
 enemyDefinitions.koboldCleric = {
@@ -97,7 +97,7 @@ enemyDefinitions.koboldCleric = {
         };
     },
     lootChance: 0.15,
-    getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather'], ['fineLeather']),
+    getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather', 'chippedSapphire'], ['fineLeather', 'sapphire'], ['flawlessSapphire']),
     aggroRadius: 150,
 };
 
@@ -120,8 +120,12 @@ enemyDefinitions.mummy = {
     lootChance: 3.5,
     getLootPool: standardEnemyLootPool(
         ['chippedEmerald', 'chippedRuby', 'chippedSapphire'],
-        ['lionPelt', 'bearSkin'],
-        ['emeraldRing', 'rubyRing', 'sapphireRing']
+        ['emeraldRing', 'rubyRing', 'sapphireRing', 'lionPelt', 'bearSkin'],
+        ['emeraldBracelet', 'rubyBracelet', 'sapphireBracelet'],
+        [
+            'emeraldNecklace', 'rubyNecklace', 'sapphireNecklace',
+            'flawlessEmerald', 'flawlessRuby', 'flawlessSapphire'
+        ],
     ),
     aggroRadius: 200,
     isBoss: true,
@@ -176,8 +180,9 @@ const medusa: EnemyDefinition<MedusaProps> = {
     lootChance: 3.5,
     getLootPool: standardEnemyLootPool(
         ['largeScales', 'chippedEmerald'],
-        ['snakeFang', 'hardScales'],
-        ['emeraldRing']
+        ['snakeFang', 'hardScales', 'emeraldRing', 'emerald'],
+        ['emeraldBracelet'],
+        ['flawlessEmerald', 'emeraldNecklace'],
     ),
     aggroRadius: 200,
     isBoss: true,

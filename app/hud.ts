@@ -1,6 +1,7 @@
 import {buttonSize, canvas, uiSize} from 'app/gameConstants';
 import {getHeroAbilityButtons} from 'app/ui/abilityButton';
-import {CraftingPanel, toggleCraftingPanel} from 'app/ui/craftingPanel';
+import {craftingBenchPanel} from 'app/ui/craftingBenchPanel';
+import {CraftingJobsPanel, toggleCraftingJobsPanel} from 'app/ui/craftingJobsPanel';
 import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equipmentPanels';
 import {getHeroButtons} from 'app/ui/heroButton';
 import {HeroPanel, toggleHeroPanel} from 'app/ui/heroPanel';
@@ -35,25 +36,26 @@ const inventoryPanelButton = new CharacterIconButton({
     },
 });
 
-const craftingPanelButton = new CharacterIconButton({
+const craftingJobsPanelButton = new CharacterIconButton({
     x: 40 + uiSize + 2 * (buttonSize + uiSize),
     y: canvas.height - buttonSize - uiSize,
     w: buttonSize, h: buttonSize,
     character: 'M',
     onClick: (state: GameState) => {
-        toggleCraftingPanel(state);
+        toggleCraftingJobsPanel(state);
         return true;
     },
 });
 
 
 const heroPanel = new HeroPanel();
-const craftingPanel = new CraftingPanel();
+const craftingJobsPanel = new CraftingJobsPanel();
 const nexusAbilityPanel = new NexusAbilityPanel({});
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
 export function updateHudUIElements(state: GameState) {
-    const openPanels: UIElement[] = [];
+    let leftAlignedPanels: UIElement[] = [];
+    let rightAlignedPanels: UIElement[] = [];
     const panelButtons: UIElement[] = [];
     state.hudUIElements = getNexusAbilityButtons(state);
     if (state.selectedHero) {
@@ -66,28 +68,32 @@ export function updateHudUIElements(state: GameState) {
     if (state.city.population) {
         state.hudUIElements.push(populationDisplay);
     }
-    craftingPanel.updateCraftingElements(state);
-    if (craftingPanel.craftingElements.length) {
-        panelButtons.push(craftingPanelButton);
+    craftingJobsPanel.updateCraftingElements(state);
+    if (craftingJobsPanel.craftingElements.length) {
+        panelButtons.push(craftingJobsPanelButton);
     }
     if (state.openCharacterPanel) {
-        openPanels.push(heroPanel);
-    }
-    if (state.openCraftingPanel) {
-        openPanels.push(craftingPanel);
+        leftAlignedPanels.push(heroPanel);
     }
     if (state.openChooseWeaponPanel) {
-        openPanels.push(chooseWeaponPanel);
+        leftAlignedPanels.push(chooseWeaponPanel);
     }
     if (state.openChooseArmorPanel) {
-        openPanels.push(chooseArmorPanel);
+        leftAlignedPanels.push(chooseArmorPanel);
     }
     if (state.openChooseCharmPanel) {
-        openPanels.push(chooseCharmPanel);
+        leftAlignedPanels.push(chooseCharmPanel);
+    }
+    if (state.openCraftingJobsPanel) {
+        leftAlignedPanels.push(craftingJobsPanel);
+    }
+    if (state.openCraftingBenchPanel) {
+        leftAlignedPanels.push(craftingBenchPanel);
     }
     if (state.openInventoryPanel) {
-        openPanels.push(inventoryPanel);
+        rightAlignedPanels.push(inventoryPanel);
     }
+    leftAlignedPanels = [...leftAlignedPanels, ...state.openPanels];
     state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
 
     if (state.selectedNexusAbilitySlot !== undefined) {
@@ -98,9 +104,15 @@ export function updateHudUIElements(state: GameState) {
     state.hudUIElements.push(waveComponent);
 
     let x = waveComponent.x + waveComponent.w;
-    for (const openPanel of openPanels) {
+    for (const openPanel of leftAlignedPanels) {
         openPanel.x = x;
         x += openPanel.w + 5;
+        state.hudUIElements.push(openPanel);
+    }
+    x = canvas.width;
+    for (const openPanel of rightAlignedPanels) {
+        openPanel.x = x - openPanel.w;
+        x -= (openPanel.w + 5);
         state.hudUIElements.push(openPanel);
     }
     x = 50;

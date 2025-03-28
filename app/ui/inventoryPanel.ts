@@ -1,4 +1,4 @@
-import {itemDefinitions} from 'app/definitions/itemDefinitions'
+import {requireItem} from 'app/definitions/itemDefinitions'
 import {ChooseItemPanel} from 'app/ui/chooseItemPanel';
 import {typedKeys} from 'app/utils/types';
 
@@ -11,13 +11,12 @@ export function toggleInventoryPanel(state: GameState, open = !state.openInvento
 export const inventoryPanel = new ChooseItemPanel<InventoryItem>({
     title: 'Inventory',
     items(state: GameState) {
-        const items: InventoryItem[] = [];
+        const items: InventoryItem[] = [...state.craftedWeapons, ...state.craftedArmors, ...state.craftedCharms];
         for (const key of typedKeys(state.inventory)) {
-            const definition = itemDefinitions[key];
-            if (!definition || !state.inventory[key]) {
+            if (!state.inventory[key]) {
                 continue;
             }
-            items.push(definition);
+            items.push(requireItem(key));
         }
         return items;
     },

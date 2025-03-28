@@ -1,4 +1,4 @@
-import {itemDefinitions} from 'app/definitions/itemDefinitions'
+import {requireItem} from 'app/definitions/itemDefinitions'
 import {ChooseItemPanel} from 'app/ui/chooseItemPanel';
 import {showArmorTooltip, showCharmTooltip, showWeaponTooltip} from 'app/ui/tooltip';
 import {addItemToInventory, removeItemFromInventory} from 'app/utils/inventory';
@@ -12,12 +12,12 @@ const noCharm: Charm = {name: 'None', charmStats: {}};
 export const chooseArmorPanel = new ChooseItemPanel<Armor>({
     title: 'Choose Armor',
     items(state: GameState) {
-        const armor: Armor[] = [noArmor];
+        const armor: Armor[] = [noArmor, ...state.craftedArmors];
         for (const key of typedKeys(state.inventory)) {
-            const definition = itemDefinitions[key];
-            if (!definition || !state.inventory[key]) {
+            if (!state.inventory[key]) {
                 continue;
             }
+            const definition = requireItem(key);
             if (isArmor(definition)) {
                 armor.push(definition);
             }
@@ -50,12 +50,12 @@ export const chooseArmorPanel = new ChooseItemPanel<Armor>({
 export const chooseWeaponPanel = new ChooseItemPanel<Weapon>({
     title: 'Choose Weapon',
     items(state: GameState) {
-        const weapons: Weapon[] = [noWeapon];
+        let weapons: Weapon[] = [noWeapon, ...state.craftedWeapons];
         for (const key of typedKeys(state.inventory)) {
-            const definition = itemDefinitions[key];
-            if (!definition || !state.inventory[key]) {
+            if (!state.inventory[key]) {
                 continue;
             }
+            const definition = requireItem(key);
             if (isWeapon(definition)) {
                 weapons.push(definition);
             }
@@ -88,12 +88,12 @@ export const chooseWeaponPanel = new ChooseItemPanel<Weapon>({
 export const chooseCharmPanel = new ChooseItemPanel<Charm>({
     title: 'Choose Charm',
     items(state: GameState) {
-        const charms: Charm[] = [noCharm];
+        const charms: Charm[] = [noCharm, ...state.craftedCharms];
         for (const key of typedKeys(state.inventory)) {
-            const definition = itemDefinitions[key];
-            if (!definition || !state.inventory[key]) {
+            if (!state.inventory[key]) {
                 continue;
             }
+            const definition = requireItem(key);
             if (isCharm(definition)) {
                 charms.push(definition);
             }

@@ -10,14 +10,15 @@ const nexusLevels = [
         goal:  1000,
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
-            // TODO: Allow forging weapons+armor here.
+            state.craftingBench.baseMaterialSlots.push(undefined);
+            state.craftingBench.baseMaterialSlots.push(undefined);
         }
     },
     {
         goal:  2000,
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
-            // TODO: Allow forging charms here.
+            state.craftingBench.decorationSlots.push(undefined);
         }
     },
     {
@@ -35,6 +36,7 @@ const nexusLevels = [
             // Gain an extra hero slot.
             state.heroSlots.push(undefined);
             state.maxHeroSkillPoints = 8;
+            state.craftingBench.baseMaterialSlots.push(undefined);
         }
     },
     {
@@ -42,6 +44,7 @@ const nexusLevels = [
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
             state.maxNexusAbilityLevel = 2;
+            state.craftingBench.decorationSlots.push(undefined);
         }
     },
     {
@@ -58,6 +61,7 @@ const nexusLevels = [
             // Gain an extra hero slot.
             state.heroSlots.push(undefined);
             state.maxHeroSkillPoints = 9;
+            state.craftingBench.baseMaterialSlots.push(undefined);
         }
     },
     {
@@ -65,13 +69,15 @@ const nexusLevels = [
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
             state.maxNexusAbilityLevel = 3;
+            state.craftingBench.decorationSlots.push(undefined);
         }
     },
     {
         goal:  500000,
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
-            // TODO: Additional bonus here.
+            state.craftingBench.baseMaterialSlots.push(undefined);
+            state.craftingBench.decorationSlots.push(undefined);
         }
     },
     {
@@ -79,6 +85,7 @@ const nexusLevels = [
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
             state.maxHeroSkillPoints = 10;
+            state.craftingBench.decorationSlots.push(undefined);
         }
     },
 ];

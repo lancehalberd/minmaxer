@@ -1,6 +1,7 @@
 import {archerJobElement} from 'app/city/archers';
 import {healerJobElement} from 'app/city/healer';
 import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
+import {CraftingBench} from 'app/objects/structure';
 import {frameLength} from 'app/gameConstants';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
@@ -41,6 +42,16 @@ export function createNexus(zone: ZoneInstance): Nexus {
 
         },
         update(state: GameState) {
+            if (state.craftingBench.baseMaterialSlots.length) {
+                let craftingBench = state.world.objects.find(object => object instanceof CraftingBench);
+                if (!craftingBench) {
+                    craftingBench = new CraftingBench({zone: this.zone, x: 0, y: 0});
+                    craftingBench.y = this.r - craftingBench.r + 10;
+                    state.world.objects.push(craftingBench);
+                } else {
+                    craftingBench.y = this.r - craftingBench.r + 10;
+                }
+            }
             // If we are tracking gained essence, remove it linearly for 1 second following the last time
             // essence was gained.
             if (this.gainedEssence) {

@@ -123,7 +123,7 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
         gainEssence(state, target.essenceWorth);
     }
     if (target.objectType === 'hero') {
-        const reviveTime = Math.floor(target.level * 5 * (1 + state.nexus.deathCount * 0.2));
+        const reviveTime = Math.floor((5 + target.level) * (1 + state.nexus.deathCount * 0.2));
         target.reviveCooldown = {
             total: reviveTime,
             remaining: reviveTime,

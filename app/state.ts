@@ -5,6 +5,15 @@ import {addBasicHeroes} from 'app/objects/hero';
 import {createNexus} from 'app/objects/nexus';
 import {initializeSpawners} from 'app/objects/spawner';
 
+
+import {getItemKeys} from 'app/definitions/itemDefinitions';
+
+function gainAllItems(state: GameState, amount: number) {
+    for (const key of getItemKeys()) {
+        state.inventory[key] = (state.inventory[key] ?? 0) + amount;
+    }
+}
+
 //const testAbility = createNexusAbility(summonGolems);
 //testAbility.level = 1;
 
@@ -49,6 +58,15 @@ export const state: GameState = {
         },
     },
     inventory: {},
+    craftedWeapons: [],
+    craftedArmors: [],
+    craftedCharms: [],
+    craftingBench: {
+        equipmentType: 'weapon',
+        maxDecorationSlots: 0,
+        baseMaterialSlots: [],
+        decorationSlots: [],
+    },
     discoveredItems: new Set(),
     availableHeroes: [],
     lastTimeRendered: 0,
@@ -68,6 +86,7 @@ export const state: GameState = {
         isLocked: true,
     },
     hudUIElements: [],
+    openPanels: [],
     mouse: {
         currentPosition: {x: 300, y: 300},
     },
@@ -82,5 +101,19 @@ export const state: GameState = {
 
 addBasicHeroes(state);
 initializeSpawners(state);
+
+/*
+state.craftingBench.baseMaterialSlots.push(undefined);
+state.craftingBench.baseMaterialSlots.push(undefined);
+state.craftingBench.baseMaterialSlots.push(undefined);
+state.craftingBench.baseMaterialSlots.push(undefined);
+state.craftingBench.baseMaterialSlots.push(undefined);
+state.craftingBench.decorationSlots.push(undefined);
+state.craftingBench.decorationSlots.push(undefined);
+state.craftingBench.decorationSlots.push(undefined);
+state.craftingBench.decorationSlots.push(undefined);
+state.craftingBench.decorationSlots.push(undefined);
+gainAllItems(state, 5);*/
+gainAllItems;//(state, 5);
 
 window.state = state;

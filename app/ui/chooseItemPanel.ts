@@ -15,6 +15,7 @@ interface ItemButtonProps<T extends InventoryItem> extends Partial<UIButton> {
 }
 export class ItemButton<T extends InventoryItem> implements UIButton {
     objectType = <const>'uiButton';
+    uniqueId = this.props.uniqueId;
     item: T = this.props.item;
     itemLabel = this.props.itemLabel;
     itemQuantity = this.props.itemQuantity;
@@ -25,7 +26,6 @@ export class ItemButton<T extends InventoryItem> implements UIButton {
     w = this.props.w ?? 100;
     h = this.props.h ?? 2 * uiSize;
     disabled = this.props.disabled;
-    uniqueId = this.props.uniqueId;
     constructor(public props: ItemButtonProps<T>) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
         if (isMouseOverTarget(state, this)) {
@@ -57,6 +57,7 @@ interface ChooseItemPanelProps<T extends InventoryItem> extends Partial<UIContai
 }
 export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     objectType = <const>'uiContainer';
+    uniqueId = this.props.uniqueId;
     hero?: Hero
     title = this.props.title;
     items = this.props.items;

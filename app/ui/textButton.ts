@@ -5,7 +5,7 @@ import {fillBorderedRect, fillText} from 'app/utils/draw';
 
 interface TextButtonProps extends Partial<UIButton> {
     text: Computed<string, TextButton>
-    textProps?: FillTextProperties
+    textProps?: TextStyle
     color?: CanvasFill
     backgroundColor?: CanvasFill
     hoverBackgroundColor?: CanvasFill
@@ -37,7 +37,7 @@ export class TextButton implements UIButton {
         this.drawBackground(context, state);
         const text = computeValue(state, this, this.text, '');
         if (text) {
-            fillText(context, {text, x: this.x + this.w / 2, y: this.y + this.h / 2, color: this.color, ...(this.textProps)});
+            fillText(context, {text, x: this.x + this.w / 2, y: this.y + this.h / 2, color: this.color, ...this.textProps});
         }
     }
 }

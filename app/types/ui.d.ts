@@ -31,3 +31,5 @@ interface UIButton extends BaseUIElement {
 }
 
 type UIElement = UIContainer | UIButton;
+
+type ToolTipLine = string|number|FillTextProperties&{icon?: Frame};

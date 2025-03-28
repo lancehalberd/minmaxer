@@ -5,8 +5,9 @@ import {getModifierLines} from 'app/utils/inventory';
 import {getAvailableToolCount, getItemLabel, getToolIcon, toolTypeLabels} from 'app/utils/inventory';
 import {typedKeys} from 'app/utils/types';
 
+
 interface TooltipProps extends Partial<UIContainer> {
-    lines: (string|number|FillTextProperties&{icon?: Frame})[]
+    lines: ToolTipLine[]
     textProps?: Partial<FillTextProperties>
     color?: CanvasFill
     backgroundColor?: CanvasFill
@@ -158,9 +159,14 @@ export function showCharmTooltip(state: GameState, item?: Charm) {
     return true;
 }
 
+export function showSimpleTooltip(state: GameState, lines: ToolTipLine[]) {
+    state.hoverToolTip = new ToolTip(state, {textProps: toolTipText, lines});
+    return true;
+}
+
 
 export function showRequirementsTooltip(state: GameState, {essenceCost, toolType, resourceCost}: Requirements) {
-    const requirementLines: (string|number|FillTextProperties&{icon?: Frame})[] = [];
+    const requirementLines: ToolTipLine[] = [];
     if (toolType) {
         const hasTool = !!getAvailableToolCount(state, toolType)
         const color = hasTool ? '#0F0' : '#F00';

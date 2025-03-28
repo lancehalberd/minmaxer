@@ -2,6 +2,10 @@ interface GameState {
     nexus: Nexus
     city: CityStats
     inventory: Inventory
+    craftingBench: CraftingBench
+    craftedWeapons: CraftedWeapon[]
+    craftedArmors: CraftedArmor[]
+    craftedCharms: CraftedCharm[]
     // Which resources have been discovered this round.
     discoveredItems: Set<InventoryKey>
     // List of heroes available to summon.
@@ -13,8 +17,10 @@ interface GameState {
     openChooseArmorPanel?: boolean
     openChooseWeaponPanel?: boolean
     openChooseCharmPanel?: boolean
+    itemsToSelectFrom?: InventoryItem[]
     openInventoryPanel?: boolean
-    openCraftingPanel?: boolean
+    openCraftingBenchPanel?: boolean
+    openCraftingJobsPanel?: boolean
     // Used for tracking which charm is being updated.
     selectedCharmIndex?: number
     hoveredAbility?: Ability
@@ -29,6 +35,7 @@ interface GameState {
     // The Nexus Ability Panel is displayed while this is set.
     selectedNexusAbilitySlot?: number
     hudUIElements: UIElement[]
+    openPanels: UIElement[]
     camera: Camera
     world: World
     waves: Wave[]

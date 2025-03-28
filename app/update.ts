@@ -5,7 +5,7 @@ import {state} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
-import {toggleCraftingPanel} from 'app/ui/craftingPanel';
+import {toggleCraftingJobsPanel} from 'app/ui/craftingJobsPanel';
 import {toggleHeroPanel} from 'app/ui/heroPanel';
 import {toggleInventoryPanel} from 'app/ui/inventoryPanel';
 import {activateHeroAbility} from 'app/utils/hero';
@@ -16,13 +16,6 @@ import {advanceDebugGameState} from 'app/utils/debug';
 /*
 TODO:
 Minigames for improving stats/experience.
-
-Add a way to farm materials from enemies/content:
-    More enemy types?
-    Include rare resources
-    Add rare drop chance for harvesting actions:
-        1% chance to get hardwood instead of wood
-        Only from hero? Or we could have bonuses on heroes to increase chance of rare items.
 
 Basic Crafting Improvements
     Add crafting bench structure to open crafting panel on interaction.
@@ -106,15 +99,15 @@ function update() {
     if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
         toggleHeroPanel(state);
     }
-    if (wasGameKeyPressed(state, gameKeys.craftingPanel)) {
-        toggleCraftingPanel(state);
+    if (wasGameKeyPressed(state, gameKeys.craftingJobsPanel)) {
+        toggleCraftingJobsPanel(state);
     }
     if (wasGameKeyPressed(state, gameKeys.inventoryPanel)) {
         toggleInventoryPanel(state);
     }
     if (wasGameKeyPressed(state, gameKeys.closeAll)) {
         toggleHeroPanel(state, false);
-        toggleCraftingPanel(state, false);
+        toggleCraftingJobsPanel(state, false);
         toggleInventoryPanel(state, false);
         delete state.selectedNexusAbilitySlot;
         // Also cancel any ability targeting.

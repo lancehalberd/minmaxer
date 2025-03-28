@@ -1,5 +1,7 @@
-import {itemDefinitions} from 'app/definitions/itemDefinitions'
+import {requireItem} from 'app/definitions/itemDefinitions'
 import {createAnimation} from 'app/utils/animations';
+import {removeItemFromArray} from 'app/utils/array';
+import {isCraftedWeapon, isCraftedArmor, isCraftedCharm} from 'app/utils/types';
 
 export const toolTypes: ToolType[] = ['axe', 'hammer', 'pickaxe', 'bow', 'staff'];
 export const toolTypeLabels:{[key in ToolType]: string} = {
@@ -29,7 +31,7 @@ export const bowTypes: BowType[] = ['shortBow', 'longBow', 'crossbow'];
 export const staffTypes: StaffType[] = ['woodStaff', 'bronzeStaff', 'steelStaff'];
 
 export function getItemLabel(itemKey: InventoryKey): string {
-    return itemDefinitions[itemKey]?.name ?? itemKey;
+    return requireItem(itemKey).name;
 }
 
 export function getItemCount(state: GameState, key: InventoryKey): number {
@@ -131,10 +133,17 @@ export function addItemToInventory(state: GameState, item?: InventoryItem) {
     if (!item) {
         return;
     }
-    if (item.key && itemDefinitions[item.key]){
+    if (item.key){
         state.inventory[item.key] = (state.inventory[item.key] ?? 0) + 1;
+    } else if (isCraftedWeapon(item)) {
+        state.craftedWeapons.push(item);
+    } else if (isCraftedArmor(item)) {
+        state.craftedArmors.push(item);
+    } else if (isCraftedCharm(item)) {
+        state.craftedCharms.push(item);
     } else {
-        // TODO: add item to crafted items array.
+        console.error('Failed to add item to inventory', item);
+        debugger;
     }
 }
 
@@ -142,10 +151,17 @@ export function removeItemFromInventory(state: GameState, item?: InventoryItem) 
     if (!item) {
         return;
     }
-    if (item.key && itemDefinitions[item.key]){
+    if (item.key){
         state.inventory[item.key] = (state.inventory[item.key] ?? 0) - 1;
+    } else if (isCraftedWeapon(item)) {
+        removeItemFromArray(state.craftedWeapons, item);
+    } else if (isCraftedArmor(item)) {
+        removeItemFromArray(state.craftedArmors, item);
+    } else if (isCraftedCharm(item)) {
+        removeItemFromArray(state.craftedCharms, item);
     } else {
-        // TODO: remove item from crafted items array.
+        console.error('Failed to add item to inventory', item);
+        debugger;
     }
 }
 

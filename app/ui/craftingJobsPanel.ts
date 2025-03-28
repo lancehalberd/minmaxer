@@ -6,8 +6,8 @@ import {pad} from 'app/utils/geometry';
 import {isJobDiscovered} from 'app/utils/job';
 
 
-export function toggleCraftingPanel(state: GameState, open = !state.openCraftingPanel) {
-    state.openCraftingPanel = open;
+export function toggleCraftingJobsPanel(state: GameState, open = !state.openCraftingJobsPanel) {
+    state.openCraftingJobsPanel = open;
     state.openCharacterPanel = false;
     state.openChooseArmorPanel = false;
     state.openChooseWeaponPanel = false;
@@ -15,7 +15,7 @@ export function toggleCraftingPanel(state: GameState, open = !state.openCrafting
 }
 
 const itemsPerPage = 7;
-export class CraftingPanel implements UIContainer {
+export class CraftingJobsPanel implements UIContainer {
     objectType = <const>'uiContainer';
     w = 250;
     h = 500;
@@ -28,7 +28,7 @@ export class CraftingPanel implements UIContainer {
         w: uiSize,
         h: uiSize,
         onPress: (state: GameState) => {
-            state.openCraftingPanel = false;
+            toggleCraftingJobsPanel(state, false);
             return true;
         },
     });
