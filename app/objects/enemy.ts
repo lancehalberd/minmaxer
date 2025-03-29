@@ -107,7 +107,6 @@ function aggroEnemyPack(enemy: Enemy, target: Nexus | AllyTarget) {
     }
 }
 
-
 export function updateEnemy(this: Enemy, state: GameState) {
     updateEnemyMain.apply(this, [state]);
     this.afterUpdate?.(state, this);
@@ -199,7 +198,8 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
             // Attack the target if the enemy's attack is not on cooldown.
             const attackCooldown = 1000 / getEnemyAttacksPerSecond(state, this);
             if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
-                damageTarget(state, this.attackTarget, {damage: this.damage, source: this});
+                const damage = getEnemyDamageForTarget(state, this, this.attackTarget);
+                damageTarget(state, this.attackTarget, {damage, source: this});
                 this.attackTarget.onHit?.(state, this);
                 this.lastAttackTime = this.zone.time;
             }
@@ -227,6 +227,23 @@ function getEnemyAttacksPerSecond(state: GameState, enemy: Enemy): number {
 function getEnemyCooldownSpeed(state: GameState, enemy: Enemy): number {
     return getModifiableStatValue(state, enemy, enemy.stats.speed);
 }
+export function getEnemyDamageForTarget(state: GameState, enemy: Enemy, target?: AbilityTarget): number {
+    let damage = getModifiableStatValue(state, enemy, enemy.stats.damage);
+    if (enemy.isBoss && target?.objectType === 'nexus') {
+        // Bosses deal 5-10x damage to the nexus.
+        // This makes them a threat to the nexus without making them too dangerous to heroes.
+        damage *= (5 + 5 * enemy.level / 100);
+    }
+    for (const ability of enemy.abilities) {
+        if (ability.abilityType === 'passiveEnemyAbility') {
+            if (ability.definition.modifyDamage) {
+                damage = ability.definition.modifyDamage(state, enemy, ability, target, damage);
+            }
+        }
+    }
+    return damage;
+}
+
 function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityTarget, distance = 0): boolean {
     const pixelsPerFrame = getEnemyMovementSpeed(state, enemy) / framesPerSecond;
     // Move this until it reaches the target.

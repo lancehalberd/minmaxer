@@ -1,8 +1,8 @@
 import {canvas, context, uiSize} from 'app/gameConstants';
 import {drawFrame} from 'app/utils/animations';
 import {fillBorderedRect, fillText, measureText} from 'app/utils/draw';
-import {getModifierLines} from 'app/utils/inventory';
 import {getAvailableToolCount, getItemLabel, getToolIcon, toolTypeLabels} from 'app/utils/inventory';
+import {statModifierStrings} from 'app/utils/modifiableStat';
 import {typedKeys} from 'app/utils/types';
 
 
@@ -129,7 +129,7 @@ export function showWeaponTooltip(state: GameState, item?: Weapon) {
         item.name,
         '',
         'Damage: ' + item.weaponStats.damage,
-        ...getModifierLines(state, item.weaponStats.modifiers),
+        ...statModifierStrings(item.weaponStats.modifiers),
     ]});
     return true;
 }
@@ -142,7 +142,7 @@ export function showArmorTooltip(state: GameState, item?: Armor) {
         item.name,
         '',
         'Armor: ' + item.armorStats.armor,
-        ...getModifierLines(state, item.armorStats.modifiers),
+        ...statModifierStrings(item.armorStats.modifiers),
     ]});
     return true;
 }
@@ -154,7 +154,7 @@ export function showCharmTooltip(state: GameState, item?: Charm) {
     state.hoverToolTip = new ToolTip(state, {textProps: toolTipText, lines: [
         item.name,
         '',
-        ...getModifierLines(state, item.charmStats.modifiers),
+        ...statModifierStrings(item.charmStats.modifiers),
     ]});
     return true;
 }

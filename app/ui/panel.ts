@@ -64,7 +64,7 @@ interface PanelTab {
     content: UIElement
 }
 interface TabbedPanelProps extends Partial<UIContainer> {
-    tabs: PanelTab[]
+    tabs: Computed<PanelTab[], undefined>
     selectedTabIndex?: number
     onSelectTab: (state: GameState, index: number) => void
     onClose?: (state: GameState) => void
@@ -95,10 +95,11 @@ export class TabbedPanel implements UIContainer {
     children: UIElement[] = [];
     constructor(public props: TabbedPanelProps) {}
     update(state: GameState) {
-        const content = this.tabs[this.selectedTabIndex].content;
+        const tabs = computeValue(state, undefined, this.tabs, []);
+        const content = tabs[this.selectedTabIndex].content;
         this.children = [this.closeButton, content];
         const tabbedPanel = this;
-        for (let i = 0; i < this.tabs.length; i++) {
+        for (let i = 0; i < tabs.length; i++) {
             if (!this.tabButtons[i]) {
                 this.tabButtons[i] = {
                     objectType: 'uiContainer',
@@ -122,7 +123,7 @@ export class TabbedPanel implements UIContainer {
                                 fillRect(context, {x: 0, y: 0, w: this.w, h: this.h}, shadedBorderFill);
                                 fillRect(context, {x: 2, y: 2, w: this.w - 4, h: this.h - 2}, '#222');
                             }
-                            const title = computeValue(state, undefined, tabbedPanel.tabs[i].title, '');
+                            const title = computeValue(state, undefined, tabs[i].title, '');
                             fillText(context, {text: title, x: this.w / 2, y: this.h / 2, size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF'});
                         context.restore();
                     }

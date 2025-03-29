@@ -3,7 +3,7 @@ import {CircleEffect} from 'app/effects/circleEffect';
 import {addHealEffectToTarget} from 'app/effects/healAnimation';
 import {addProjectile, OrbitingProjectile} from 'app/effects/projectile';
 import {canvas, frameLength} from 'app/gameConstants';
-import {createEnemy} from 'app/objects/enemy';
+import {createEnemy, getEnemyDamageForTarget} from 'app/objects/enemy';
 import {createCanvasAndContext, drawCanvas} from 'app/utils/canvas';
 import {applyDamageOverTime, damageTarget, getAllyTargets, getEnemyTargets, getTargetsInCircle} from 'app/utils/combat';
 import {fillCircle} from 'app/utils/draw';
@@ -52,6 +52,7 @@ interface BaseEnemyAbilityProps {
 
 interface EnemyAreaHitAbilityProps extends BaseEnemyAbilityProps{
     r: number
+    damageMultiplier?: number
     afterActivate?: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) => void
     getHit?: (state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) => Partial<AttackHit>
 }
@@ -75,17 +76,20 @@ class EnemyAreaHitAbility implements ActiveEnemyAbilityDefinition<undefined> {
     renderWarning = this.props.renderWarning;
     initialCharges = this.props.initialCharges;
     maxCharges = this.props.maxCharges;
+    damageMultiplier = this.props.damageMultiplier ?? 1;
     onActivate(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) {
         const targetingInfo = this.getTargetingInfo(state, enemy, ability);
         const hitCircle = {x: enemy.x, y: enemy.y, r: targetingInfo.hitRadius || 0};
         const hit = {
-            damage: enemy.damage,
             ...(this.getHit?.(state, enemy, ability)),
             source: enemy,
         }
         const targets = getTargetsInCircle(state, getAllyTargets(state, enemy.zone), hitCircle);
         for (const target of targets) {
-            damageTarget(state, target, hit);
+            damageTarget(state, target, {
+                ...hit,
+                damage: this.damageMultiplier * getEnemyDamageForTarget(state, enemy, target),
+            });
         }
         this.afterActivate?.(state, enemy, ability);
     }
@@ -93,13 +97,13 @@ class EnemyAreaHitAbility implements ActiveEnemyAbilityDefinition<undefined> {
 
 export const stunningSlam = new EnemyAreaHitAbility({
     name: 'Stunning Slam',
+    damageMultiplier: 2,
     r: 60,
     cooldown: 5000,
     zoneCooldown: 1000,
     warningTime: 1500,
     getHit(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) {
         return {
-            damage: enemy.damage,
             onHit(state: GameState, target: AttackTarget) {
                 if (target.objectType === 'hero' || target.objectType === 'ally') {
                     stunEffect.apply(state, target, 2);
@@ -220,7 +224,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
             piercing: true,
             // The projectile itself does regular enemy damage.
             // but it leaves a pool that deals damage over time.
-            hit: {damage: enemy.damage, source: enemy},
+            hit: {damage: getEnemyDamageForTarget(state, enemy, target), source: enemy},
             render: renderPoisonSpitProjectile,
             onExpire(this: Projectile, state: GameState) {
                 // PoisonPoolEffect automatically adds itself to the zone in the constructor.
@@ -232,7 +236,7 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
                     targetsAllies: true,
                     maxRadius: 30,
                     duration: 2000,
-                    damagePerSecond: enemy.damage,
+                    damagePerSecond: getEnemyDamageForTarget(state, enemy, target),
                     source: enemy,
                 });
             }
@@ -242,6 +246,43 @@ export const poisonSpit: ActiveEnemyAbilityDefinition<AbilityTarget> = {
 function renderPoisonSpitProjectile(this: Projectile, context: CanvasRenderingContext2D, state: GameState) {
     fillCircle(context, {...this, color: poisonCanvasFill});
 }
+
+const piercingShotRadius = 8;
+export const piercingShot: ActiveEnemyAbilityDefinition<AbilityTarget> = {
+    abilityType: 'activeEnemyAbility',
+    name: 'Piercing Shot',
+    getTargetingInfo(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<AbilityTarget>) {
+        return {
+            canTargetEnemy: true,
+            hitRadius: piercingShotRadius,
+            range: 80,
+        };
+    },
+    cooldown: 8000,
+    zoneCooldown: 1000,
+    warningTime: 500,
+    onActivate(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<AbilityTarget>, target: LocationTarget) {
+        const targetingInfo = this.getTargetingInfo(state, enemy, ability);
+        const speed = 200;
+        const dx = target.x - enemy.x, dy = target.y - enemy.y;
+        const mag = Math.sqrt(dx*dx + dy*dy);
+        addProjectile(state, {
+            zone: enemy.zone,
+            x: enemy.x + dx * enemy.r / mag,
+            y: enemy.y + dy * enemy.r / mag,
+            hitsAllies: true,
+            vx: dx * speed / mag,
+            vy: dy * speed / mag,
+            r: piercingShotRadius,
+            // Set the duration to expire either at the target location, or the maximum range.
+            duration: 1000 * Math.min(mag, targetingInfo.range) / speed,
+            piercing: true,
+            // The projectile itself does regular enemy damage.
+            // but it leaves a pool that deals damage over time.
+            hit: {damage: 1.5 * getEnemyDamageForTarget(state, enemy, target), source: enemy},
+        });
+    },
+};
 
 interface CreateSummonMinionAbilityProps{
     name: string
@@ -340,7 +381,7 @@ export const petrifyingBarrier: PassiveEnemyAbilityDefinition = {
                     vTheta: Math.PI,
                     orbitRadius: 50,
                     hit: {
-                        damage: Math.ceil(enemy.damage / 10),
+                        damage: Math.ceil(getEnemyDamageForTarget(state, enemy) / 2),
                         onHit(state: GameState, target: AttackTarget) {
                             if (target.objectType === 'hero' || target.objectType === 'ally') {
                                 stackingPetrificationEffect.applyStacks(state, target, 1);
@@ -441,7 +482,6 @@ export const petrifyingGaze = new EnemyAreaHitAbility({
     },
     getHit(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) {
         return {
-            damage: Math.ceil(enemy.damage / 4),
             onHit(state: GameState, target: AttackTarget) {
                 if (target.objectType === 'hero' || target.objectType === 'ally') {
                     stunEffect.apply(state, target, 2);

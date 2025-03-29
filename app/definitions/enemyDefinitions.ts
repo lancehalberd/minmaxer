@@ -1,5 +1,5 @@
 import {createAnimation, drawFrame, getFrame} from 'app/utils/animations';
-import {createSummonMinionAbility, groupHeal, petrifyingBarrier, petrifyingGaze, poisonSpit, stunningSlam} from 'app/definitions/enemyAbilities';
+import {createSummonMinionAbility, groupHeal, petrifyingBarrier, petrifyingGaze, piercingShot, poisonSpit, stunningSlam} from 'app/definitions/enemyAbilities';
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 import {createActiveEnemyAbilityInstance, prepareToUseEnemyAbilityOnTarget} from 'app/utils/ability';
 import {standardEnemyLootPool} from 'app/utils/lootPool'
@@ -81,7 +81,31 @@ enemyDefinitions.kobold = {
     r: 9,
     getStatsForLevel: getBasicEnemyStatsForLevel,
     aggroRadius: baseAggroRadius,
-    getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather', 'chippedRuby'], ['fineLeather', 'ruby'], ['flawlessRuby']),
+    getLootPool: standardEnemyLootPool(
+        ['leatherStrap', 'woodHammer', 'woodHatchet'],
+        ['leather', 'chippedRuby', 'stoneHammer', 'stoneAxe'],
+        ['fineLeather', 'ruby', 'ironHammer', 'ironHatchet'],
+        ['flawlessRuby', 'steelHammer', 'steelAxe']),
+};
+
+
+enemyDefinitions.koboldArcher = {
+    name: 'Kobold Archer',
+    color: 'orange',
+    r: 9,
+    abilities: [piercingShot],
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            maxHealth: (baseStats.maxHealth * 0.8) | 0,
+            attacksPerSecond: baseStats.attacksPerSecond * 0.8,
+            attackRange: 40,
+        };
+    },
+    lootChance: 0.15,
+    getLootPool: standardEnemyLootPool(['shortBow'], ['leather', 'chippedSapphire', 'longBow'], ['fineLeather', 'sapphire', 'crossbow'], ['flawlessSapphire']),
+    aggroRadius: baseAggroRadius,
 };
 
 enemyDefinitions.koboldCleric = {
@@ -98,7 +122,7 @@ enemyDefinitions.koboldCleric = {
         };
     },
     lootChance: 0.15,
-    getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather', 'chippedSapphire'], ['fineLeather', 'sapphire'], ['flawlessSapphire']),
+    getLootPool: standardEnemyLootPool(['woodStaff'], ['leather', 'chippedSapphire'], ['fineLeather', 'sapphire', 'bronzeStaff'], ['flawlessSapphire', 'steelStaff']),
     aggroRadius: baseAggroRadius,
 };
 
@@ -112,7 +136,6 @@ enemyDefinitions.mummy = {
         return {
             ...baseStats,
             maxHealth: (100 * baseStats.maxHealth) | 0,
-            damage: (5 * baseStats.damage) | 0,
             attacksPerSecond: 0.5 * baseStats.attacksPerSecond,
             attackRange: 10,
             movementSpeed: 5,
@@ -162,7 +185,7 @@ const medusa: EnemyDefinition<MedusaProps> = {
         return {
             ...baseStats,
             maxHealth: (80 * baseStats.maxHealth) | 0,
-            damage: (3 * baseStats.damage) | 0,
+            damage: (0.8 * baseStats.damage) | 0,
             attacksPerSecond: 0.5 * baseStats.attacksPerSecond,
             attackRange: 10,
             movementSpeed: 6,
@@ -204,7 +227,7 @@ enemyDefinitions.flyingBeetle = {
             ...baseStats,
             maxHealth: (baseStats.maxHealth * 0.8) | 0,
             attacksPerSecond: baseStats.attacksPerSecond * 1.25,
-            damage: baseStats.attacksPerSecond * 0.8,
+            damage: (baseStats.damage * 0.8) | 0,
             movementSpeed: baseStats.movementSpeed * 1.5,
         };
     },

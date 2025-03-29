@@ -164,21 +164,3 @@ export function removeItemFromInventory(state: GameState, item?: InventoryItem) 
         debugger;
     }
 }
-
-
-export function getModifierLines(state: GameState, modifiers?: StatModifier[]): (string|number)[] {
-    const lines: (string|number)[] = [];
-    for (const modifier of (modifiers ?? [])) {
-        // TODO: Use display friendly labels for stat keys here.
-        if (modifier.flatBonus) {
-            lines.push('+' + modifier.flatBonus + ' ' + modifier.stat);
-        }
-        if (modifier.percentBonus) {
-            lines.push(modifier.percentBonus + '% ' + modifier.stat);
-        }
-        if (modifier.multiplier) {
-            lines.push(modifier.flatBonus + 'x ' + modifier.stat);
-        }
-    }
-    return lines;
-}

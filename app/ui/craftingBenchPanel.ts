@@ -285,16 +285,25 @@ export const craftingBenchPanel = new TabbedPanel({
     h: 400,
     x: 40,
     y: (canvas.height - 400) / 2,
-    tabs: [{
-        title: 'Craft Weapon',
-        content: craftingBenchPanelContent,
-    },{
-        title: 'Craft Armor',
-        content: craftingBenchPanelContent,
-    },{
-        title: 'Craft Charm',
-        content: craftingBenchPanelContent,
-    }],
+    tabs(state: GameState) {
+        const tabs = [{
+            title: 'Craft Weapon',
+            content: craftingBenchPanelContent,
+        },{
+            title: 'Craft Armor',
+            content: craftingBenchPanelContent,
+        }];
+        // Lock Charm crafting until 1 decoration slot is available as charms aren't
+        // very interesting without decorations and this makes unlocking the first
+        // decoration slot feel more impactful.
+        if (state.craftingBench.decorationSlots.length) {
+            tabs.push({
+                title: 'Craft Charm',
+                content: craftingBenchPanelContent,
+            });
+        }
+        return tabs;
+    },
     onSelectTab(state: GameState, index: number) {
         const newEquipmentType = (<const>['weapon', 'armor', 'charm'])[index];
         if (state.craftingBench.equipmentType === newEquipmentType) {

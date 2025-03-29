@@ -1,4 +1,4 @@
-import {frameLength} from 'app/gameConstants';
+import {canvas, frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
 import {Forest, Quary, Village} from 'app/objects/structure';
 import {fillCircle, fillRing, renderCooldownCircle} from 'app/utils/draw';
@@ -223,15 +223,19 @@ class EnemyWaveSpawner implements WaveSpawner {
 }
 
 
-const easyEnemyTypes: EnemyType[] = ['snake', 'kobold'];
-const advancedEnemyTypes: EnemyType[] = ['cobra', 'koboldCleric'];
+const easyEnemyTypes: EnemyType[] = ['snake', 'kobold', 'flyingBeetle'];
+const advancedEnemyTypes: EnemyType[] = ['cobra', 'koboldArcher', 'koboldCleric'];
 const bossEnemyTypes: EnemyType[] = ['medusa', 'mummy'];
 export function checkToAddNewSpawner(state: GameState) {
     // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
     const numSpawners = state.world.objects.filter(o => o.objectType === 'waveSpawner').length;
 
     // Add additional spawners/waves as necessary for now.
-    if (numSpawners === 0 || !state.waves[state.nextWaveIndex + 5]) {
+    const lastWave = state.waves[state.waves.length - 1];
+    // Compute the bottom of the last defined wave stone visually and add additional waves if it is not below the bottom
+    // edge of the screen.
+    const lastWaveBottom = (lastWave.actualStartTime - state.world.time + lastWave.duration) / 1000 / state.waveScale;
+    if (numSpawners === 0 || lastWaveBottom < canvas.height) {
         const level = state.world.nextSpawnerLevel;
         // This is slightly more than level * Math.PI / 4 so that the generated spawners mostly won't line up exactly.
         const theta = 21 * Math.PI * level / 80;
@@ -356,6 +360,7 @@ function processWaveDefinitions(state: GameState, waveDefinitions: WaveDefinitio
 const snake: SpacedSpawnProps = {type: 'snake', level: 1, count: 3};
 const cobra: SpacedSpawnProps = <const>{type: 'cobra', level: 4, count: 1, offset: 5, spacing: 2};
 const kobold: SpacedSpawnProps = {type: 'kobold', level: 3, count: 2, spacing: 3};
+const koboldArcher: SpacedSpawnProps = {type: 'koboldArcher', level: 3, count: 1, offset: 2, spacing: 4};
 const koboldCleric: SpacedSpawnProps = {type: 'koboldCleric', level: 5, count: 1, offset: 2, spacing: 4};
 
 function forestLootPool(bonus: number) {
@@ -435,7 +440,8 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...cobra, count: 1})
                 ]},
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 2}),
+                    ...spacedSpawns({...kobold, count: 1}),
+                    ...spacedSpawns({...koboldArcher, count: 1}),
                 ]},
             ],
         },
@@ -447,7 +453,8 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...cobra, count: 3})
                 ]},
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 3}),
+                    ...spacedSpawns({...kobold, count: 2}),
+                    ...spacedSpawns({...koboldArcher, count: 2}),
                 ]},
             ],
         },
@@ -459,7 +466,8 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...cobra, count: 3})
                 ]},
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 3}),
+                    ...spacedSpawns({...kobold, count: 2}),
+                    ...spacedSpawns({...koboldArcher, count: 2}),
                     ...spacedSpawns({...koboldCleric, count: 1}),
                 ]},
             ],
@@ -472,7 +480,8 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...cobra, count: 3})
                 ]},
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 3}),
+                    ...spacedSpawns({...kobold, count: 2}),
+                    ...spacedSpawns({...koboldArcher, count: 2}),
                     ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
@@ -486,7 +495,8 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({type: 'medusa', level: 1, count: 1, offset: 15}),
                 ]},
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 3}),
+                    ...spacedSpawns({...kobold, count: 2}),
+                    ...spacedSpawns({...koboldArcher, count: 2}),
                     ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
@@ -495,7 +505,8 @@ export function initializeSpawners(state: GameState) {
             duration: 45,
             spawners: [
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 4, amount: 2}),
+                    ...spacedSpawns({...kobold, count: 4}),
+                    ...spacedSpawns({...koboldArcher, count: 4}),
                     ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],
@@ -504,7 +515,8 @@ export function initializeSpawners(state: GameState) {
             duration: 45,
             spawners: [
                 {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 5, amount: 2}),
+                    ...spacedSpawns({...kobold, count: 5}),
+                    ...spacedSpawns({...koboldArcher, count: 5}),
                     ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],
@@ -513,9 +525,12 @@ export function initializeSpawners(state: GameState) {
             duration: 90,
             spawners: [
                 {spawner: koboldSpawner, isFinalWave: true, spawns: [
-                    ...spacedSpawns({...kobold, count: 5, amount: 2}),
+                    ...spacedSpawns({...kobold, count: 5}),
+                    ...spacedSpawns({...koboldArcher, count: 5}),
                     ...spacedSpawns({...koboldCleric, count: 3}),
-                    ...spacedSpawns({...kobold, level: 9, offset: 10, count: 1, amount: 2}),
+                    {enemyType: 'koboldCleric', level: 9, spawnTime: 25},
+                    {enemyType: 'kobold', level: 9, spawnTime: 25},
+                    {enemyType: 'koboldArcher', level: 9, spawnTime: 25},
                 ]},
             ],
         },
@@ -525,7 +540,8 @@ export function initializeSpawners(state: GameState) {
                 {spawner: mummySpawner, spawns: [
                     ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
                     ...spacedSpawns({...cobra, count: 2, spacing: 3}),
-                    ...spacedSpawns({...kobold, count: 5, amount: 2, spacing: 3}),
+                    ...spacedSpawns({...kobold, count: 5, spacing: 3}),
+                    ...spacedSpawns({...koboldArcher, count: 5, spacing: 3}),
                     ...spacedSpawns({...koboldCleric, count: 1}),
                 ]},
             ],
@@ -536,7 +552,8 @@ export function initializeSpawners(state: GameState) {
                 {spawner: mummySpawner, spawns: [
                     ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
                     ...spacedSpawns({...cobra, count: 4, spacing: 3}),
-                    ...spacedSpawns({...kobold, count: 5, amount: 2, spacing: 3}),
+                    ...spacedSpawns({...kobold, count: 5, spacing: 3}),
+                    ...spacedSpawns({...koboldArcher, count: 5, spacing: 3}),
                     ...spacedSpawns({...koboldCleric, count: 2}),
                 ]},
             ],
@@ -547,7 +564,8 @@ export function initializeSpawners(state: GameState) {
                 {spawner: mummySpawner, spawns: [
                     ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
                     ...spacedSpawns({...cobra, count: 6, spacing: 3}),
-                    ...spacedSpawns({...kobold, count: 5, amount: 2, spacing: 3}),
+                    ...spacedSpawns({...kobold, count: 5, spacing: 3}),
+                    ...spacedSpawns({...koboldArcher, count: 5, spacing: 3}),
                     ...spacedSpawns({...koboldCleric, count: 3}),
                 ]},
             ],

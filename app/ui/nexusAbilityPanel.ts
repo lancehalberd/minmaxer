@@ -10,6 +10,7 @@ import {activateNexusAbility} from 'app/utils/hero';
 
 interface NexusAbilityButtonProps extends UIContainer {
     ability?: NexusAbility<any>
+    onHoverLevelUpButton: (state: GameState) => boolean
     onPressLevelUpButton: (state: GameState) => boolean
     showCooldown?: boolean
     showLevelUpButton?: boolean
@@ -24,6 +25,7 @@ class NexusAbilityButton implements UIContainer {
     h = this.props.h ?? buttonSize;
     onPress = this.props.onPress;
     onHover = this.props.onHover;
+    onHoverLevelUpButton = this.props.onHoverLevelUpButton;
     onPressLevelUpButton = this.props.onPressLevelUpButton;
     showLevelUpButton = this.props.showLevelUpButton;
     showCooldown = this.props.showCooldown;
@@ -31,6 +33,9 @@ class NexusAbilityButton implements UIContainer {
         uniqueId: this.uniqueId + '-level-up',
         x: this.w - 3/4 * tinyButtonSize,
         y: this.h - 3/4 * tinyButtonSize,
+        onHover: (state: GameState) => {
+            return this.onHoverLevelUpButton?.(state) ?? true;
+        },
         onPress: (state: GameState) => {
             return this.onPressLevelUpButton?.(state) ?? true;
         },
@@ -215,6 +220,12 @@ export class NexusAbilityPanel implements UIContainer {
                                 ? 'Learn ' +  this.ability?.definition.name
                                 : 'Lv ' + this.ability.level + ' ' + this.ability?.definition.name;
                             state.hoverToolTip = new ToolTip(state, {textProps: toolTipText, lines: [text]});
+                        }
+                        return true;
+                    },
+                    onHoverLevelUpButton(state: GameState) {
+                        if (this.ability) {
+                            previewLevelNexusAbilityCost(state, this.ability);
                         }
                         return true;
                     },

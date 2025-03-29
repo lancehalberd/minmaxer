@@ -1,5 +1,5 @@
 
-type EnemyType = 'kobold'| 'koboldCleric'
+type EnemyType = 'kobold' | 'koboldArcher' | 'koboldCleric'
     | 'snake'| 'cobra'
     | 'flameElemental' | 'frostElemental' | 'stormElemental'
     | 'beetleEgg' | 'flyingBeetle'
@@ -80,8 +80,6 @@ interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     activeAbility?: ActiveEnemyAbility<any>;
     // Max life of the enemy
     maxHealth: number
-    // How much damage the enemy deals on attack
-    damage: number
     // How far away the enemy can hit targets from in pixels.
     attackRange: number
     // How much experience the enemy grants when defeated.
@@ -150,8 +148,8 @@ interface PassiveEnemyAbilityDefinition {
     name: string
     update?: (state: GameState, enemy: Enemy, ability: PassiveEnemyAbility) => void
     // Called when the ability user hits any target.
-    onHitTarget?: (state: GameState, enemy: Enemy, target: AttackTarget, ability: PassiveEnemyAbility) => void
-    modifyDamage?: (state: GameState, enemy: Enemy, target: AbilityTarget|undefined, ability: PassiveEnemyAbility, damage: number) => number
+    onHitTarget?: (state: GameState, enemy: Enemy, ability: PassiveEnemyAbility, target: AttackTarget) => void
+    modifyDamage?: (state: GameState, enemy: Enemy, ability: PassiveEnemyAbility, target: AbilityTarget|undefined, damage: number) => number
     cleanup?: (state: GameState, enemy: Enemy, ability: PassiveEnemyAbility) => void
 }
 

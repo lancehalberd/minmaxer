@@ -104,6 +104,7 @@ export const state: GameState = {
 addBasicHeroes(state);
 initializeSpawners(state);
 
+
 /*
 state.craftingBench.baseMaterialSlots.push(undefined);
 state.craftingBench.baseMaterialSlots.push(undefined);

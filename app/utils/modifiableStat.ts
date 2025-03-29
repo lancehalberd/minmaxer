@@ -137,11 +137,12 @@ export function statModifierStrings(modifiers?: StatModifier[]): string[] {
         if (!combinedStat) {
             continue;
         }
+        // TODO: Use display friendly labels for stat keys here.
         if (combinedStat.flatBonus) {
             lines.push((combinedStat.flatBonus >= 0 ? '+' : '-') + combinedStat.flatBonus.toFixed(0) + ' ' + combinedStat.stat);
         }
         if (combinedStat.percentBonus) {
-            lines.push(combinedStat.percentBonus.toFixed(0) + '%' + (combinedStat.percentBonus >= 0 ? ' increased ' : ' reduced ') + combinedStat.stat);
+            lines.push((combinedStat.percentBonus >= 0 ? '+' : '-') + combinedStat.percentBonus.toFixed(0) + '%' + combinedStat.stat);
         }
         if (combinedStat.multiplier) {
             lines.push(combinedStat.multiplier.toFixed(2) + 'x ' + combinedStat.stat);

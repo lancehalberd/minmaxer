@@ -130,7 +130,9 @@ export class PlusButton implements UIButton {
     y = this.props.y ?? 0;
     w = this.props.w ?? tinyButtonSize;
     h = this.props.h ?? tinyButtonSize;
+    onClick = this.props.onClick;
     onPress = this.props.onPress;
+    onHover = this.props.onHover;
     constructor(public props: Partial<UIButton>) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
         // Draw a red square with a white border and white plus on it.

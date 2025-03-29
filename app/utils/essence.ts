@@ -4,6 +4,7 @@ const nexusLevels = [
         applyChanges(state: GameState) {
             state.nexus.essenceGrowth++;
             state.nexusAbilitySlots.push(undefined);
+            state.maxNexusAbilityLevel = 2;
         }
     },
     {
