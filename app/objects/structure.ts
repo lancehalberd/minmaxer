@@ -175,6 +175,7 @@ interface CaveProps extends StructureProps {
     // If this is not set it functions as an exit, returning the
     // hero to the containing zone/overworld.
     zoneDefinition?: ZoneDefinition
+    exitToOverworld?: boolean
 }
 export class Cave implements Structure {
     objectType = <const>'structure';
@@ -184,14 +185,17 @@ export class Cave implements Structure {
     r = this.props.r ?? 20;
     color = this.props.color ?? '#999';
     zoneDefinition = this.props.zoneDefinition;
+    exitToOverworld = this.props.exitToOverworld;
 
     constructor(public props: CaveProps) {}
     onHeroInteraction(state: GameState, hero: Hero) {
-       if (!this.zoneDefinition && hero.zone.exit) {
+        if (this.exitToOverworld && hero.zone.overworldExit) {
+            enterZone(state, hero.zone.overworldExit, hero);
+        } else if (!this.zoneDefinition && hero.zone.exit) {
             enterZone(state, hero.zone.exit, hero);
-       } else if (this.zoneDefinition) {
+        } else if (this.zoneDefinition) {
            enterNewZoneInstance(state, this.zoneDefinition, {x: hero.x, y: hero.y, zone: hero.zone}, hero);
-       }
+        }
     }
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -212,6 +216,7 @@ function enterNewZoneInstance(state: GameState, definition: ZoneDefinition, exit
         objects: [],
         zoneEnemyCooldowns: new Map(),
         exit,
+        overworldExit: hero.zone.overworldExit ?? exit,
     };
     definition.initialize(state, newZone);
     enterZone(state, {x: 0, y: 25, zone: newZone}, hero);

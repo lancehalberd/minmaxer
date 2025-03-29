@@ -18,6 +18,9 @@ export function createNexusAbility<T extends FieldTarget | undefined>(abilityDef
     };
 }
 
+// 1.6^11 is ~175, 1.75^11 is ~470
+const nexusGrowthFactor = 1.6;
+
 export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeNexusAbility',
     name: 'Healing Wind',
@@ -42,7 +45,7 @@ export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
         const hitCircle = {x: target.x, y: target.y, r: targetingInfo.hitRadius || 0};
         const targets = getTargetsInCircle(state, getAllyTargets(state, state.camera.zone), hitCircle);
         // Heal amount increases by 50% every nexus level.
-        const healAmount = Math.floor(1.5 ** (state.nexus.level - 1) * 30);
+        const healAmount = Math.floor(nexusGrowthFactor ** (state.nexus.level - 1) * 30);
         for (const target of targets) {
             /*if (target.objectType === 'nexus') {
                 continue;
@@ -127,11 +130,11 @@ export const inferno: NexusAbilityDefinition<AbilityTarget> = {
     },
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
         const targetingInfo = this.getTargetingInfo(state, ability);
-        const damagePerSecond = Math.floor(1.5 ** (state.nexus.level - 1) * 2);
+        const damagePerSecond = Math.floor(nexusGrowthFactor ** (state.nexus.level - 1) * 2);
 
         // FireGroundEffect automatically adds itself to the zone in the constructor.
         const fireGroundEffect = new FireGroundEffect({
-            zone: state.nexus.zone,
+            zone: target.zone,
             x: target.x,
             y: target.y,
             r: targetingInfo.hitRadius || 0,
@@ -176,7 +179,7 @@ export const arcticBlast: NexusAbilityDefinition<AbilityTarget> = {
 
         // CircleEffect automatically adds itself to the zone in the constructor.
         const circleEffect = new CircleEffect({
-            zone: state.nexus.zone,
+            zone: target.zone,
             x: target.x,
             y: target.y,
             r: targetingInfo.hitRadius || 0,
@@ -184,7 +187,7 @@ export const arcticBlast: NexusAbilityDefinition<AbilityTarget> = {
         });
 
         const targets = getTargetsInCircle(state, getEnemyTargets(state, state.camera.zone), circleEffect);
-        const damageAmount = Math.floor(1.5 ** (state.nexus.level - 1) * 3);
+        const damageAmount = Math.floor(nexusGrowthFactor ** (state.nexus.level - 1) * 3);
         for (const target of targets) {
             if (target.objectType === 'spawner') {
                 continue;
@@ -243,7 +246,7 @@ export const summonGolems: NexusAbilityDefinition<LocationTarget> = {
 
         // CircleEffect automatically adds itself to the zone in the constructor.
         const circleEffect = new CircleEffect({
-            zone: state.nexus.zone,
+            zone: target.zone,
             x: target.x,
             y: target.y,
             r: targetingInfo.hitRadius || 0,
@@ -252,9 +255,9 @@ export const summonGolems: NexusAbilityDefinition<LocationTarget> = {
 
         const r = 8;
         const baseTheta = Math.atan2(target.y, target.x) + Math.PI / 2;
-        const damage = Math.floor(1.5 ** (state.nexus.level - 1) * 2);
-        const maxHealth = Math.floor(1.5 ** (state.nexus.level - 1) * 5);
-        const armor = Math.floor(1.5 ** (state.nexus.level - 1) * 1);
+        const damage = Math.floor(nexusGrowthFactor ** (state.nexus.level - 1) * 2);
+        const maxHealth = Math.floor(nexusGrowthFactor ** (state.nexus.level - 1) * 8);
+        const armor = Math.floor(nexusGrowthFactor ** (state.nexus.level - 1) * 2);
         const count = [2, 3, 5][ability.level - 1];
         for (let i = 0; i < count; i++) {
             const theta =baseTheta + 2 * Math.PI * i / count;

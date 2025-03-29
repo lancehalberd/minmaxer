@@ -293,7 +293,7 @@ export function createSummonMinionAbility(props: CreateSummonMinionAbilityProps)
                 }
                 target.zone.objects.push(minion);
                 new CircleEffect({
-                    zone: state.nexus.zone,
+                    zone: target.zone,
                     duration: 200,
                     x: minion.x,
                     y: minion.y,
@@ -428,7 +428,7 @@ export const petrifyingGaze = new EnemyAreaHitAbility({
     afterActivate(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<undefined>) {
         const targetingInfo = ability.definition.getTargetingInfo(state, enemy, ability);
         new CircleEffect({
-            zone: state.nexus.zone,
+            zone: enemy.zone,
             duration: 60,
             fadeDuration: 800,
             x: enemy.x,

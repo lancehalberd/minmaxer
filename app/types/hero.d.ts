@@ -63,6 +63,7 @@ interface Hero extends Circle, ZoneLocation {
     getExtraHitChance: (state: GameState) => number
     getCriticalChance: (state: GameState) => number
     getCooldownSpeed: (state: GameState) => number
+    getMaxAbilityCharges(state: GameState): number
     getCriticalMultipler: (state: GameState) => number
     // Any damage the hero takes is multiplied by this state. This allows us to
     // create effects that cause the hero to take increased or decreased damage.
@@ -98,6 +99,7 @@ interface Hero extends Circle, ZoneLocation {
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Enemy) => void
 
+    autocastCooldown: number
     abilities: Ability[]
     totalSkillPoints: number
     spentSkillPoints: number
@@ -183,6 +185,9 @@ interface ActiveAbility {
     abilityType: 'activeAbility'
     definition: ActiveAbilityDefinition
     level: number
+    // How many chargest the ability currently has. Abilities are more powerful the
+    // more charges they have when used. Max charges increases with cooldown speed.
+    charges: number
     // Cooldown in milliseconds.
     cooldown: number
     // Whether the hero should automatically use this ability if it is an active ability.

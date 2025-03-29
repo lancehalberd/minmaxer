@@ -84,8 +84,8 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
         y: this.h - 3 * uiSize,
         character: '<',
         onClick: (state: GameState) => {
-            const items = this.getItems(state);
-            this.page = (this.page + items.length - 1) % items.length;
+            const pages = this.totalPages(state);
+            this.page = (this.page + pages - 1) % pages;
             return true;
         },
     });
@@ -94,8 +94,8 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
         y: this.h - 3 * uiSize,
         character: '>',
         onClick: (state: GameState) => {
-            const items = this.getItems(state);
-            this.page = (this.page + 1) % items.length;
+            const pages = this.totalPages(state);
+            this.page = (this.page + 1) % pages;
             return true;
         },
     });

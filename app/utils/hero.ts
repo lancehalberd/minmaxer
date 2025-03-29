@@ -61,7 +61,7 @@ export function activateHeroAbility(state: GameState, hero: Hero, ability: Abili
     if (ability.abilityType !== 'activeAbility') {
         return;
     }
-    if (ability.level <= 0 || ability.cooldown > 0) {
+    if (ability.level <= 0 || ability.charges <= 0) {
         return;
     }
     const definition = ability.definition;

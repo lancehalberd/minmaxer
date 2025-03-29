@@ -1,7 +1,7 @@
 import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {frameLength, heroLevelCap} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {removeEffectFromTarget} from 'app/utils/ability';
+import {activateHeroAbility, removeEffectFromTarget} from 'app/utils/ability';
 import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
@@ -172,13 +172,15 @@ class HeroObject implements Hero {
     getChildren = getHeroFieldButtons;
     effects: ObjectEffect[] = [];
     onHit = onHitHero;
-    abilities = this.definition.abilities.map(abilityDefinition => {
+    autocastCooldown = 0;
+    abilities: Ability[] = this.definition.abilities.map(abilityDefinition => {
         if (abilityDefinition.abilityType === 'activeAbility') {
             return {
                 abilityType: <const>'activeAbility',
                 definition: abilityDefinition,
                 level: 0,
                 cooldown: 0,
+                charges: 0,
                 autocast: true,
             }
         }
@@ -279,6 +281,12 @@ class HeroObject implements Hero {
     getCooldownSpeed(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.cooldownSpeed) * getModifiableStatValue(state, this, this.stats.speed);
     }
+    getMaxAbilityCharges(state: GameState): number {
+        // Generating charge N takes N*baseCooldown seconds.
+        // Max charges is set so that the highest charge takes at most 2 * baseCooldown seconds
+        // after the hero's cooldown speed is applied.
+        return Math.floor(2 * getModifiableStatValue(state, this, this.stats.cooldownSpeed));
+    }
     getCriticalMultipler(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.criticalMultiplier);
     }
@@ -304,13 +312,25 @@ class HeroObject implements Hero {
             this.health = this.getMaxHealth(state);
         }
         this.totalSkillPoints = Math.min(state.maxHeroSkillPoints, this.level);
+        // Prevent autocasting skills too frequently. This also serves as cap for
+        // how often abilities can be cast when cooldown speed gets very high.
+        if (this.autocastCooldown > 0) {
+            this.autocastCooldown -= frameLength;
+        }
 
         // Update ability cooldown and autocast any abilities that make sense.
+        const cooldownDelta = frameLength * this.getCooldownSpeed(state);
+        const maxCharges = this.getMaxAbilityCharges(state);
         for (const ability of this.abilities) {
             if (ability.level > 0 && ability.abilityType === 'activeAbility') {
-                if (ability.cooldown > 0) {
-                    ability.cooldown -= frameLength;
-                } else if (ability.autocast) {
+                if (ability.charges < maxCharges) {
+                    ability.cooldown -= cooldownDelta;
+                    if (ability.cooldown <= 0) {
+                        ability.charges++;
+                        ability.cooldown += ability.definition.getCooldown(state, this, ability) * (ability.charges + 1);
+                    }
+                }
+                if (this.autocastCooldown <= 0 && ability.charges > 0 ) {
                     checkToAutocastAbility(state, this, ability);
                 }
             }
@@ -340,9 +360,7 @@ class HeroObject implements Hero {
             } else {
                 const targetingInfo = this.selectedAbility.definition.getTargetingInfo(state, this, this.selectedAbility);
                 if (moveAllyTowardsTarget(state, this, this.abilityTarget, this.r + (this.abilityTarget.r ?? 0) + targetingInfo.range)) {
-                    const definition = this.selectedAbility.definition;
-                    definition.onActivate(state, this, this.selectedAbility, this.abilityTarget);
-                    this.selectedAbility.cooldown = definition.getCooldown(state, this, this.selectedAbility);
+                    activateHeroAbility(state, this, this.selectedAbility, this.abilityTarget);
                     delete this.selectedAbility;
                     delete this.abilityTarget;
                 }
@@ -569,8 +587,7 @@ function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbi
         }
         // Use the ability on the target if it is in range.
         if (getDistance(hero, object) < hero.r + object.r + targetingInfo.range + (targetingInfo.hitRadius ?? 0)) {
-            ability.definition.onActivate(state, hero, ability, object);
-            ability.cooldown = ability.definition.getCooldown(state, hero, ability);
+            activateHeroAbility(state, hero, ability, object);
             return;
         }
     }

@@ -56,11 +56,54 @@ addItemDefinition({
     extraArmorModifiers: [armor(3)],
 });
 
+
+addItemDefinition({
+    key: 'brokenShell',
+    name: 'Broken Shell',
+    charmStats: {modifiers: [armor(1)]},
+    extraArmorModifiers: [armor(1)],
+});
+addItemDefinition({
+    key: 'carapace',
+    name: 'Carapace',
+    armorStats: {
+        armor: 3,
+    },
+    baseArmorStats: {armor: 2, armorCap: 5, maxDecorations: 2, itemLabel: 'Scalemail'},
+    extraArmorModifiers: [armor(1)],
+});
+
+addItemDefinition({
+    key: 'claw',
+    name: 'Claw',
+    weaponStats: {damage: 4, modifiers: [dex(1)]},
+    baseWeaponStats: {damage: 3, damageCap: 12, maxDecorations: 2, itemLabel: 'Claws'},
+    charmStats: {modifiers: [damage(3)]},
+    extraCharmModifiers: [damage(2)],
+});
+addItemDefinition({
+    key: 'fang',
+    name: 'Fang',
+    weaponStats: {damage: 10, modifiers: [dex(2)]},
+    baseWeaponStats: {damage: 7, damageCap: 30, maxDecorations: 3, itemLabel: 'Fierce Claws'},
+    charmStats: {modifiers: [damage(5)]},
+    extraCharmModifiers: [damage(3)],
+});
 addItemDefinition({
     key: 'snakeFang',
     name: 'Snake Fang',
     // TODO: Reduce damage and add DOT effect.
     weaponStats: {damage: 20, modifiers: [dex(5)]},
+    charmStats: {modifiers: [damage(7)]},
+    extraCharmModifiers: [damage(4)],
+});
+addItemDefinition({
+    key: 'horn',
+    name: 'Horn',
+    weaponStats: {damage: 20, modifiers: [dex(5)]},
+    baseWeaponStats: {damage: 20, damageCap: 50, maxDecorations: 3, itemLabel: 'Horn Spear'},
+    charmStats: {modifiers: [damage(10)]},
+    extraCharmModifiers: [damage(5)],
 });
 
 addItemDefinition({

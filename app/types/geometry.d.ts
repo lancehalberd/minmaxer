@@ -17,3 +17,11 @@ interface Rect extends Point {
 interface Ring extends Circle {
     r2: number
 }
+
+interface Ray {
+    x1: number
+    y1: number
+    x2: number
+    y2: number
+    r: number
+}

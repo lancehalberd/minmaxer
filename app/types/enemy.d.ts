@@ -1,6 +1,9 @@
 
 type EnemyType = 'kobold'| 'koboldCleric'
     | 'snake'| 'cobra'
+    | 'flameElemental' | 'frostElemental' | 'stormElemental'
+    | 'beetleEgg' | 'flyingBeetle'
+    | 'thunderBird'
     | 'mummy'
     | 'medusa';
 
@@ -28,7 +31,7 @@ interface EnemyDefinition<EnemyProps=any> {
     // Indicates the type of enemy
     name: string
     r: number
-    color: string
+    color?: CanvasFill
     getStatsForLevel: (level: number) => EnemyLevelDerivedStats
     aggroRadius: number
     isBoss?: boolean
@@ -86,6 +89,7 @@ interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     // How much essence the enemy grants when defeated.
     essenceWorth: number
     props: EnemyProps
+    animationTime: number
     cleanup: (state: GameState) => void
 }
 

@@ -50,3 +50,14 @@ export function createActiveEnemyAbilityInstance<T extends FieldTarget|undefined
         maxCharges: abilityDefinition.maxCharges ?? 1,
     };
 }
+
+export function activateHeroAbility(state: GameState, hero: Hero, ability: ActiveAbility, target: AbilityTarget) {
+    // TODO: Consume all charges here but make the ability more powerful.
+    ability.charges--;
+    ability.definition.onActivate(state, hero, ability, target);
+    const baseCooldown = ability.definition.getCooldown(state, hero, ability);
+    // Calculate the current cooldown percent and apply it to the next cooldown, if it is positive.
+    const cooldownPercent = ability.cooldown / (baseCooldown * (ability.charges + 2));
+    ability.cooldown = (ability.cooldown >= 0) ? cooldownPercent * baseCooldown * (ability.charges + 1) : baseCooldown;
+    hero.autocastCooldown = 400;
+}

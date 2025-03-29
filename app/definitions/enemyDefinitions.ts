@@ -1,4 +1,4 @@
-import {createAnimation, drawFrame} from 'app/utils/animations';
+import {createAnimation, drawFrame, getFrame} from 'app/utils/animations';
 import {createSummonMinionAbility, groupHeal, petrifyingBarrier, petrifyingGaze, poisonSpit, stunningSlam} from 'app/definitions/enemyAbilities';
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
 import {createActiveEnemyAbilityInstance, prepareToUseEnemyAbilityOnTarget} from 'app/utils/ability';
@@ -34,6 +34,7 @@ const [/*snakeYellowLeftFrame*/, /*snakeYellowDownFrame*/, snakeYellowUpFrame] =
 
 const [stethnoFrame] = createAnimation('gfx/enemies/stethno.png', {w: 96, h: 96, content: {x: 12, y: 7, w: 76, h: 82}}, {cols: 1}).frames;
 
+const baseAggroRadius = 150;
 
 enemyDefinitions.snake = {
     name: 'Snake',
@@ -50,7 +51,7 @@ enemyDefinitions.snake = {
     render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
         renderSimpleEnemy(context, enemy, snakeGreenUpFrame);
     },
-    aggroRadius: 150,
+    aggroRadius: baseAggroRadius,
     getLootPool: standardEnemyLootPool(['scales'], ['largeScales', 'chippedEmerald'], ['snakeFang', 'hardScales', 'emerald'], ['flawlessEmerald']),
 };
 
@@ -69,7 +70,7 @@ enemyDefinitions.cobra = {
     render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
         renderSimpleEnemy(context, enemy, snakeYellowUpFrame);
     },
-    aggroRadius: 150,
+    aggroRadius: baseAggroRadius,
     lootChance: 0.15,
     getLootPool: standardEnemyLootPool(['scales'], ['largeScales', 'chippedEmerald'], ['snakeFang', 'hardScales', 'emerald'], ['flawlessEmerald']),
 };
@@ -79,12 +80,12 @@ enemyDefinitions.kobold = {
     color: 'red',
     r: 9,
     getStatsForLevel: getBasicEnemyStatsForLevel,
-    aggroRadius: 150,
+    aggroRadius: baseAggroRadius,
     getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather', 'chippedRuby'], ['fineLeather', 'ruby'], ['flawlessRuby']),
 };
 
 enemyDefinitions.koboldCleric = {
-    name: 'Kobold',
+    name: 'Kobold Cleric',
     color: 'purple',
     r: 12,
     abilities: [groupHeal],
@@ -98,7 +99,7 @@ enemyDefinitions.koboldCleric = {
     },
     lootChance: 0.15,
     getLootPool: standardEnemyLootPool(['leatherStrap'], ['leather', 'chippedSapphire'], ['fineLeather', 'sapphire'], ['flawlessSapphire']),
-    aggroRadius: 150,
+    aggroRadius: baseAggroRadius,
 };
 
 enemyDefinitions.mummy = {
@@ -184,10 +185,34 @@ const medusa: EnemyDefinition<MedusaProps> = {
         ['emeraldBracelet'],
         ['flawlessEmerald', 'emeraldNecklace'],
     ),
-    aggroRadius: 200,
+    aggroRadius: baseAggroRadius,
     isBoss: true,
     render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
         renderSimpleEnemy(context, enemy, stethnoFrame);
     },
 };
 enemyDefinitions.medusa = medusa;
+
+const flyingBeetleAnimation = createAnimation('gfx/enemies/flyingBeetle.png', {w: 22, h: 18}, {cols: 4});
+enemyDefinitions.flyingBeetle = {
+    name: 'Flying Beetle',
+    r: 12,
+    abilities: [],
+    getStatsForLevel(level: number): EnemyLevelDerivedStats {
+        const baseStats = getBasicEnemyStatsForLevel(level);
+        return {
+            ...baseStats,
+            maxHealth: (baseStats.maxHealth * 0.8) | 0,
+            attacksPerSecond: baseStats.attacksPerSecond * 1.25,
+            damage: baseStats.attacksPerSecond * 0.8,
+            movementSpeed: baseStats.movementSpeed * 1.5,
+        };
+    },
+    lootChance: 0.1,
+    getLootPool: standardEnemyLootPool(['claw', 'brokenShell'], ['fang', 'carapace'], ['horn']),
+    aggroRadius: baseAggroRadius,
+    render(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy): void {
+        const frame = getFrame(flyingBeetleAnimation, enemy.animationTime);
+        renderSimpleEnemy(context, enemy, frame);
+    },
+};

@@ -182,7 +182,7 @@ class CraftingBenchContent implements UIContainer {
                         return item ? item.name : 'None';
                     },
                     onHover(state: GameState) {
-                        const material = state.craftingBench.baseMaterialSlots[i];
+                        const material = state.craftingBench.decorationSlots[i];
                         if (material) {
                             showMaterialToolTip(state, 'decoration', state.craftingBench.equipmentType, material);
                         } else {
@@ -281,7 +281,7 @@ class ItemPreview implements UIContainer {
 const craftingBenchPanelContent = new CraftingBenchContent();
 
 export const craftingBenchPanel = new TabbedPanel({
-    w: 500,
+    w: 550,
     h: 400,
     x: 40,
     y: (canvas.height - 400) / 2,

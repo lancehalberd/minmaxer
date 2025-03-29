@@ -128,6 +128,8 @@ interface ZoneInstance {
     objects: FieldObject[]
     // Where to return heroes to when they leave the zone.
     exit?: ZoneLocation
+    // Where to return heroes to if they return to the overworld.
+    overworldExit?: ZoneLocation
     zoneEnemyCooldowns: Map<EnemyAbilityDefinition, number>
 }
 

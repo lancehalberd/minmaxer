@@ -1,4 +1,5 @@
 import {arcticBlast, inferno, healingWind, summonGolems, createNexusAbility} from 'app/definitions/nexusAbilities';
+import {bossGauntletZones} from 'app/definitions/zones/bossGauntlet';
 import {snakePit} from 'app/definitions/zones/snakePit';
 import {Cave} from 'app/objects/structure';
 import {addBasicHeroes} from 'app/objects/hero';
@@ -27,9 +28,10 @@ const world: World = {
     zoneEnemyCooldowns: new Map(),
 }
 const nexus = createNexus(world);
-const snakePitCave = new Cave({zone: world, zoneDefinition: snakePit, x: -200, y: 0});
+const snakePitCave = new Cave({zone: world, zoneDefinition: snakePit, x: -200, y: 50});
 world.objects.push(nexus);
 world.objects.push(snakePitCave);
+world.objects.push(new Cave({zone: world, zoneDefinition: bossGauntletZones[0], x: 200, y: 50}));
 
 export const state: GameState = {
     nexus,

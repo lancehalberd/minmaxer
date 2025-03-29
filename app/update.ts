@@ -15,6 +15,10 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
+Add open ended jobs that population can be left assigned to:
+    Train archers/healers: improves stats of archer/healer jobs
+    Gives linear improvement to jobs on average, but job size+benefits pre job increase over time so there is more delay between each improvement.
+
 Minigames for improving stats/experience.
 
 Basic Crafting Improvements

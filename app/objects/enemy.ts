@@ -45,6 +45,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         zone,
         x,
         y,
+        animationTime: 0,
         update: updateEnemy,
         afterUpdate: definition.afterUpdate,
         render: renderEnemy,
@@ -117,6 +118,7 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
     if (this.health <= 0) {
         return;
     }
+    this.animationTime += frameLength * getModifiableStatValue(state, this, this.stats.speed);
     // Update any effects being applied to this hero and remove them if their duration elapses.
     for (let i = 0; i < this.effects.length; i++) {
         const effect = this.effects[i];
@@ -141,7 +143,8 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
     if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
         delete this.attackTarget;
     }
-    if (this.isBoss) {
+    // Bosses on the overworld always attack the nexus and don't explicitly target anything else.
+    if (this.isBoss && this.zone === state.nexus.zone) {
         this.attackTarget = state.nexus;
     }
     // Check to choose a new attack target.

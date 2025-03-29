@@ -1,7 +1,7 @@
 import {buttonSize, canvas, uiPadding, tinyButtonSize} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
 import {PlusButton, RepeatToggle} from 'app/ui/iconButton';
-import {fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
+import {fillCircle, fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {activateHeroAbility} from 'app/utils/hero';
 
@@ -38,18 +38,26 @@ class HeroAbilityButton implements UIContainer {
         }
         if (this.ability.abilityType === 'activeAbility'
             && this.ability.level > 0
-            && this.ability.cooldown <= 0
+            && this.ability.charges > 0
             && isMouseOverTarget(state, this)
         ) {
             fillRect(context, this, 'rgba(255,255,255,0.5)');
         }
-        if (this.ability.abilityType === 'activeAbility' && this.ability.cooldown > 0) {
-            const p = 1 - this.ability.cooldown / this.ability.definition.getCooldown(state, this.hero, this.ability);
+        const maxCharges = this.hero.getMaxAbilityCharges(state);
+        if (this.ability.abilityType === 'activeAbility' && this.ability.cooldown > 0 && this.ability.charges < maxCharges) {
+            const totalCooldownTime = this.ability.definition.getCooldown(state, this.hero, this.ability) * (this.ability.charges + 1);
+            const p = 1 - this.ability.cooldown / totalCooldownTime;
             const circle = {x: this.x + this.w / 2 + 3, y : this.y + this.h / 2, r: this.w / 2 - 6}
-            renderCooldownCircle(context, circle, p, 'rgba(255, 0, 0, 0.6)');
+            renderCooldownCircle(context, circle, p, this.ability.charges > 0 ? 'rgba(0, 0, 255, 0.6)' : 'rgba(255, 0, 0, 0.6)');
         }
         context.save();
             context.translate(this.x, this.y);
+            if (this.ability.level > 0 && this.ability.abilityType === 'activeAbility') {
+                const r = 4;
+                for (let i = maxCharges - 1; i >= 0; i--) {
+                    fillCircle(context, {x: pillSize + i * (1.5 * r), y: this.h, r, color: (i < this.ability.charges ? '#0F0' : '#AAA')});
+                }
+            }
             const children = this.getChildren?.(state) ?? [];
             for (const child of children) {
                 child.render(context, state);
@@ -64,7 +72,7 @@ class HeroAbilityButton implements UIContainer {
         if (this.ability.abilityType !== 'activeAbility') {
             return true;
         }
-        if (this.ability.level > 0 && this.ability.cooldown <= 0) {
+        if (this.ability.level > 0 && this.ability.charges > 0) {
             state.hoveredAbility = this.ability;
         }
         return true;
