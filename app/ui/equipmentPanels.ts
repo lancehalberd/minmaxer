@@ -4,9 +4,9 @@ import {showArmorTooltip, showCharmTooltip, showWeaponTooltip} from 'app/ui/tool
 import {addItemToInventory, removeItemFromInventory} from 'app/utils/inventory';
 import {isArmor, isCharm, isWeapon, typedKeys} from 'app/utils/types';
 
-const noArmor: Armor = {name: 'None', armorStats: {armor: 0}};
-const noWeapon: Weapon = {name: 'None', weaponStats: {damage: 0}};
-const noCharm: Charm = {name: 'None', charmStats: {}};
+const noArmor: Armor = {name: 'None', armorStats: {armor: 0}, rarity: 0};
+const noWeapon: Weapon = {name: 'None', weaponStats: {damage: 0}, rarity: 0};
+const noCharm: Charm = {name: 'None', charmStats: {}, rarity: 0};
 
 
 export const chooseArmorPanel = new ChooseItemPanel<Armor>({

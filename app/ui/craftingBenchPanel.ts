@@ -445,7 +445,7 @@ export function createCraftedItem(state: GameState, equipmentType: EquipmentType
 
 export function createCraftedWeapon(state: GameState, baseMaterials: (GenericItem|undefined)[], extraMaterials: (GenericItem|undefined)[]): CraftedWeapon {
     let modifiers: StatModifier[] = [];
-    let weaponName = 'Custom Weapon', namePriority = 0;
+    let weaponName = 'Custom Weapon', namePriority = 0, rarity = 0;
     const weapon: CraftedWeapon = {
         name: weaponName,
         equipmentType: 'weapon',
@@ -455,6 +455,7 @@ export function createCraftedWeapon(state: GameState, baseMaterials: (GenericIte
         // Also allows us to start equipment as recipes on save and recreate the specific stats on load.
         materials: [],
         decorations: [],
+        rarity: 0,
     };
     let damageCap = 0;
     for (const material of baseMaterials) {
@@ -479,6 +480,7 @@ export function createCraftedWeapon(state: GameState, baseMaterials: (GenericIte
         if (material.baseWeaponStats.modifiers) {
             modifiers = [...modifiers, ...material.baseWeaponStats.modifiers];
         }
+        rarity = Math.max(rarity, material.rarity);
     }
     for (const material of extraMaterials) {
         if (!material?.key) {
@@ -490,18 +492,20 @@ export function createCraftedWeapon(state: GameState, baseMaterials: (GenericIte
         }
         weapon.decorations.push(material.key);
         modifiers = [...modifiers, ...material.extraWeaponModifiers];
+        rarity = Math.max(rarity, material.rarity);
     }
     // TODO: make weapon type based on the crafting hero.
     weapon.name = weaponName;
     weapon.weaponStats.damage = Math.min(weapon.weaponStats.damage, damageCap);
     weapon.weaponStats.modifiers = modifiers;
+    weapon.rarity = rarity;
     return weapon;
 }
 
 
 export function createCraftedArmor(state: GameState, baseMaterials: (GenericItem|undefined)[], extraMaterials: (GenericItem|undefined)[]): CraftedArmor {
     let modifiers: StatModifier[] = [];
-    let armorName = 'Custom Armor', namePriority = 0;
+    let armorName = 'Custom Armor', namePriority = 0, rarity = 0;
     const armor: CraftedArmor = {
         name: armorName,
         equipmentType: 'armor',
@@ -511,6 +515,7 @@ export function createCraftedArmor(state: GameState, baseMaterials: (GenericItem
         // Also allows us to start equipment as recipes on save and recreate the specific stats on load.
         materials: [],
         decorations: [],
+        rarity,
     };
     let armorCap = 0;
     for (const material of baseMaterials) {
@@ -535,6 +540,7 @@ export function createCraftedArmor(state: GameState, baseMaterials: (GenericItem
         if (material.baseArmorStats.modifiers) {
             modifiers = [...modifiers, ...material.baseArmorStats.modifiers];
         }
+        rarity = Math.max(rarity, material.rarity);
     }
     for (const material of extraMaterials) {
         if (!material?.key) {
@@ -551,12 +557,13 @@ export function createCraftedArmor(state: GameState, baseMaterials: (GenericItem
     armor.name = armorName;
     armor.armorStats.armor = Math.min(armor.armorStats.armor, armorCap);
     armor.armorStats.modifiers = modifiers;
+    armor.rarity = rarity;
     return armor;
 }
 
 export function createCraftedCharm(state: GameState, baseMaterials: (GenericItem|undefined)[], extraMaterials: (GenericItem|undefined)[]): CraftedCharm {
     let modifiers: StatModifier[] = [];
-    let itemName = 'Custom Charm', namePriority = 0;
+    let itemName = 'Custom Charm', namePriority = 0, rarity = 0;
     const charm: CraftedCharm = {
         name: itemName,
         equipmentType: 'charm',
@@ -566,6 +573,7 @@ export function createCraftedCharm(state: GameState, baseMaterials: (GenericItem
         // Also allows us to start equipment as recipes on save and recreate the specific stats on load.
         materials: [],
         decorations: [],
+        rarity,
     };
     for (const material of baseMaterials) {
         if (!material?.key) {
@@ -585,6 +593,7 @@ export function createCraftedCharm(state: GameState, baseMaterials: (GenericItem
         if (material.baseCharmStats.modifiers) {
             modifiers = [...modifiers, ...material.baseCharmStats.modifiers];
         }
+        rarity = Math.max(rarity, material.rarity);
     }
     for (const material of extraMaterials) {
         if (!material?.key) {
@@ -599,6 +608,7 @@ export function createCraftedCharm(state: GameState, baseMaterials: (GenericItem
     }
     charm.name = itemName;
     charm.charmStats.modifiers = modifiers;
+    charm.rarity = rarity;
     return charm;
 }
 

@@ -1,11 +1,12 @@
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
+import {requireItem} from 'app/definitions/itemDefinitions';
 import {addDamageNumber} from 'app/effects/damageNumber';
 import {addTextEffect} from 'app/effects/textEffect';
 import {createLoot, pickupLoot} from 'app/objects/loot';
 import {frameLength, levelBuffer} from 'app/gameConstants';
 import {gainEssence, loseEssence} from 'app/utils/essence';
 import {doCirclesIntersect} from 'app/utils/geometry'
-import {getItemLabel} from 'app/utils/inventory';
+import {getItemLabel, getRarityColor} from 'app/utils/inventory';
 import {rollLoot} from 'app/utils/lootPool';
 import {removeFieldObject} from 'app/utils/world';
 
@@ -117,7 +118,8 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
             while (lootPool?.length && lootChance > 0) {
                 if (lootChance >= 1 || Math.random() < lootChance) {
                     const itemKey = rollLoot(lootPool);
-                    addTextEffect(state, {target, text: getItemLabel(itemKey), delay});
+                    const item = requireItem(itemKey);
+                    addTextEffect(state, {target, text: getItemLabel(itemKey), color: (state) => getRarityColor(state, item.rarity), delay});
                     state.inventory[itemKey] = (state.inventory[itemKey] ?? 0) + 1;
                     delay += 400;
                 }

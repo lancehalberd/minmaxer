@@ -16,9 +16,8 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
-Add open ended jobs that population can be left assigned to:
-    Train archers/healers: improves stats of archer/healer jobs
-    Gives linear improvement to jobs on average, but job size+benefits pre job increase over time so there is more delay between each improvement.
+Replace healer job with train mages that works similar to train archers.
+    Mages use weaker versions of nexus spells
 
 Add Job Queue
     Free Jobs are automatically included in the job queue (mining/logging/train archers/train healers)
@@ -68,8 +67,6 @@ Make assignments based on total tool power instead of population.
     reserved tool power assumes the worst tools will not be used.
     Assigned population will assume the best tools are being used.
 Add job element improvements.
-Allow equipping a tool to a hero for Nx boost to any jobs using the tool.
-    But while equipped the tool is removed from inventory and cannot be used by the population.
 
 Population jobs:
     Utility structures:

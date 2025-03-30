@@ -257,7 +257,7 @@ export function checkToAddNewSpawner(state: GameState): boolean {
         structure = new Quary({
             zone: state.world,
             jobKey: 'quary-' + level,
-            drops: generateLootPool(['stone'], ['ironOre'], ['bronze', 'iron', 'chippedRuby'], ['gold', 'steel', 'ruby', 'emerald', 'sapphire'], level),
+            drops: generateLootPool(['stone'], ['ironOre', 'chippedRuby'], ['bronze', 'iron', 'ruby', 'emerald', 'sapphire'], ['gold', 'steel'], level),
             stone: level * 1000,
             x,
             y,

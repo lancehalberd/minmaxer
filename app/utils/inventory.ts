@@ -167,3 +167,10 @@ export function removeItemFromInventory(state: GameState, item?: InventoryItem) 
         debugger;
     }
 }
+
+export function getRarityColor(state: GameState, rarity: number): CanvasFill {
+    if (rarity >= 4) {
+        return `hsl(` + (360 * state.time / 500) % 360 + `, 100%, 50%)`;
+    }
+    return ['#CCC', '#FFF', '#00E', '#DD0', '#A80'][rarity];
+}

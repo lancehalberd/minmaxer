@@ -1,5 +1,6 @@
+import {requireItem} from 'app/definitions/itemDefinitions';
 import {addTextEffect} from 'app/effects/textEffect';
-import {getItemLabel} from 'app/utils/inventory';
+import {getItemLabel, getRarityColor} from 'app/utils/inventory'
 
 
 // This is set to 100 so that increases of 1% effect the chance of dropping the item.
@@ -70,7 +71,13 @@ export function gainLoot(state: GameState, itemKey: InventoryKey, target: FieldT
     // If there is existing loot text don't show more unless this is an item the player doesn't have a lot of.
     state.inventory[itemKey] = (state.inventory[itemKey] ?? 0) + 1;
     state.discoveredItems.add(itemKey);
-    if (!existingItemEffect || (state.inventory[itemKey] ?? 0) < 5){
-        addTextEffect(state, {target, text: getItemLabel(itemKey), delay: existingItemEffect ? 400 : 0, creator: 'lootText', duration: 1000});
+    const item = requireItem(itemKey);
+    if (!existingItemEffect || (state.inventory[itemKey] ?? 0) < 5 || item.rarity > 1){
+        addTextEffect(state, {target,
+            text: getItemLabel(itemKey),
+            color: (state) => getRarityColor(state, item.rarity),
+            delay: existingItemEffect ? 400 : 0,
+            creator: 'lootText', duration: 1000
+        });
     }
 }

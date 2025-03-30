@@ -102,6 +102,7 @@ interface GenericItem {
     extraWeaponModifiers?: StatModifier[]
     baseCharmStats?: BaseCharmStats
     extraCharmModifiers?: StatModifier[]
+    rarity: number
     // TODO: Possible include price information here if we allow purchasing materials.
 }
 
@@ -109,16 +110,19 @@ interface Armor {
     key?: InventoryKey
     name: string
     armorStats: ArmorStats
+    rarity: number
 }
 interface Weapon {
     key?: InventoryKey
     name: string
     weaponStats: WeaponStats
+    rarity: number
 }
 interface Charm {
     key?: InventoryKey
     name: string
     charmStats: CharmStats
+    rarity: number
 }
 
 interface CraftableEquipment {
@@ -129,6 +133,7 @@ interface CraftableEquipment {
     // Also allows us to start equipment as recipes on save and recreate the specific stats on load.
     materials: InventoryKey[]
     decorations: InventoryKey[]
+    rarity: number
 }
 
 interface CraftedArmor extends CraftableEquipment {

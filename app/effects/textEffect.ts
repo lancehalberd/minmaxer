@@ -1,11 +1,12 @@
 import {frameLength} from 'app/gameConstants';
+import {computeValue} from 'app/utils/computed';
 import {fillText} from 'app/utils/draw';
 import {removeEffect} from 'app/utils/effect';
 
 interface TextEffectProps {
     target: FieldTarget
     text: string
-    color?: CanvasFill
+    color?: Computed<CanvasFill, undefined>
     delay?: number
     duration?: number
     creator?: any
@@ -50,7 +51,8 @@ class TextEffect implements FieldAnimationEffect {
             x += this.target.x;
             y += this.target.y;
         }
-        fillText(context, {text: this.text, size, x, y, color: this.color});
+        const color = computeValue(state, undefined, this.color, '#FFF');
+        fillText(context, {text: this.text, size, x, y, color});
     }
     
 }
