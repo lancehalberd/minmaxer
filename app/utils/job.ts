@@ -58,7 +58,8 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
         return false;
     }
     job.workerSecondsCompleted += workerSeconds;
-    while (job.workerSecondsCompleted >= computeValue(state, job.definition, job.definition.workerSeconds, 0)) {
+    let workerSecondsToCompletJob = computeValue(state, job.definition, job.definition.workerSeconds, 0);
+    while (job.workerSecondsCompleted >= workerSecondsToCompletJob) {
     // while (job.workerSecondsCompleted >= job.definition.workerSeconds) { // This line did not correctly give a TS error on old versions of TS.
         if (job.definition.onComplete) {
             job.definition.onComplete(state, job);
@@ -70,7 +71,7 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
             break;
         }
         if (job.shouldRepeatJob) {
-            job.workerSecondsCompleted -= computeValue(state, job.definition, job.definition.workerSeconds, 0);
+            job.workerSecondsCompleted -= workerSecondsToCompletJob;
             if (!payForJob(state, job)) {
                 // Cancel repeated jobs the player cannot afford.
                 // TODO: Consider freezing the job at zero progress instead.
@@ -86,6 +87,7 @@ export function progressJob(state: GameState, job: Job, workerSeconds: number): 
             job.workerSecondsCompleted = 0;
             break;
         }
+        workerSecondsToCompletJob = computeValue(state, job.definition, job.definition.workerSeconds, 0);
     }
     return true;
 }

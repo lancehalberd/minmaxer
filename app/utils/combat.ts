@@ -22,6 +22,10 @@ export function applyDamageOverTime(state: GameState, target: AttackTarget, dama
     let damage = damagePerSecond * frameLength / 1000;
     if (target.objectType === 'hero') {
         damage *= target.getIncomingDamageMultiplier(state);
+        const armorClass = target.getArmorClass(state);
+        const maxDamageReduction = target.getMaxDamageReduction(state);
+        const actualDamageReduction = Math.min(maxDamageReduction, armorClass / damagePerSecond);
+        damage *= (1 - actualDamageReduction);
     }
     target.health = Math.max(0, target.health - damage);
     checkIfTargetIsDefeated(state, target, source);

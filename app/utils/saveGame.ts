@@ -1,3 +1,4 @@
+import {archerJobDefinition, gainArcherLevel} from 'app/city/archers';
 import {gainWallLevel} from 'app/city/cityWall';
 import {requireItem} from 'app/definitions/itemDefinitions';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
@@ -5,6 +6,7 @@ import {getNewGameState} from 'app/state';
 import {clearCraftingBench, createCraftedItem} from 'app/ui/craftingBenchPanel';
 import {updateWaveScale} from 'app/ui/waveComponent';
 import {gainEssence} from 'app/utils/essence';
+import {getOrCreateJob} from 'app/utils/job';
 import {isWeapon, isArmor, isCharm, isCraftedWeapon, isCraftedArmor, isCraftedCharm, typedKeys} from 'app/utils/types';
 
 // TDDO
@@ -49,12 +51,16 @@ interface SavedCityData {
     population: number
     wallLevel: number
     wallHealth: number
+    archerLevel: number
+    archerJobProgress: number
 }
 function exportSavedCityData(state: GameState): SavedCityData {
     const cityData: SavedCityData = {
         population: state.city.population,
         wallLevel: state.city.wall.level,
         wallHealth: state.city.wall.health,
+        archerLevel: state.city.archers.level,
+        archerJobProgress: getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted,
     };
     return cityData;
 }
@@ -68,6 +74,10 @@ function applySavedCityDataToState(state: GameState, cityData: SavedCityData) {
         gainWallLevel(state);
     }
     state.city.wall.health = Math.min(state.city.wall.maxHealth, cityData.wallHealth);
+    for (let i = 0; i < cityData.archerLevel; i++) {
+        gainArcherLevel(state);
+    }
+    getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted = cityData.archerJobProgress ?? 0;
 }
 
 type SavedEquipment = SavedCraftedItem|InventoryKey|undefined

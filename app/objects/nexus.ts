@@ -1,4 +1,4 @@
-import {archerJobElement} from 'app/city/archers';
+import {archerJobElement, updateArchers} from 'app/city/archers';
 import {healerJobElement} from 'app/city/healer';
 import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
 import {CraftingBench} from 'app/objects/structure';
@@ -80,6 +80,8 @@ export function createNexus(zone: ZoneInstance): Nexus {
 
             // Since this is gained every frame we don't want to animate this change.
             gainEssence(state, this.essenceGrowth * frameLength / 1000, false);
+
+            updateArchers(state);
         },
         onHeroInteraction(state: GameState, hero: Hero) {
             if (hero.assignedJob) {

@@ -108,7 +108,10 @@ export function computeJobMultiplier(state: GameState, workerCount: number, tool
 }
 window.computeJobMultiplier = computeJobMultiplier;
 
-export function getJobMultiplierFromTools(state: GameState, workerCount: number, toolType: ToolType): number {
+export function getJobMultiplierFromTools(state: GameState, workerCount: number, toolType?: ToolType): number {
+    if (!toolType) {
+        return workerCount;
+    }
     if (toolType === 'axe') {
         return computeJobMultiplier(state, workerCount, axeTypes);
     }

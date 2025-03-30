@@ -61,6 +61,12 @@ export function getNewGameState(): GameState {
                 health: 0,
                 returnDamage: 0,
             },
+            archers: {
+                level: 0,
+                damage: 0,
+                attacksPerSecond: 0,
+                range: 0,
+            },
         },
         inventory: {},
         craftedWeapons: [],

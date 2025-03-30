@@ -65,9 +65,17 @@ interface CityStats {
         [key in JobKey]: Job
     }
     wall: CityWallStats
+    archers: CityArcherStats
+}
+
+interface CityArcherStats {
+    level: number
+    damage: number
+    attacksPerSecond: number
+    range: number
     // Number of people assigned as archers.
-    archersTarget?: EnemyTarget
-    archersLastAttackTime?: number
+    target?: EnemyTarget
+    lastAttackTime?: number
 }
 
 interface CityWallStats {
