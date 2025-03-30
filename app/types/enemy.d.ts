@@ -196,6 +196,7 @@ interface WaveSpawner extends Circle, ZoneLocation {
     essenceWorth: number
     startNewWave: (state: GameState, schedule: WaveSpawnerSchedule) => void
     render: (context: CanvasRenderingContext2D, state: GameState) => void
+    checkToRemove: (state: GameState, skipEssenceGain: boolean) => boolean
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
 }

@@ -7,6 +7,7 @@ type HeroSkillType = 'logging' | 'mining' | 'building' | 'crafting';
 interface HeroDefinition {
     // Name of the hero.
     name: string
+    heroType: HeroType
     coreState: CoreStat
     // Level that the hero starts at.
     startingLevel: number
@@ -233,9 +234,10 @@ interface AttackHit {
     onHit?: (state: GameState, target: AttackTarget) => void
 }
 
-
+type NexusAbilityKey = 'heal'|'flame'|'frost'|'summon'
 interface NexusAbilityDefinition<T extends AbilityTarget|undefined> {
     abilityType: 'activeNexusAbility'
+    abilityKey: NexusAbilityKey
     name: string
     canActivate?: (state: GameState, ability: NexusAbility<T>) => boolean
     getTargetingInfo: (state: GameState, ability: NexusAbility<T>) => AbilityTargetingInfo

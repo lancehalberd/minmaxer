@@ -176,6 +176,20 @@ class EnemyWaveSpawner implements WaveSpawner {
             renderCooldownCircle(context, {x: this.x, y: this.y, r: this.r / 2}, p, color);
         }
     }
+    checkToRemove(state: GameState, skipEssenceGain = false) {
+        if (!this.isFinalWave || this.spawnedEnemies.length || this.scheduledSpawns.length) {
+            return false;
+        }
+        if (this.structure) {
+            state.world.objects.push(this.structure);
+            this.structure.onDiscover?.(state);
+        }
+        if (!skipEssenceGain) {
+           gainEssence(state, this.essenceWorth);
+        }
+        removeFieldObject(state, this);
+        return true;
+    }
     update(state: GameState) {
         // Remove any dead enemies from the array of spawned enemies this spawner is tracking.
         this.spawnedEnemies = this.spawnedEnemies.filter(enemy => enemy.health > 0);
@@ -186,13 +200,7 @@ class EnemyWaveSpawner implements WaveSpawner {
         }
 
         // Remove this spawner when all enemies from it are defeated (replace with contained structure if necessary).
-        if (this.isFinalWave && !this.spawnedEnemies.length && !this.scheduledSpawns.length) {
-            if (this.structure) {
-                state.world.objects.push(this.structure);
-                this.structure.onDiscover?.(state);
-            }
-            gainEssence(state, this.essenceWorth);
-            removeFieldObject(state, this);
+        if (this.checkToRemove(state)) {
             return;
         }
         // Spawn any scheduled enemies.
@@ -226,7 +234,7 @@ class EnemyWaveSpawner implements WaveSpawner {
 const easyEnemyTypes: EnemyType[] = ['snake', 'kobold', 'flyingBeetle'];
 const advancedEnemyTypes: EnemyType[] = ['cobra', 'koboldArcher', 'koboldCleric'];
 const bossEnemyTypes: EnemyType[] = ['medusa', 'mummy'];
-export function checkToAddNewSpawner(state: GameState) {
+export function checkToAddNewSpawner(state: GameState): boolean {
     // Check how many spawners are left so we can create new spawners early if all existing spawners are defeated.
     const numSpawners = state.world.objects.filter(o => o.objectType === 'waveSpawner').length;
 
@@ -235,86 +243,110 @@ export function checkToAddNewSpawner(state: GameState) {
     // Compute the bottom of the last defined wave stone visually and add additional waves if it is not below the bottom
     // edge of the screen.
     const lastWaveBottom = (lastWave.actualStartTime - state.world.time + lastWave.duration) / 1000 / state.waveScale;
-    if (numSpawners === 0 || lastWaveBottom < canvas.height) {
-        const level = state.world.nextSpawnerLevel;
-        // This is slightly more than level * Math.PI / 4 so that the generated spawners mostly won't line up exactly.
-        const theta = 21 * Math.PI * level / 80;
-        const spawnRadius = 300 + 20 * level;
-        const x = state.nexus.x + spawnRadius * Math.cos(theta);
-        const y = state.nexus.y - spawnRadius * Math.sin(theta);
-        let structure: Structure, bossEnemyType: EnemyType = 'mummy';
-        if (level % 3 === 0) {
-            structure = new Quary({
-                zone: state.world,
-                jobKey: 'quary-' + level,
-                drops: generateLootPool(['stone'], ['ironOre'], ['bronze', 'iron', 'chippedRuby'], ['gold', 'steel', 'ruby', 'emerald', 'sapphire'], level),
-                stone: level * 1000,
-                x,
-                y,
-            });
-            bossEnemyType = bossEnemyTypes[(Math.random() * bossEnemyTypes.length) | 0];
-        } else if (level % 3 === 1) {
-            structure = new Forest({
-                zone: state.world,
-                jobKey: 'forest-' + level,
-                drops: forestLootPool(level),
-                wood: 5 * level * 1000,
-                x,
-                y,
-            });
-            bossEnemyType = 'medusa';
-        } else {
-            structure = new Village({zone: state.world, population: 5, x, y});
-            bossEnemyType = 'mummy';
-        }
-        const newSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 500 * level, structure});
-        state.world.objects.push(newSpawner);
-        state.world.nextSpawnerLevel++;
-        const easyEnemyType = easyEnemyTypes[(Math.random() * easyEnemyTypes.length) | 0];
-        const easyEnemy: SpacedSpawnProps = {type: easyEnemyType, level: Math.floor(3 + level / 2), count: 3};
-        const advancedEnemyType = advancedEnemyTypes[(Math.random() * advancedEnemyTypes.length) | 0];
-        const advancedEnemy: SpacedSpawnProps = {type: advancedEnemyType, level: Math.floor(5 + level / 2), count: 3};
-        const bossEnemy: SpacedSpawnProps = {type: bossEnemyType, level: Math.floor(2 + level), count: 3, offset: 15 + level};
-        processWaveDefinitions(state, [
-            {
-                duration: 60 + level * 5,
-                spawners: [
-                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(3 + level / 3)})},
-                ],
-            },
-            {
-                duration: 60 + level * 5,
-                spawners: [
-                    {spawner: newSpawner, spawns: spacedSpawns({...easyEnemy, count: Math.floor(5 + level)})},
-                ],
-            },
-            {
-                duration: 60 + level * 5,
-                spawners: [{spawner: newSpawner, spawns: [
-                        ...spacedSpawns({...easyEnemy, count: Math.floor(5 + level)}),
-                        ...spacedSpawns({...advancedEnemy, count: Math.floor(1 + level / 3)}),
-                    ],
-                }],
-            },
-            {
-                duration: 60 + level * 5,
-                spawners: [{spawner: newSpawner, spawns: [
-                        ...spacedSpawns({...easyEnemy, count: Math.floor(5 + level)}),
-                        ...spacedSpawns({...advancedEnemy, count: Math.floor(1 + 2 * level / 3)}),
-                    ],
-                }],
-            },
-            {
-                duration: 60 + level * 5,
-                spawners: [{spawner: newSpawner, isFinalWave: true, spawns: [
-                        ...spacedSpawns({...easyEnemy, count: Math.floor(8 + level)}),
-                        ...spacedSpawns({...advancedEnemy, count: Math.floor(3 + 2 * level / 3)}),
-                        ...spacedSpawns({...bossEnemy, count: 1}),
-                    ],
-                }],
-            },
-        ])
+    if (state.waves.length > state.nextWaveIndex + 1 && numSpawners > 0 && lastWaveBottom >= canvas.height) {
+        return false;
     }
+    const level = state.world.nextSpawnerLevel;
+    // This is slightly more than level * Math.PI / 4 so that the generated spawners mostly won't line up exactly.
+    const theta = 21 * Math.PI * level / 80;
+    const spawnRadius = 300 + 20 * level;
+    const x = state.nexus.x + spawnRadius * Math.cos(theta);
+    const y = state.nexus.y - spawnRadius * Math.sin(theta);
+    let structure: Structure, bossEnemyType: EnemyType = 'mummy';
+    if (level % 3 === 0) {
+        structure = new Quary({
+            zone: state.world,
+            jobKey: 'quary-' + level,
+            drops: generateLootPool(['stone'], ['ironOre'], ['bronze', 'iron', 'chippedRuby'], ['gold', 'steel', 'ruby', 'emerald', 'sapphire'], level),
+            stone: level * 1000,
+            x,
+            y,
+        });
+        bossEnemyType = bossEnemyTypes[(Math.random() * bossEnemyTypes.length) | 0];
+    } else if (level % 3 === 1) {
+        structure = new Forest({
+            zone: state.world,
+            jobKey: 'forest-' + level,
+            drops: forestLootPool(level),
+            wood: 5 * level * 1000,
+            x,
+            y,
+        });
+        bossEnemyType = 'medusa';
+    } else {
+        structure = new Village({zone: state.world, population: 5, x, y});
+        bossEnemyType = 'mummy';
+    }
+    const newSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 500 * level, structure});
+    state.world.objects.push(newSpawner);
+    state.world.nextSpawnerLevel++;
+    const easyEnemyType = easyEnemyTypes[(Math.random() * easyEnemyTypes.length) | 0];
+    const easyEnemy: SpacedSpawnProps = {type: easyEnemyType, level: Math.floor(3 + level), count: 3};
+    const advancedEnemyType = advancedEnemyTypes[(Math.random() * advancedEnemyTypes.length) | 0];
+    const advancedEnemy: SpacedSpawnProps = {type: advancedEnemyType, level: Math.floor(4 + level), count: 3};
+    //const bossEnemy: SpacedSpawnProps = {type: bossEnemyType, level: Math.floor(9 + level), count: 3, offset: 15 + level};
+    const duration = 80 + level * 5;
+    const spawnDuration = duration / 5;
+    processWaveDefinitions(state, [
+        {
+            duration,
+            spawners: [
+                {spawner: newSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...easyEnemy, count: Math.floor(10 + level / 3)},
+                    ], duration: spawnDuration,
+                })},
+            ],
+        },
+        {
+            duration,
+            spawners: [
+                {spawner: newSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...easyEnemy, count: Math.floor(10 + level / 3)},
+                        {...advancedEnemy, count: Math.floor(5 + level / 3)},
+                    ], duration: spawnDuration,
+                })},
+            ],
+        },
+        {
+            duration,
+            spawners: [
+                {spawner: newSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...easyEnemy, count: Math.floor(10 + level)},
+                        {...advancedEnemy, count: Math.floor(5 + level / 2)},
+                    ], duration: spawnDuration,
+                })},
+            ],
+        },
+        {
+            duration,
+            spawners: [
+                {spawner: newSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...easyEnemy, count: Math.floor(10 + level)},
+                        {...advancedEnemy, count: Math.floor(5 + 2 * level / 3)},
+                    ], duration: spawnDuration,
+                })},
+            ],
+        },
+        {
+            duration: duration + 20,
+            spawners: [
+                {spawner: newSpawner, isFinalWave: true, spawns: [
+                    ...spreadSpawns({
+                        spawnTypes: [
+                            {...easyEnemy, count: Math.floor(10 + 2 * level)},
+                            {...advancedEnemy, count: Math.floor(5 + level)},
+                        ], duration: spawnDuration,
+                    }),
+                    {enemyType: bossEnemyType, level: Math.floor(5 + level), spawnTime: spawnDuration}
+                ]},
+            ],
+        },
+    ]);
+    return true;
 }
 
 interface SpacedSpawnProps {
@@ -336,6 +368,34 @@ function spacedSpawns({type, level, count, amount = 1, spacing = 1, offset = 1}:
                 level,
                 spawnTime: offset + spacing * i
             });
+        }
+    }
+    return spawns;
+}
+interface SreadSpawnProps {
+    spawnTypes: {
+        type: EnemyType
+        level: number
+        // number of times to spawn
+        count: number
+        // number of enemies to spawn at once.
+        amount?: number
+    }[]
+    duration?: number
+    offset?: number
+}
+function spreadSpawns({spawnTypes, duration = 20, offset = 1}: SreadSpawnProps): ScheduledSpawn[] {
+    const spawns: ScheduledSpawn[] = [];
+    for (const spawnType of spawnTypes) {
+        const {type, level, count, amount = 1} = spawnType
+        for (let i = 0; i < count; i++) {
+            for (let j = 0; j < amount; j++) {
+                spawns.push({
+                    enemyType: type,
+                    level,
+                    spawnTime: offset + (i + 1) * duration / (count + 1),
+                });
+            }
         }
     }
     return spawns;
@@ -465,11 +525,13 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...snake, count: 4, amount: 2, spacing: 2}),
                     ...spacedSpawns({...cobra, count: 3})
                 ]},
-                {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 2}),
-                    ...spacedSpawns({...koboldArcher, count: 2}),
-                    ...spacedSpawns({...koboldCleric, count: 1}),
-                ]},
+                {spawner: koboldSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...kobold, count: 2},
+                        {...koboldArcher, count: 2},
+                        koboldCleric
+                    ], duration: 15,
+                })},
             ],
         },
         {
@@ -479,11 +541,13 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...snake, count: 4, amount: 2, spacing: 2}),
                     ...spacedSpawns({...cobra, count: 3})
                 ]},
-                {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 2}),
-                    ...spacedSpawns({...koboldArcher, count: 2}),
-                    ...spacedSpawns({...koboldCleric, count: 2}),
-                ]},
+                {spawner: koboldSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...kobold, count: 2},
+                        {...koboldArcher, count: 2},
+                        {...koboldCleric, count: 2},
+                    ], duration: 15,
+                })},
             ],
         },
         {
@@ -494,40 +558,49 @@ export function initializeSpawners(state: GameState) {
                     ...spacedSpawns({...cobra, count: 3}),
                     ...spacedSpawns({type: 'medusa', level: 1, count: 1, offset: 15}),
                 ]},
-                {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 2}),
-                    ...spacedSpawns({...koboldArcher, count: 2}),
-                    ...spacedSpawns({...koboldCleric, count: 2}),
-                ]},
+                {spawner: koboldSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...kobold, count: 2},
+                        {...koboldArcher, count: 2},
+                        {...koboldCleric, count: 2},
+                    ], duration: 15,
+                })},
             ],
         },
         {
             duration: 45,
             spawners: [
-                {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 4}),
-                    ...spacedSpawns({...koboldArcher, count: 4}),
-                    ...spacedSpawns({...koboldCleric, count: 3}),
-                ]},
+                {spawner: koboldSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...kobold, count: 4},
+                        {...koboldArcher, count: 4},
+                        {...koboldCleric, count: 3},
+                    ], duration: 20,
+                })},
             ],
         },
         {
             duration: 45,
             spawners: [
-                {spawner: koboldSpawner, spawns: [
-                    ...spacedSpawns({...kobold, count: 5}),
-                    ...spacedSpawns({...koboldArcher, count: 5}),
-                    ...spacedSpawns({...koboldCleric, count: 3}),
-                ]},
+                {spawner: koboldSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...kobold, count: 5},
+                        {...koboldArcher, count: 5},
+                        {...koboldCleric, count: 3},
+                    ], duration: 20,
+                })},
             ],
         },
         {
             duration: 90,
             spawners: [
-                {spawner: koboldSpawner, isFinalWave: true, spawns: [
-                    ...spacedSpawns({...kobold, count: 5}),
-                    ...spacedSpawns({...koboldArcher, count: 5}),
-                    ...spacedSpawns({...koboldCleric, count: 3}),
+                {spawner: koboldSpawner, isFinalWave: true,spawns: [...spreadSpawns({
+                        spawnTypes: [
+                            {...kobold, count: 4},
+                            {...koboldArcher, count: 4},
+                            {...koboldCleric, count: 3},
+                        ], duration: 20,
+                    }),
                     {enemyType: 'koboldCleric', level: 9, spawnTime: 25},
                     {enemyType: 'kobold', level: 9, spawnTime: 25},
                     {enemyType: 'koboldArcher', level: 9, spawnTime: 25},
@@ -537,37 +610,43 @@ export function initializeSpawners(state: GameState) {
         {
             duration: 60,
             spawners: [
-                {spawner: mummySpawner, spawns: [
-                    ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
-                    ...spacedSpawns({...cobra, count: 2, spacing: 3}),
-                    ...spacedSpawns({...kobold, count: 5, spacing: 3}),
-                    ...spacedSpawns({...koboldArcher, count: 5, spacing: 3}),
-                    ...spacedSpawns({...koboldCleric, count: 1}),
-                ]},
+                {spawner: mummySpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...snake, count: 5, amount: 2},
+                        {...cobra, count: 2},
+                        {...kobold, count: 5},
+                        {...koboldArcher, count: 5},
+                        {...koboldCleric, count: 2},
+                    ], duration: 30,
+                })},
             ],
         },
         {
             duration: 60,
             spawners: [
-                {spawner: mummySpawner, spawns: [
-                    ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
-                    ...spacedSpawns({...cobra, count: 4, spacing: 3}),
-                    ...spacedSpawns({...kobold, count: 5, spacing: 3}),
-                    ...spacedSpawns({...koboldArcher, count: 5, spacing: 3}),
-                    ...spacedSpawns({...koboldCleric, count: 2}),
-                ]},
+                {spawner: mummySpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...snake, count: 5, amount: 2},
+                        {...cobra, count: 3},
+                        {...kobold, count: 5},
+                        {...koboldArcher, count: 5},
+                        {...koboldCleric, count: 2},
+                    ], duration: 30,
+                })},
             ],
         },
         {
             duration: 60,
             spawners: [
-                {spawner: mummySpawner, spawns: [
-                    ...spacedSpawns({...snake, count: 5, amount: 2, spacing: 3}),
-                    ...spacedSpawns({...cobra, count: 6, spacing: 3}),
-                    ...spacedSpawns({...kobold, count: 5, spacing: 3}),
-                    ...spacedSpawns({...koboldArcher, count: 5, spacing: 3}),
-                    ...spacedSpawns({...koboldCleric, count: 3}),
-                ]},
+                {spawner: mummySpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...snake, count: 5, amount: 2},
+                        {...cobra, count: 4},
+                        {...kobold, count: 5},
+                        {...koboldArcher, count: 5},
+                        {...koboldCleric, count: 3},
+                    ], duration: 30,
+                })},
             ],
         },
         {

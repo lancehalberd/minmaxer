@@ -7,15 +7,19 @@ import {millisecondsToTime} from 'app/utils/time';
 const skullFrame = requireFrame('gfx/militaryIcons.png', {x: 120, y: 23, w: 14, h: 16});
 
 // This UI value updates independent of the world time.
-function updateWaveScale(state: GameState) {
+export function updateWaveScale(state: GameState, instant = false) {
     // We should zoom out on the wave HUD until we can see at least the next two wave stones.
     const waveToDisplay = state.waves[Math.min(state.waves.length - 1, state.nextWaveIndex + 1)];
     if (!waveToDisplay) {
         return;
     }
-    const endYValue = (waveToDisplay.actualStartTime + waveToDisplay.duration - state.world.time) / 1000 / state.waveScale;
-    if (endYValue > canvas.height && waveToDisplay.duration / 1000 / state.waveScale > 80) {
+    let endYValue = (waveToDisplay.actualStartTime + waveToDisplay.duration - state.world.time) / 1000 / state.waveScale;
+    while (endYValue > canvas.height && waveToDisplay.duration / 1000 / state.waveScale > 80) {
         state.waveScale *= 1.01;
+        if (!instant) {
+            return;
+        }
+        endYValue = (waveToDisplay.actualStartTime + waveToDisplay.duration - state.world.time) / 1000 / state.waveScale;
     }
 }
 

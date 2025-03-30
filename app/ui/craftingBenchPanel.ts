@@ -25,6 +25,23 @@ export function toggleCraftingBenchPanel(state: GameState, open = !state.openCra
     }
 }
 
+export function clearCraftingBench(state: GameState) {
+    delete state.craftingBench.previewItem;
+    // Return all selected items to the inventory since they may not
+    // work for the new equipment type.
+    for (let i = 0; i < state.craftingBench.baseMaterialSlots.length; i++) {
+        if (state.craftingBench.baseMaterialSlots[i]) {
+            addItemToInventory(state, state.craftingBench.baseMaterialSlots[i]);
+            state.craftingBench.baseMaterialSlots[i] = undefined;
+        }
+    }
+    for (let i = 0; i < state.craftingBench.decorationSlots.length; i++) {
+        if (state.craftingBench.decorationSlots[i]) {
+            addItemToInventory(state, state.craftingBench.decorationSlots[i]);
+            state.craftingBench.decorationSlots[i] = undefined;
+        }
+    }
+}
 
 interface RemoveItemButtonProps {
     slotType: CraftingSlotType
@@ -311,21 +328,7 @@ export const craftingBenchPanel = new TabbedPanel({
         }
         hideChooseMaterialPanel(state);
         state.craftingBench.equipmentType = newEquipmentType
-        delete state.craftingBench.previewItem;
-        // Return all selected items to the inventory since they may not
-        // work for the new equipment type.
-        for (let i = 0; i < state.craftingBench.baseMaterialSlots.length; i++) {
-            if (state.craftingBench.baseMaterialSlots[i]) {
-                addItemToInventory(state, state.craftingBench.baseMaterialSlots[i]);
-                state.craftingBench.baseMaterialSlots[i] = undefined;
-            }
-        }
-        for (let i = 0; i < state.craftingBench.decorationSlots.length; i++) {
-            if (state.craftingBench.decorationSlots[i]) {
-                addItemToInventory(state, state.craftingBench.decorationSlots[i]);
-                state.craftingBench.decorationSlots[i] = undefined;
-            }
-        }
+        clearCraftingBench(state);
     },
     /*title: (state) => {
         if (state.craftingBench.equipmentType === 'weapon') {
@@ -445,6 +448,7 @@ export function createCraftedWeapon(state: GameState, baseMaterials: (GenericIte
     let weaponName = 'Custom Weapon', namePriority = 0;
     const weapon: CraftedWeapon = {
         name: weaponName,
+        equipmentType: 'weapon',
         weaponStats: {damage: 0},
         // If this equipment was crafted, there recipe is stored here.
         // This could be displayed to the user if they want to know how equipment was made.
@@ -500,6 +504,7 @@ export function createCraftedArmor(state: GameState, baseMaterials: (GenericItem
     let armorName = 'Custom Armor', namePriority = 0;
     const armor: CraftedArmor = {
         name: armorName,
+        equipmentType: 'armor',
         armorStats: {armor: 0},
         // If this equipment was crafted, there recipe is stored here.
         // This could be displayed to the user if they want to know how equipment was made.
@@ -554,6 +559,7 @@ export function createCraftedCharm(state: GameState, baseMaterials: (GenericItem
     let itemName = 'Custom Charm', namePriority = 0;
     const charm: CraftedCharm = {
         name: itemName,
+        equipmentType: 'charm',
         charmStats: {},
         // If this equipment was crafted, there recipe is stored here.
         // This could be displayed to the user if they want to know how equipment was made.

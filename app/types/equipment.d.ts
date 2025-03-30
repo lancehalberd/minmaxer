@@ -123,6 +123,7 @@ interface Charm {
 
 interface CraftableEquipment {
     name: string
+    equipmentType: EquipmentType
     // If this equipment was crafted, there recipe is stored here.
     // This could be displayed to the user if they want to know how equipment was made.
     // Also allows us to start equipment as recipes on save and recreate the specific stats on load.
@@ -133,16 +134,19 @@ interface CraftableEquipment {
 interface CraftedArmor extends CraftableEquipment {
     // This will be set on armor that corresponds to a generic item.
     key?: InventoryKey
+    equipmentType: 'armor'
     armorStats: ArmorStats
 }
 interface CraftedWeapon extends CraftableEquipment {
     // This will be set on weapons that corresponds to a generic item.
     key?: InventoryKey
+    equipmentType: 'weapon'
     weaponStats: WeaponStats
 }
 interface CraftedCharm extends CraftableEquipment {
     // This will be set on charms that corresponds to a generic item.
     key?: InventoryKey
+    equipmentType: 'charm'
     charmStats: CharmStats
 }
 type CraftedItem = CraftedArmor|CraftedWeapon|CraftedCharm;

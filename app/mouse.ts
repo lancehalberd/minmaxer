@@ -147,7 +147,7 @@ export function updateMouseActions(state: GameState) {
     state.mouse.currentPosition = lastMousePosition;
     state.mouse.isOverCanvas = isMouseOverCanvas;
     // Trigger a click any time lastMouseUpPosition has been set since the last time we updated.
-    if (lastMouseUpPosition) {
+    if (lastMouseUpPosition && !state.mouse.pressHandled) {
         // If state.mouse.mouseDownPosition was set assume the click started at this position.
         // We definitely want to use this value if the user has released the mouse and pressed
         // again since the last update, in which the new press should have no bearing on the
@@ -170,57 +170,7 @@ export function updateMouseActions(state: GameState) {
         if (previousMouseDownPosition !== state.mouse.mouseDownPosition) {
             const target = getTargetAtScreenPoint(state, state.mouse.mouseDownPosition);
             state.mouse.mouseDownTarget = target;
-            // Trigger the effect of a button.
-            if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
-                target.onPress?.(state);
-            } else if (state.selectedAbility?.abilityType === 'activeNexusAbility') {
-                const definition = state.selectedAbility.definition;
-                const targetingInfo = definition.getTargetingInfo(state, state.selectedAbility);
-                if (isAbilityMouseTargetValid(state, targetingInfo)) {
-                    definition.onActivate(state, state.selectedAbility, target);
-                    state.selectedAbility.cooldown = definition.getCooldown(state, state.selectedAbility);
-                    delete state.selectedAbility;
-                    state.mouse.pressHandled = true;
-                }
-            } else if (state.selectedHero) {
-                if (state.selectedAbility) {
-                    if (state.selectedAbility.abilityType === 'activeAbility') {
-                        const definition = state.selectedAbility.definition;
-                        const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
-                        if (isAbilityMouseTargetValid(state, targetingInfo)) {
-                            if (targetingInfo.moveToTarget) {
-                                // Assign the ability action to the hero if they should move until the
-                                // target is in range.
-                                state.selectedHero.abilityTarget = target
-                                state.selectedHero.selectedAbility = state.selectedAbility;
-                            } else {
-                                // Activate the ability immediately if the hero should just use it where they are
-                                // standing.
-                                activateHeroAbility(state, state.selectedHero, state.selectedAbility, target);
-                            }
-                            delete state.selectedAbility;
-                            state.mouse.pressHandled = true;
-                        }
-                    }
-                } else if (target?.objectType === 'enemy' || target?.objectType === 'spawner') {
-                    // Default action is to make the enemy an attack target.
-                    // Make the selected hero attack an enemy target.
-                    state.selectedHero.attackTarget = target;
-                    state.selectedHero.selectedAttackTarget = target;
-                    delete state.selectedHero.movementTarget;
-                    delete state.selectedHero.assignedJob;
-                } else if (target?.objectType === 'loot') {
-                    delete state.selectedHero.attackTarget;
-                    delete state.selectedHero.selectedAttackTarget;
-                    delete state.selectedHero.assignedJob;
-                    state.selectedHero.movementTarget = target;
-                } else if (target?.objectType === 'structure' || target?.objectType === 'nexus') {
-                    delete state.selectedHero.attackTarget;
-                    delete state.selectedHero.selectedAttackTarget;
-                    delete state.selectedHero.assignedJob;
-                    state.selectedHero.movementTarget = target;
-                }
-            }
+            checkToHandleMousePress(state);
         }
     } else {
         delete state.mouse.mouseDownPosition;
@@ -242,6 +192,67 @@ export function updateMouseActions(state: GameState) {
         state.mouse.mouseHoverTarget = target;
         if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
             target.onHover?.(state);
+        }
+    }
+}
+
+function checkToHandleMousePress(state: GameState) {
+    const target = state.mouse.mouseDownTarget;
+    if (state.mouse.pressHandled || !target) {
+        return;
+    }
+    // Trigger the effect of a button.
+    if (target?.objectType === 'uiButton' || target?.objectType === 'uiContainer') {
+        state.mouse.pressHandled = target.onPress?.(state);
+    } else if (state.selectedAbility?.abilityType === 'activeNexusAbility') {
+        const definition = state.selectedAbility.definition;
+        const targetingInfo = definition.getTargetingInfo(state, state.selectedAbility);
+        if (isAbilityMouseTargetValid(state, targetingInfo)) {
+            definition.onActivate(state, state.selectedAbility, target);
+            state.selectedAbility.cooldown = definition.getCooldown(state, state.selectedAbility);
+            delete state.selectedAbility;
+            state.mouse.pressHandled = true;
+        }
+    } else if (state.selectedHero) {
+        if (state.selectedAbility) {
+            if (state.selectedAbility.abilityType === 'activeAbility') {
+                const definition = state.selectedAbility.definition;
+                const targetingInfo = definition.getTargetingInfo(state, state.selectedHero, state.selectedAbility);
+                if (isAbilityMouseTargetValid(state, targetingInfo)) {
+                    if (targetingInfo.moveToTarget) {
+                        // Assign the ability action to the hero if they should move until the
+                        // target is in range.
+                        state.selectedHero.abilityTarget = target
+                        state.selectedHero.selectedAbility = state.selectedAbility;
+                    } else {
+                        // Activate the ability immediately if the hero should just use it where they are
+                        // standing.
+                        activateHeroAbility(state, state.selectedHero, state.selectedAbility, target);
+                    }
+                    delete state.selectedAbility;
+                    state.mouse.pressHandled = true;
+                }
+            }
+        } else if (target?.objectType === 'enemy' || target?.objectType === 'spawner') {
+            // Default action is to make the enemy an attack target.
+            // Make the selected hero attack an enemy target.
+            state.selectedHero.attackTarget = target;
+            state.selectedHero.selectedAttackTarget = target;
+            delete state.selectedHero.movementTarget;
+            delete state.selectedHero.assignedJob;
+            state.mouse.pressHandled = true;
+        } else if (target?.objectType === 'loot') {
+            delete state.selectedHero.attackTarget;
+            delete state.selectedHero.selectedAttackTarget;
+            delete state.selectedHero.assignedJob;
+            state.selectedHero.movementTarget = target;
+            state.mouse.pressHandled = true;
+        } else if (target?.objectType === 'structure' || target?.objectType === 'nexus') {
+            delete state.selectedHero.attackTarget;
+            delete state.selectedHero.selectedAttackTarget;
+            delete state.selectedHero.assignedJob;
+            state.selectedHero.movementTarget = target;
+            state.mouse.pressHandled = true;
         }
     }
 }

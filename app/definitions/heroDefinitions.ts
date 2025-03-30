@@ -4,6 +4,7 @@ export const heroDefinitions: {[key in HeroType]?: HeroDefinition} = {};
 
 heroDefinitions.warrior = {
     name: 'Aragorn',
+    heroType: 'warrior',
     coreState: 'str',
     startingLevel: 1,
     /*getStatsForLevel(level: number): HeroLevelDerivedStats {
@@ -23,6 +24,7 @@ heroDefinitions.warrior = {
 
 heroDefinitions.ranger = {
     name: 'Legolas',
+    heroType: 'ranger',
     coreState: 'dex',
     startingLevel: 1,
     /*getStatsForLevel(level: number): HeroLevelDerivedStats {
@@ -42,6 +44,7 @@ heroDefinitions.ranger = {
 
 heroDefinitions.wizard = {
     name: 'Gandalf',
+    heroType: 'wizard',
     coreState: 'int',
     startingLevel: 1,
     /*getStatsForLevel(level: number): HeroLevelDerivedStats {

@@ -26,6 +26,7 @@ function getNexusAbilityPower(state: GameState, ability: NexusAbility<any>): num
 
 export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeNexusAbility',
+    abilityKey: 'heal',
     name: 'Healing Wind',
     renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
         fillPlus(context, {x: r.x + r.w / 2 - r.w / 3, y: r.y + r.h / 2 - r.w / 8, w: r.w / 3, h: r.w / 3}, '#080');
@@ -114,6 +115,7 @@ class FireGroundEffect implements GenericEffect {
 }
 export const inferno: NexusAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeNexusAbility',
+    abilityKey: 'flame',
     name: 'Inferno',
     renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
         fillCircle(context, {x: r.x + r.w / 2 - r.w / 3 + r.w / 6, y: r.y + r.h / 2 - r.w / 8 + r.w / 6, r: r.w / 6, color: '#F00'});
@@ -162,6 +164,7 @@ export const inferno: NexusAbilityDefinition<AbilityTarget> = {
 const arcticBlastFill = 'rgba(200, 200, 255, 0.5)';
 export const arcticBlast: NexusAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeNexusAbility',
+    abilityKey: 'frost',
     name: 'Arctic Blast',
     renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
         fillCircle(context, {x: r.x + r.w / 2, y: r.y + r.h / 2, r: r.w / 3, color: '#AAF'});
@@ -223,6 +226,7 @@ function renderGolem(context: CanvasRenderingContext2D, state: GameState, {x, y,
 
 export const summonGolems: NexusAbilityDefinition<LocationTarget> = {
     abilityType: 'activeNexusAbility',
+    abilityKey: 'summon',
     name: 'Summon Golems',
     renderIcon(context: CanvasRenderingContext2D, state: GameState, r: Rect) {
         renderGolem(context, state, {x: r.x + r.w / 2, y: r.y + r.h / 2, r: 0.45 * r.w});

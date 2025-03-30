@@ -1,10 +1,11 @@
 import {canvas, frameLength} from 'app/gameConstants'
 import {reviveHero} from 'app/objects/hero';
 import {checkToAddNewSpawner, updateWaves} from 'app/objects/spawner';
-import {state} from 'app/state';
+import {getState} from 'app/state';
 import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
+import {toggleCraftingBenchPanel} from 'app/ui/craftingBenchPanel';
 import {toggleCraftingJobsPanel} from 'app/ui/craftingJobsPanel';
 import {toggleHeroPanel} from 'app/ui/heroPanel';
 import {toggleInventoryPanel} from 'app/ui/inventoryPanel';
@@ -19,6 +20,24 @@ Add open ended jobs that population can be left assigned to:
     Train archers/healers: improves stats of archer/healer jobs
     Gives linear improvement to jobs on average, but job size+benefits pre job increase over time so there is more delay between each improvement.
 
+Add Job Queue
+    Free Jobs are automatically included in the job queue (mining/logging/train archers/train healers)
+    Paid Jobs can be manually added to queue by clicking a [+] button on the job to add it to the queue.
+    Queue can be opened in a large panel that can show 40+ queued jobs.
+    Queued jobs can be re-ordered by dragging and dropping them.
+        Game is paused while dragging jobs to avoid issues with them completing while they are dragging.
+    Completed jobs are removed from the queue.
+    Idle population automatically work on the highest priority valid job
+    There is a "job queue" job that a hero can select to also work on highest priority job.
+
+Add Forge Level to crafted gear
+    Items can be broken down into Forge Power.
+    For X Forge Power, crafted gear can increase forge level and gain a modifier:
+        %1 more attack speed, %1 more damage, +1% critical damage multiplier
+        %1 more health, %1 more armor, 1% more cooldown speed
+    Cost and benefit increases linearly with Forge Level. So at level 1, 1% more attack speed costs 100 FP, at level 10 10% more attack speed costs 1000FP
+    Common items are worth 1FP, uncommon 10FP, rare 100FP, legendary 1000FP
+
 Minigames for improving stats/experience.
 
 Basic Crafting Improvements
@@ -27,8 +46,6 @@ Basic Crafting Improvements
     Later add job to build crafting bench for 10 wood (revealed on obtaining 1 wood)
     Upgrade crafting bench with 50 wood to unlock some behavior
     Upgrade the crafting bench with 5 stone to unlock stone crafting, etc.
-
-Make sure CDR is working and add overcharge mechanic to abilities
 
 Nexus button:
     At top of hero, click to return camera to the nexus.
@@ -45,14 +62,6 @@ Spawners:
 Training grounds:
     Break increasingly challenging waves of targets to get +1 core stat per wave
     Different variations for int/dex/str that are designed around the abilities of that hero.
-
-
-Add crafting
-
-Craft Armor:
-    1-5x material slots that add armor and raise armor cap.
-    1-10x decoration slots that add additional stats
-    (room to expand further for example 1-4 enchantment slots)
 
 Make assignments based on total tool power instead of population.
     Total tool power for a job is the sum of the best N tools used by N people where N is min(number of tools, population).
@@ -73,6 +82,7 @@ Population jobs:
 */
 
 function update() {
+    const state = getState();
     // Reset the essence preview every frame so it doesn't get stale.
     // This needs to run before updateMouseActions since it is often set when hovering over elements.
     state.nexus.previewEssenceChange = 0;
@@ -113,6 +123,7 @@ function update() {
         toggleHeroPanel(state, false);
         toggleCraftingJobsPanel(state, false);
         toggleInventoryPanel(state, false);
+        toggleCraftingBenchPanel(state, false);
         delete state.selectedNexusAbilitySlot;
         // Also cancel any ability targeting.
         delete state.selectedAbility;

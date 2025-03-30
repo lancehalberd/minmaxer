@@ -65,4 +65,5 @@ interface GameState {
         mostRecentKeysPressed: Set<number>
         gameKeysReleased: Set<number>
     },
+    autosaveEnabled: boolean
 }
