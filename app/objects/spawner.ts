@@ -384,7 +384,7 @@ interface SreadSpawnProps {
     duration?: number
     offset?: number
 }
-function spreadSpawns({spawnTypes, duration = 20, offset = 1}: SreadSpawnProps): ScheduledSpawn[] {
+function spreadSpawns({spawnTypes, duration = 20, offset = 0}: SreadSpawnProps): ScheduledSpawn[] {
     const spawns: ScheduledSpawn[] = [];
     for (const spawnType of spawnTypes) {
         const {type, level, count, amount = 1} = spawnType
