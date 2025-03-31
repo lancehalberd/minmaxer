@@ -5,6 +5,7 @@ import {Cave} from 'app/objects/structure';
 import {addBasicHeroes} from 'app/objects/hero';
 import {createNexus} from 'app/objects/nexus';
 import {initializeSpawners} from 'app/objects/spawner';
+import {typedKeys} from 'app/utils/types';
 
 
 import {getItemKeys} from 'app/definitions/itemDefinitions';
@@ -109,6 +110,14 @@ export function getNewGameState(): GameState {
             mostRecentKeysPressed: new Set(),
         },
         autosaveEnabled: true,
+        prestige: {
+            lootRarityBonus: 0,
+            archerExperienceBonus: 0,
+            essenceGainBonus: 0,
+            heroExperienceBonus: 0,
+            skillExperienceBonus: 0,
+        },
+        highestLevelEnemyDefeated: 0,
     };
 
     addBasicHeroes(state);
@@ -128,6 +137,33 @@ export function setState(newState: GameState) {
     window.state = state;
 }
 window.setState = setState;
+
+export function calculatePrestigeStats(state: GameState): PrestigeStats {
+    let totalHeroLevels = 0, totalSkillLevels = 0;
+    for (const hero of state.heroSlots) {
+        totalHeroLevels += (hero?.level ?? 0);
+        totalSkillLevels += (hero?.totalSkillLevels ?? 0);
+    }
+    const newPrestigeStats: PrestigeStats = {
+        lootRarityBonus: state.highestLevelEnemyDefeated,
+        archerExperienceBonus: 5 * state.city.archers.level,
+        essenceGainBonus: 5 * state.nexus.level,
+        heroExperienceBonus: 5 * totalHeroLevels,
+        skillExperienceBonus: 5 * totalSkillLevels,
+    };
+    // Keep the highest prestigate stats from the current run.
+    for (const key of typedKeys(newPrestigeStats)) {
+        newPrestigeStats[key] = Math.max(state.prestige[key], newPrestigeStats[key]);
+    }
+    return newPrestigeStats;
+}
+
+export function restartGame(state: GameState) {
+    const newGameState = getNewGameState();
+    newGameState.prestige = calculatePrestigeStats(state);
+    setState(newGameState);
+}
+window.restartGame = restartGame;
 
 
 /*

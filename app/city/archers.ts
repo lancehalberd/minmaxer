@@ -13,7 +13,7 @@ export const archerJobDefinition: JobDefinition = {
     onComplete: (state: GameState) => {
         gainArcherLevel(state);
     },
-    workerSeconds: (state: GameState) => 100 * (1.2 ** (state.city.archers.level)),
+    workerSeconds: (state: GameState) => 100 * (1.2 ** (state.city.archers.level)) / (1 + (state.prestige.archerExperienceBonus ?? 0) / 100),
     repeat: true,
 };
 export const archerJobElement = createJobComponent({jobDefinition: archerJobDefinition, x: -6.5 * uiSize, y: -3.5 * uiSize});

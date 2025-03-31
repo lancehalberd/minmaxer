@@ -15,7 +15,8 @@ export function getHeroSkill(state: GameState, hero: Hero, skillType: HeroSkillT
 
 export function gainSkillExperience(state: GameState, hero: Hero, skillType: HeroSkillType, experience: number) {
     const skill = getHeroSkill(state, hero, skillType);
-    skill.experience += experience * Math.pow(0.98, hero.totalSkillLevels);
+    const skillExperienceBonus = (1 + state.prestige.skillExperienceBonus / 100);
+    skill.experience += experience * Math.pow(0.98, hero.totalSkillLevels) * skillExperienceBonus;
     let experienceForLevel = getSkillExperienceForNextLevel(state, skill);
     while (skill.experience >= experienceForLevel) {
         skill.level++;

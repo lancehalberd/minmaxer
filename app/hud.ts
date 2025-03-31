@@ -1,4 +1,5 @@
 import {buttonSize, canvas, uiSize} from 'app/gameConstants';
+import {calculatePrestigeStats, restartGame} from 'app/state';
 import {getHeroAbilityButtons} from 'app/ui/abilityButton';
 import {craftingBenchPanel} from 'app/ui/craftingBenchPanel';
 import {CraftingJobsPanel, toggleCraftingJobsPanel} from 'app/ui/craftingJobsPanel';
@@ -8,11 +9,37 @@ import {HeroPanel, toggleHeroPanel} from 'app/ui/heroPanel';
 import {inventoryPanel, toggleInventoryPanel} from 'app/ui/inventoryPanel';
 import {CharacterIconButton} from 'app/ui/iconButton';
 import {getNexusAbilityButtons, NexusAbilityPanel} from 'app/ui/nexusAbilityPanel';
+import {TextButton} from 'app/ui/textButton';
+import {showSimpleTooltip} from 'app/ui/tooltip';
 import {requireFrame, drawFrame} from 'app/utils/animations';
 import {waveComponent} from 'app/ui/waveComponent';
 import {fillText} from 'app/utils/draw';
 
 
+const restartButton = new TextButton({
+    x: (canvas.width - 150) / 2,
+    y: (canvas.height - 4 * uiSize) / 2,
+    h: 4 * uiSize,
+    w: 150,
+    textProps: {size: 30,},
+    text: 'Rewind',
+    onHover(state: GameState) {
+        const prestigeStats = calculatePrestigeStats(state);
+        showSimpleTooltip(state, [
+            'Prestige Bonuses:',
+            'Loot Rarity Bonus: ' + prestigeStats.lootRarityBonus,
+            '+' + prestigeStats.essenceGainBonus + '% Essence gained',
+            '+' + prestigeStats.heroExperienceBonus + '% Hero XP gained',
+            '+' + prestigeStats.skillExperienceBonus + '% Skill XP gained',
+            '+' + prestigeStats.archerExperienceBonus + '% Archer XP gained',
+        ]);
+        return true;
+    },
+    onClick(state: GameState)  {
+        restartGame(state);
+        return true;
+    },
+});
 
 const characterPanelButton = new CharacterIconButton({
     x: 40 + uiSize,
@@ -126,6 +153,10 @@ export function updateHudUIElements(state: GameState) {
         if (element.update) {
             element.update(state);
         }
+    }
+
+    if (state.nexus.essence <= 0) {
+        state.hudUIElements.push(restartButton);
     }
 }
 

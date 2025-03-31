@@ -173,6 +173,7 @@ function importSavedHero(state: GameState, savedHeroData: undefined|SavedHeroDat
             const skill = savedHeroData.skills[key];
             if (skill) {
                 hero.skills[key] = {...skill};
+                hero.totalSkillLevels += skill.level;
             }
         }
         hero.health = hero.getMaxHealth(state);

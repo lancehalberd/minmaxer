@@ -89,7 +89,7 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
     // remove the object from the state, if not a 'nexus' when it dies.
     removeFieldObject(state, target);
     if (target.objectType === 'enemy' || target.objectType === 'spawner') {
-
+        state.highestLevelEnemyDefeated = Math.max(state.highestLevelEnemyDefeated, target.level);
         target.onDeath?.(state);
 
         // Loot drops+xp apply to all heroes in range.
@@ -98,7 +98,8 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
         for (const hero of heroesInRange) {
             const levelDisparity = hero.level - (target.level + levelBuffer);
             const experiencePenalty = 1 - 0.1 * Math.max(levelDisparity, 0);
-            hero.experience += Math.max(target.experienceWorth * experiencePenalty, 0) / heroesInRange.length;
+            const experienceBonus = (1 + (state.prestige.heroExperienceBonus ?? 0) / 100);
+            hero.experience += Math.max(target.experienceWorth * experiencePenalty * experienceBonus, 0) / heroesInRange.length;
             if (lootType) {
                 pickupLoot(state, hero, createLoot(lootType, target));
             }

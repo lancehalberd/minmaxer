@@ -19,17 +19,19 @@ export function standardEnemyLootPool(
     legendaryItems: InventoryKey[] = []
 ): LootPoolGenerator {
     return (state: GameState, enemy: Enemy) => {
-        return generateLootPool(commonItems, uncommonItems, rareItems, legendaryItems, enemy.level);
+        return generateLootPool(state, commonItems, uncommonItems, rareItems, legendaryItems,  + enemy.level);
     }
 }
 
 export function generateLootPool(
+    state: GameState,
     commonItems: InventoryKey[],
     uncommonItems: InventoryKey[],
     rareItems: InventoryKey[] = [],
     legendaryItems: InventoryKey[] = [],
     bonusValue = 0
 ) {
+    bonusValue += (state.prestige.lootRarityBonus ?? 0);
     const weightedDrops: WeightedDrop[] = [];
 
     if (commonItems.length) {

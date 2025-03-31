@@ -66,4 +66,14 @@ interface GameState {
         gameKeysReleased: Set<number>
     },
     autosaveEnabled: boolean
+    highestLevelEnemyDefeated: number
+    prestige: PrestigeStats
+}
+
+interface PrestigeStats {
+    lootRarityBonus: number
+    archerExperienceBonus: number
+    essenceGainBonus: number
+    heroExperienceBonus: number
+    skillExperienceBonus: number
 }

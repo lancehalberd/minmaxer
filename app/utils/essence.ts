@@ -96,7 +96,7 @@ export function gainEssence(state: GameState, essence: number, showDelta = true)
     if (essence <= 0) {
         return;
     }
-    state.nexus.essence += essence;
+    state.nexus.essence += Math.floor(essence * (1 + (state.prestige.essenceGainBonus ?? 0) / 100));
     // Set gained essence to animate gaining the essence over time in the essence bar.
     if (showDelta) {
         state.nexus.gainedEssence += essence;
