@@ -150,7 +150,6 @@ function update() {
     // Pan world.camera to nexus, change background color (gray) and return.
     if (state.nexus.essence <= 0) {
         if (state.selectedHero){
-            console.log(`Selected hero defeated ${state.selectedHero.enemyDefeatCount} enemies in total`);
             delete state.selectedHero;
         }
     } else if (!state.isPaused){
@@ -193,7 +192,7 @@ function update() {
     updateHudUIElements(state);
 
     // Advance state time, game won't render anything new if this timer isn't updated.
-    state.time += 20;
+    state.time += frameLength;
 }
 
 function updateZone(state: GameState, zone: ZoneInstance) {
@@ -210,7 +209,7 @@ function updateZone(state: GameState, zone: ZoneInstance) {
             child.update?.(state);
         }
     }
-    zone.time += 20;
+    zone.time += frameLength;
 }
 
 function computeIdlePopulation(state: GameState): void {

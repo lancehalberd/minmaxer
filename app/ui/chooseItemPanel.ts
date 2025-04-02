@@ -1,4 +1,4 @@
-import {canvas, uiSize} from 'app/gameConstants';
+import {canvas, uiPadding, uiSize} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
 import {CharacterIconButton, CloseIconButton} from 'app/ui/iconButton';
 import {computeValue} from 'app/utils/computed';
@@ -11,7 +11,7 @@ interface ItemButtonProps<T extends InventoryItem> extends Partial<UIButton> {
     itemLabel: string
     itemQuantity?: number
     onHoverItem?: (state: GameState, item: T) => void
-    onSelectItem: (state: GameState, item: T) => void
+    onSelectItem?: (state: GameState, item: T) => void
 }
 export class ItemButton<T extends InventoryItem> implements UIButton {
     objectType = <const>'uiButton';
@@ -26,6 +26,7 @@ export class ItemButton<T extends InventoryItem> implements UIButton {
     w = this.props.w ?? 100;
     h = this.props.h ?? 2 * uiSize;
     disabled = this.props.disabled;
+    resize = this.props.resize;
     constructor(public props: ItemButtonProps<T>) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
         if (isMouseOverTarget(state, this)) {
@@ -166,6 +167,127 @@ export class ChooseItemPanel<T extends InventoryItem> implements UIContainer {
     }
     getItems(state: GameState): T[] {
         return computeValue(state, this, this.items, []);
+    }
+    getChildren(state: GameState) {
+        return this.children;
+    }
+}
+
+
+
+interface ChooseItemListProps<T extends InventoryItem> extends Partial<UIContainer> {
+    items: Computed<T[], undefined>
+    onHoverItem?: (state: GameState, item: T) => void
+    onSelectItem?: (state: GameState, item: T) => void
+}
+export class ChooseItemList<T extends InventoryItem> implements UIContainer {
+    objectType = <const>'uiContainer';
+    uniqueId = this.props.uniqueId;
+    items = this.props.items;
+    onHoverItem = this.props.onHoverItem;
+    onSelectItem = this.props.onSelectItem;
+    w = this.props.w ?? 250;
+    h = this.props.h ?? 400;
+    x = this.props.x ?? 300;
+    y = this.props.y ?? (canvas.height - this.h) / 2;
+    page = 0;
+    prevButton = new CharacterIconButton({
+        character: '<',
+        onClick: (state: GameState) => {
+            const pages = this.totalPages(state);
+            this.page = (this.page + pages - 1) % pages;
+            return true;
+        },
+        resize(state: GameState, container: UIContainer) {
+            this.x = container.w / 2 - 3 * uiPadding - this.w;
+            this.y = container.h - this.h;
+        },
+    });
+    nextButton = new CharacterIconButton({
+        character: '>',
+        onClick: (state: GameState) => {
+            const pages = this.totalPages(state);
+            this.page = (this.page + 1) % pages;
+            return true;
+        },
+        resize(state: GameState, container: UIContainer) {
+            this.x = container.w / 2 + 3 * uiPadding;
+            this.y = container.h - this.h;
+        },
+    });
+    itemButtons: ItemButton<T>[] = [];
+    children: UIElement[] = [];
+    constructor(public props: ChooseItemListProps<T>) {}
+    itemsPerPage(): number {
+        return Math.floor((this.h - 2 * uiPadding - uiSize) / (2 * uiSize));
+    }
+    totalPages(state: GameState) {
+        return Math.ceil(this.getItems(state).length / this.itemsPerPage());
+    }
+    update(state: GameState) {
+        const itemsPerPage = this.itemsPerPage();
+        this.children = [];
+        const items = this.getItems(state);
+        const totalPages = this.totalPages(state);
+        this.page = totalPages ? this.page % totalPages : 0;
+        let y = 0;
+        for (let i = 0; i < itemsPerPage; i++) {
+            const item = items[this.page * itemsPerPage + i];
+            if (!item) {
+                break;
+            }
+            const itemLabel = item.name;
+            const itemQuantity = item.key ? state.inventory[item.key] ?? 0 : undefined;
+            if (!this.itemButtons[i]) {
+                this.itemButtons[i] = new ItemButton<T>({
+                    x: 0,
+                    y,
+                    item,
+                    itemLabel,
+                    itemQuantity,
+                    onHoverItem: this.onHoverItem,
+                    onSelectItem: this.onSelectItem,
+                    resize(state: GameState, container: UIContainer) {
+                        this.w = container.w;
+                    },
+                });
+            } else {
+                this.itemButtons[i].item = item;
+                this.itemButtons[i].itemLabel = itemLabel
+                this.itemButtons[i].itemQuantity = itemQuantity;
+                this.itemButtons[i].y = y;
+            }
+            this.children.push(this.itemButtons[i]);
+            y += 2 * uiSize;
+        }
+        if (totalPages > 1) {
+            this.children.push(this.prevButton);
+            this.children.push(this.nextButton);
+        }
+        for (const child of this.children) {
+            child.resize?.(state, this);
+            child.update?.(state);
+        }
+    }
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        context.save();
+            context.translate(this.x, this.y);
+            for (const child of this.children) {
+                child.render(context, state);
+            }
+            const totalPages = this.totalPages(state);
+            if (totalPages > 1) {
+                fillText(context, {
+                    text: (this.page + 1) + ' / ' + (totalPages),
+                    x: this.w / 2,
+                    y: this.prevButton.y + this.prevButton.h / 2,
+                    size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF',
+                });
+            }
+        context.restore();
+    }
+    getItems(state: GameState): T[] {
+        return computeValue(state, undefined, this.items, []);
     }
     getChildren(state: GameState) {
         return this.children;

@@ -124,3 +124,29 @@ export function drawFrameContentAt(
         y: y - (frame.content?.y || 0) - (z || 0),
     });
 }
+
+export function drawFrameInCircle(context: CanvasRenderingContext2D, circle: Circle, frame: Frame) {
+    const content = frame.content ?? {x: 0, y: 0, w: frame.w, h: frame.h};
+    const scale = 2 * circle.r / Math.min(content.w, content.h);
+    drawFrame(context, frame, {
+        x: circle.x - (content.x + content.w / 2) * scale,
+        y: circle.y - (content.y + content.h / 2) * scale,
+        w: frame.w * scale,
+        h: frame.h * scale,
+    });
+}
+
+export function drawRotatedFrameInCircle(context: CanvasRenderingContext2D, circle: Circle, frame: Frame) {
+    context.save();
+        const content = frame.content ?? {x: 0, y: 0, w: frame.w, h: frame.h};
+        const scale = 2 * circle.r / Math.min(content.w, content.h);
+        context.translate(circle.x, circle.y);
+        context.rotate(circle.theta ?? 0);
+        drawFrame(context, frame, {
+            x: -(content.x + content.w / 2) * scale,
+            y: -(content.y + content.h / 2) * scale,
+            w: frame.w * scale,
+            h: frame.h * scale,
+        });
+    context.restore();
+}

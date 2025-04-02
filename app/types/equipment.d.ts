@@ -14,6 +14,7 @@ type MaterialType = '???'
     | 'brokenShell' | 'carapace'
     | 'claw' | 'fang' | 'horn'
     | 'snakeFang'
+    | 'phoenixFeather' | 'phoenixPlume' | 'phoenixPinion'
     | 'wood' | 'hardwood' | 'silverwood' | 'enchantedWood'
     | 'stone'
     | 'ironOre' | 'iron'
@@ -28,6 +29,8 @@ type CharmType =
     'emeraldRing' | 'emeraldBracelet' | 'emeraldNecklace'
     | 'rubyRing' | 'rubyBracelet' | 'rubyNecklace'
     | 'sapphireRing' | 'sapphireBracelet' | 'sapphireNecklace'
+    | 'sprintShoes' | 'berserkBelt' | 'hasteRing' | 'thirdEye' | 'phoenixCrown'
+    | 'ankh'
 
 type InventoryKey =
     MaterialType

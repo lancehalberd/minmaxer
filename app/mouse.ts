@@ -247,7 +247,18 @@ function checkToHandleMousePress(state: GameState) {
             delete state.selectedHero.assignedJob;
             state.selectedHero.movementTarget = target;
             state.mouse.pressHandled = true;
-        } else if (target?.objectType === 'structure' || target?.objectType === 'nexus') {
+        } else if (target?.objectType === 'structure') {
+            if (!target.onClick?.(state)) {
+                // If the structure doesn't have special on click handling,
+                // just use the default behavior of moving the selected hero
+                // to interact with the structure.
+                delete state.selectedHero.attackTarget;
+                delete state.selectedHero.selectedAttackTarget;
+                delete state.selectedHero.assignedJob;
+                state.selectedHero.movementTarget = target;
+            }
+            state.mouse.pressHandled = true;
+        } else if (target?.objectType === 'nexus') {
             delete state.selectedHero.attackTarget;
             delete state.selectedHero.selectedAttackTarget;
             delete state.selectedHero.assignedJob;

@@ -3,7 +3,7 @@ type EnemyType = 'kobold' | 'koboldArcher' | 'koboldCleric'
     | 'snake'| 'cobra'
     | 'flameElemental' | 'frostElemental' | 'stormElemental'
     | 'beetleEgg' | 'flyingBeetle'
-    | 'thunderBird'
+    | 'phoenix'
     | 'mummy'
     | 'medusa';
 
@@ -33,10 +33,12 @@ interface EnemyDefinition<EnemyProps=any> {
     r: number
     color?: CanvasFill
     getStatsForLevel: (level: number) => EnemyLevelDerivedStats
-    aggroRadius: number
+    aggroRadius?: number
     isBoss?: boolean
     render?: (context: CanvasRenderingContext2D, state: GameState, enemy: Enemy<EnemyProps>) => void
+    beforeUpdate?: (state: GameState, enemy: Enemy<EnemyProps>) => boolean
     afterUpdate?: (state: GameState, enemy: Enemy<EnemyProps>) => void
+    onDeath?: (state: GameState, enemy: Enemy<EnemyProps>) => boolean
     abilities?: EnemyAbilityDefinition[]
     // Defaults to 0.1= 10%
     lootChance?: number
@@ -51,6 +53,7 @@ interface WeightedDrop {
 
 interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     objectType: 'enemy'
+    theta: number
     enemyType: EnemyType
     level: number
     // Current life of the enemy
@@ -58,11 +61,14 @@ interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     stats: ModifiableEnemyStats
     getMaxHealth: (state: GameState) => number
     render: (context: CanvasRenderingContext2D, state: GameState) => void
+    // If this returns false, the regular update logic will be skipped.
+    beforeUpdate?: (state: GameState, enemy: Enemy<EnemyProps>) => boolean
     update: (state: GameState) => void
     afterUpdate?: (state: GameState, enemy: Enemy<EnemyProps>) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Ally|Hero) => void
-    onDeath?: (state: GameState) => void
+    // If this returns false, the enemy won't actually die.
+    onDeath?: (state: GameState, enemy: Enemy<EnemyProps>) => boolean
     effects: ObjectEffect[]
     addStatModifiers: (modifiers?: StatModifier[]) => void
     removeStatModifiers: (modifiers?: StatModifier[]) => void
@@ -80,8 +86,6 @@ interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     activeAbility?: ActiveEnemyAbility<any>;
     // Max life of the enemy
     maxHealth: number
-    // How far away the enemy can hit targets from in pixels.
-    attackRange: number
     // How much experience the enemy grants when defeated.
     experienceWorth: number
     // How much essence the enemy grants when defeated.
@@ -120,7 +124,7 @@ interface Spawner extends Circle, ZoneLocation {
     update: (state: GameState) => void
     getChildren?: (state: GameState) => UIElement[]
     onHit: (state: GameState, attacker: Ally|Hero) => void
-    onDeath?: (state: GameState) => void
+    onDeath?: (state: GameState, spawner: Spawner) => void
 }
 
 

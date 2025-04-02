@@ -30,6 +30,8 @@ export const pickaxeTypes: PickaxeType[] = ['stonePickaxe', 'ironPickaxe', 'stee
 export const bowTypes: BowType[] = ['shortBow', 'longBow', 'crossbow'];
 export const staffTypes: StaffType[] = ['woodStaff', 'bronzeStaff', 'steelStaff'];
 
+const allToolKeys: Set<InventoryKey> = new Set([...axeTypes, ...hammerTypes, ...pickaxeTypes, ...bowTypes, ...staffTypes]);
+
 export function getItemLabel(itemKey: InventoryKey): string {
     return requireItem(itemKey).name;
 }
@@ -43,6 +45,10 @@ export function sumItemCount(state: GameState, keys: InventoryKey[]): number {
         sum += state.inventory[key] ?? 0;
     }
     return sum;
+}
+
+export function isTool(key?: InventoryKey) {
+    return !!key && allToolKeys.has(key);
 }
 
 export function getAvailableToolCount(state: GameState, toolType: ToolType): number {

@@ -24,6 +24,8 @@ export class IconButton implements UIButton {
     onPress = this.props.onPress;
     onClick = this.props.onClick;
     uniqueId = this.props.uniqueId;
+    resize = this.props.resize;
+    update = this.props.update;
     constructor(public props: IconButtonProps) {}
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {
         fillBorderedRect(context, this, {
@@ -86,7 +88,6 @@ export class CharacterIconButton extends IconButton {
         });
     }
 }
-
 
 interface RepeatButtonProps extends IconButtonProps {
     isActive: (state: GameState) => boolean

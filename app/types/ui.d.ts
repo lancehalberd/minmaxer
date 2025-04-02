@@ -11,6 +11,9 @@ interface BaseUIElement extends Rect {
     // Set this when an element is rendered as a child of another element and uses the parent
     // elements x/y as its origin.
     parent?: UIElement
+    // Update the size and position of the element.
+    // This is useful to define on child elements that have size and position based on parent elements that might change.
+    resize?: (this: BaseUIElement, state: GameState, container: UIContainer) => void
     // If this is set, this element will only be rendered as part of a particular zone and will
     // only trigger events when the camera is viewing that zone.
     zone?: ZoneInstance

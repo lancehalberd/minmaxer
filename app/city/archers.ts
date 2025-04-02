@@ -1,7 +1,7 @@
 import {addProjectile} from 'app/effects/projectile';
 import {uiSize} from 'app/gameConstants';
 import {isTargetAvailable} from 'app/utils/combat';
-import {getDistance} from 'app/utils/geometry';
+import {getDistanceBetweenCircles} from 'app/utils/geometry';
 import {createJobComponent} from 'app/ui/jobComponent';
 import {getOrCreateJob} from 'app/utils/job';
 import {getJobMultiplierFromTools} from 'app/utils/inventory';
@@ -24,11 +24,11 @@ export function gainArcherLevel(state: GameState) {
         state.city.archers.damage = 5;
         state.city.archers.attacksPerSecond = 3;
         state.city.archers.range = 50;
-    } else if (state.city.archers.level % 3 === 1) {
-        state.city.archers.damage *= 1.2;
     } else if (state.city.archers.level % 3 === 2) {
-        state.city.archers.attacksPerSecond += 0.2;
+        state.city.archers.damage *= 1.2;
     } else if (state.city.archers.level % 3 === 0) {
+        state.city.archers.attacksPerSecond += 0.3;
+    } else if (state.city.archers.level % 3 === 1) {
         state.city.archers.range += 10;
     }
 }
@@ -46,16 +46,17 @@ export function updateArchers(state: GameState) {
         delete state.city.archers.target
     }
     // Remove the target if it goes out of range since the archers cannot chase it.
-    if (state.city.archers.target && getDistance(state.nexus, state.city.archers.target)) {
+    const currentTarget = state.city.archers.target;
+    if (currentTarget && getDistanceBetweenCircles(state.nexus, currentTarget) > range) {
         delete state.city.archers.target
     }
     // The archers will automatically attack an enemy within its range if it is idle.
     if (!state.city.archers.target) {
         // Choose the closest valid target within the aggro radius as an attack target.
-        let closestDistance = state.nexus.r + range;
+        let closestDistance = range;
         for (const object of state.nexus.zone.objects) {
             if (object.objectType === 'enemy') {
-                const distance = getDistance(state.nexus, object) - object.r - state.nexus.r;
+                const distance = getDistanceBetweenCircles(state.nexus, object);
                 if (distance < closestDistance) {
                     state.city.archers.target = object;
                     closestDistance = distance;

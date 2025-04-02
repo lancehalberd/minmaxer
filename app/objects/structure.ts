@@ -285,6 +285,10 @@ export class CraftingBench implements Structure {
         toggleCraftingBenchPanel(state, true);
         delete hero.movementTarget;
     }
+    onClick(state: GameState) {
+        toggleCraftingBenchPanel(state, true);
+        return true;
+    }
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);

@@ -7,6 +7,8 @@ const commonStatMap: {[key in CommonModifiableStats]: boolean} = {
     movementSpeed: true,
     incomingDamageMultiplier: true,
     damage: true,
+    attackRange: true,
+    regenPerSecond: true,
 }
 const enemyStatMap: {[key in ModifiableEnemyStat]: boolean} = {
     ...commonStatMap,
@@ -27,6 +29,27 @@ const heroStatMap: {[key in ModifiableHeroStat]: boolean} = {
 const anyStatMap: {[key in ModifiableHeroStat]: boolean} = {
     ...enemyStatMap,
     ...heroStatMap,
+}
+
+const statLabels: {[key in AnyModifiableStat]: string} = {
+    speed: 'Speed',
+    attacksPerSecond: 'Attack Speed',
+    movementSpeed: 'Move Speed',
+    incomingDamageMultiplier: 'Damage Taken',
+    damage: 'Damage',
+    attackRange: 'Attack Range',
+    regenPerSecond: 'Health Regenerated',
+    dex: 'Dexterity',
+    str: 'Strength',
+    int: 'Intelligence',
+    maxHealth: 'Health',
+    armor: 'Armor',
+    extraHitChance: 'Multi Hit Chance',
+    criticalChance: 'Critical Chance',
+    criticalMultiplier: 'Critical Damage',
+    cooldownSpeed: 'Cooldown Speed',
+    maxDamageReduction: 'Max Damage Reduction',
+
 }
 
 const allEnemyStats = new Set<ModifiableEnemyStat>(typedKeys(enemyStatMap));
@@ -139,13 +162,13 @@ export function statModifierStrings(modifiers?: StatModifier[]): string[] {
         }
         // TODO: Use display friendly labels for stat keys here.
         if (combinedStat.flatBonus) {
-            lines.push((combinedStat.flatBonus >= 0 ? '+' : '-') + combinedStat.flatBonus.toFixed(0) + ' ' + combinedStat.stat);
+            lines.push((combinedStat.flatBonus >= 0 ? '+' : '-') + combinedStat.flatBonus.toFixed(0) + ' ' + statLabels[combinedStat.stat]);
         }
         if (combinedStat.percentBonus) {
-            lines.push((combinedStat.percentBonus >= 0 ? '+' : '-') + combinedStat.percentBonus.toFixed(0) + '%' + combinedStat.stat);
+            lines.push((combinedStat.percentBonus >= 0 ? '+' : '-') + combinedStat.percentBonus.toFixed(0) + '%' + statLabels[combinedStat.stat]);
         }
         if (combinedStat.multiplier) {
-            lines.push(combinedStat.multiplier.toFixed(2) + 'x ' + combinedStat.stat);
+            lines.push(combinedStat.multiplier.toFixed(2) + 'x ' + statLabels[combinedStat.stat]);
         }
     }
     return lines;

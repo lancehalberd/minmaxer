@@ -1,11 +1,14 @@
-import {archerJobElement, updateArchers} from 'app/city/archers';
+import {archerJobDefinition, archerJobElement, updateArchers} from 'app/city/archers';
 import {healerJobElement} from 'app/city/healer';
 import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
+import {renderRangeCircle} from 'app/draw/renderIndicator';
 import {CraftingBench} from 'app/objects/structure';
 import {frameLength} from 'app/gameConstants';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
 import {applyHeroToJob, isJobDiscovered} from 'app/utils/job';
+import {getOrCreateJob} from 'app/utils/job';
+import {getJobMultiplierFromTools} from 'app/utils/inventory';
 
 export function createNexus(zone: ZoneInstance): Nexus {
     return {
@@ -40,16 +43,22 @@ export function createNexus(zone: ZoneInstance): Nexus {
                 context.restore();
             }
 
+            if (state.city.archers.level > 0) {
+                const archerJob = getOrCreateJob(state, archerJobDefinition);
+                const jobMultiplier = getJobMultiplierFromTools(state, archerJob.workers, archerJob.definition.requiredToolType);
+                const range = state.city.archers.range * (1 + jobMultiplier / 100 / 10);
+                renderRangeCircle(context, {x: this.x, y: this.y, r: this.r + range, color: 'rgba(255, 255, 255, 0.4)'});
+            }
         },
         update(state: GameState) {
             if (state.craftingBench.baseMaterialSlots.length) {
                 let craftingBench = state.world.objects.find(object => object instanceof CraftingBench);
                 if (!craftingBench) {
                     craftingBench = new CraftingBench({zone: this.zone, x: 0, y: 0});
-                    craftingBench.y = this.r - craftingBench.r + 10;
+                    craftingBench.y = this.r - craftingBench.r;
                     state.world.objects.push(craftingBench);
                 } else {
-                    craftingBench.y = this.r - craftingBench.r + 10;
+                    craftingBench.y = this.r - craftingBench.r;
                 }
             }
             // If we are tracking gained essence, remove it linearly for 1 second following the last time

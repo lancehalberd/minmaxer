@@ -3,6 +3,11 @@ export function getDistance(p1: Point, p2: Point): number {
     return Math.sqrt(dx * dx + dy * dy);
 }
 
+export function getDistanceBetweenCircles(c1: Circle, c2: Circle): number {
+    const dx = c1.x - c2.x, dy = c1.y - c2.y;
+    return Math.sqrt(dx * dx + dy * dy) - c1.r - c2.r;
+}
+
 export function pad({x, y, w, h}: Rect, amount: number): Rect {
     return {
         x: x - amount,

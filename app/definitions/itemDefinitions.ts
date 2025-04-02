@@ -30,9 +30,16 @@ function makeStatFunction<T>(stat: ModifiableHeroStat) {
 const health = makeStatFunction('maxHealth');
 const armor = makeStatFunction('armor');
 const damage = makeStatFunction('damage');
+const range = makeStatFunction('attackRange');
 const str = makeStatFunction('str');
 const dex = makeStatFunction('dex');
 const int = makeStatFunction('int');
+const regen = makeStatFunction('regenPerSecond');
+const attackSpeed = makeStatFunction('attacksPerSecond');
+const cooldownSpeed = makeStatFunction('cooldownSpeed');
+const movementSpeed = makeStatFunction('movementSpeed');
+const speed = makeStatFunction('speed');
+//const damageTaken = makeStatFunction('incomingDamageMultiplier');
 
 
 addItemDefinition({
@@ -49,7 +56,7 @@ addItemDefinition({
         armor: 3,
     },
     baseArmorStats: {armor: 2, armorCap: 5, maxDecorations: 2, itemLabel: 'Scalemail'},
-    extraArmorModifiers: [armor(1)],
+    extraArmorModifiers: [armor(2)],
     rarity: 1,
 });
 addItemDefinition({
@@ -86,7 +93,7 @@ addItemDefinition({
     baseWeaponStats: {damage: 3, damageCap: 12, maxDecorations: 2, itemLabel: 'Claws'},
     charmStats: {modifiers: [damage(3)]},
     extraCharmModifiers: [damage(2)],
-    rarity: 1,
+    rarity: 0,
 });
 addItemDefinition({
     key: 'fang',
@@ -95,7 +102,7 @@ addItemDefinition({
     baseWeaponStats: {damage: 7, damageCap: 30, maxDecorations: 3, itemLabel: 'Fierce Claws'},
     charmStats: {modifiers: [damage(5)]},
     extraCharmModifiers: [damage(3)],
-    rarity: 2,
+    rarity: 1,
 });
 addItemDefinition({
     key: 'snakeFang',
@@ -104,7 +111,7 @@ addItemDefinition({
     weaponStats: {damage: 20, modifiers: [dex(5)]},
     charmStats: {modifiers: [damage(7)]},
     extraCharmModifiers: [damage(4)],
-    rarity: 3,
+    rarity: 2,
 });
 addItemDefinition({
     key: 'horn',
@@ -113,7 +120,7 @@ addItemDefinition({
     baseWeaponStats: {damage: 20, damageCap: 50, maxDecorations: 3, itemLabel: 'Horn Spear'},
     charmStats: {modifiers: [damage(10)]},
     extraCharmModifiers: [damage(5)],
-    rarity: 3,
+    rarity: 2,
 });
 
 addItemDefinition({
@@ -217,6 +224,79 @@ addItemDefinition({
     extraArmorModifiers: [armor(1), str(1)],
     rarity: 3,
 });
+
+
+addItemDefinition({
+    key: 'phoenixFeather',
+    name: 'Phoenix Feather',
+    charmStats: {modifiers: [health(20), regen(1)]},
+    extraCharmModifiers: [health(5), regen(1)],
+    rarity: 1,
+});
+addItemDefinition({
+    key: 'phoenixPlume',
+    name: 'Phoenix Plume',
+    charmStats: {modifiers: [health(50), regen(5)]},
+    extraCharmModifiers: [health(10), regen(3)],
+    rarity: 2,
+});
+addItemDefinition({
+    key: 'phoenixPinion',
+    name: 'Phoenix Pinion',
+    charmStats: {modifiers: [health(100), regen(10)]},
+    extraCharmModifiers: [health(20), regen(5)],
+    rarity: 3,
+});
+addItemDefinition({
+    key: 'phoenixCrown',
+    name: 'Phoenix Crown',
+    armorStats: {
+        armor: 30,
+        modifiers: [cooldownSpeed(50), health(50), regen(5), str(10), dex(10), int(10)],
+    },
+    rarity: 4,
+});
+addItemDefinition({
+    key: 'thirdEye',
+    name: 'Third Eye',
+    charmStats: {
+        modifiers: [dex(10, 10), int(10, 10), range(10)],
+    },
+    rarity: 4,
+});
+addItemDefinition({
+    key: 'hasteRing',
+    name: 'Haste Ring',
+    charmStats: {
+        modifiers: [speed(0, 20)],
+    },
+    rarity: 4,
+});
+addItemDefinition({
+    key: 'sprintShoes',
+    name: 'Sprint Shoes',
+    charmStats: {
+        modifiers: [movementSpeed(0, 50)],
+    },
+    rarity: 4,
+});
+addItemDefinition({
+    key: 'berserkBelt',
+    name: 'Berserk Belt',
+    charmStats: {
+        modifiers: [str(10, 10), attackSpeed(0, 50)],
+    },
+    rarity: 4,
+});
+addItemDefinition({
+    key: 'ankh',
+    name: 'Ankh',
+    charmStats: {
+        modifiers: [health(100), regen(20), str(10), int(10)],
+    },
+    rarity: 4,
+});
+
 
 addItemDefinition({
     key: 'wood',

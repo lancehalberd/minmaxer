@@ -23,7 +23,7 @@ const nexusGrowthFactor = 1.6;
 function getNexusAbilityPower(state: GameState, ability: NexusAbility<any>): number {
     return (nexusGrowthFactor ** (state.nexus.level - 1 + ability.level - 1));
 }
-
+// TODO: Allow overhealing heroe's up to 200% health with grey healthbar to represent extra health.
 export const healingWind: NexusAbilityDefinition<AbilityTarget> = {
     abilityType: 'activeNexusAbility',
     abilityKey: 'heal',
@@ -135,7 +135,7 @@ export const inferno: NexusAbilityDefinition<AbilityTarget> = {
     },
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget) {
         const targetingInfo = this.getTargetingInfo(state, ability);
-        const damagePerSecond = Math.floor(2 * getNexusAbilityPower(state, ability));
+        const damagePerSecond = Math.floor(3 * getNexusAbilityPower(state, ability));
 
         // FireGroundEffect automatically adds itself to the zone in the constructor.
         const fireGroundEffect = new FireGroundEffect({
@@ -145,7 +145,7 @@ export const inferno: NexusAbilityDefinition<AbilityTarget> = {
             r: targetingInfo.hitRadius || 0,
             targetsEnemies: true,
             maxRadius: 30,
-            duration: [2000, 4000, 6000][ability.level - 1],
+            duration: [4000, 6000, 10000][ability.level - 1],
             damagePerSecond,
             source: state.nexus,
         });
@@ -193,17 +193,30 @@ export const arcticBlast: NexusAbilityDefinition<AbilityTarget> = {
         });
 
         const targets = getTargetsInCircle(state, getEnemyTargets(state, state.camera.zone), circleEffect);
-        const damageAmount = Math.floor(3 * getNexusAbilityPower(state, ability));
+        const damageAmount = Math.floor(5 * getNexusAbilityPower(state, ability));
         for (const target of targets) {
             if (target.objectType === 'spawner') {
                 continue;
             }
             damageTarget(state, target, {damage: damageAmount, source: state.nexus});
-            const slowEffect = new ModifierEffect({
-                duration: [5, 7, 10][ability.level - 1],
+            // Short freeze effect.
+            const freezeEffect = new ModifierEffect({
+                duration: [2, 3, 4][ability.level - 1],
                 modifiers: [{
                     stat: 'speed',
-                    percentBonus: [-33, -50, -66][ability.level - 1],
+                    multiplier: 0,
+                }],
+                renderOver(context: CanvasRenderingContext2D, state: GameState, target: ModifiableTarget) {
+                    fillCircle(context, {x: target.x, y: target.y, r: target.r + 2, color: 'rgba(255, 255, 255, 0.6)'});
+                },
+            });
+            applyEffectToTarget(state, freezeEffect, target);
+            // Followed by a longer slow effect.
+            const slowEffect = new ModifierEffect({
+                duration: freezeEffect.duration + (3 + state.nexus.level) * (1.5 ** (ability.level - 1)),
+                modifiers: [{
+                    stat: 'speed',
+                    percentBonus: [-60, -70, -80][ability.level - 1],
                 }],
                 renderOver(context: CanvasRenderingContext2D, state: GameState, target: ModifiableTarget) {
                     fillCircle(context, {x: target.x, y: target.y, r: target.r + 2, color: 'rgba(255, 255, 255, 0.4)'});

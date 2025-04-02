@@ -86,11 +86,18 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
     if (target.objectType === 'nexus' || target.health > 0) {
         return;
     }
-    // remove the object from the state, if not a 'nexus' when it dies.
-    removeFieldObject(state, target);
     if (target.objectType === 'enemy' || target.objectType === 'spawner') {
         state.highestLevelEnemyDefeated = Math.max(state.highestLevelEnemyDefeated, target.level);
-        target.onDeath?.(state);
+        // Nonsense to make the TS compiler happy.
+        if (target.objectType === 'enemy') {
+            if (target.onDeath?.(state, target) === false) {
+                // If onDeath returns false, it means some effect is preventing the enemy from actually dying,
+                // such as the phoenix' rebirth mechanic.
+                return;
+            }
+        } else {
+            target.onDeath?.(state, target);
+        }
 
         // Loot drops+xp apply to all heroes in range.
         const heroesInRange = getTargetsInCircle(state, getHeroes(state), {x: target.x, y: target.y, r: 200});
@@ -120,15 +127,24 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
                 if (lootChance >= 1 || Math.random() < lootChance) {
                     const itemKey = rollLoot(lootPool);
                     const item = requireItem(itemKey);
-                    addTextEffect(state, {target, text: getItemLabel(itemKey), color: (state) => getRarityColor(state, item.rarity), delay});
+                    const duration = 500 * (1 + item.rarity / 2);
+                    addTextEffect(state, {
+                        target,
+                        text: getItemLabel(itemKey),
+                        color: (state) => getRarityColor(state, item.rarity),
+                        duration,
+                        delay,
+                    });
                     state.inventory[itemKey] = (state.inventory[itemKey] ?? 0) + 1;
-                    delay += 400;
+                    delay += (duration - 100);
                 }
                 lootChance--;
             }
         }
         gainEssence(state, target.essenceWorth);
     }
+    // remove the object from the state, if not a 'nexus' when it dies.
+    removeFieldObject(state, target);
     if (target.objectType === 'hero') {
         const reviveTime = Math.floor((5 + target.level) * (1 + state.nexus.deathCount * 0.2));
         target.reviveCooldown = {

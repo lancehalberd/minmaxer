@@ -82,6 +82,7 @@ interface Structure extends Circle, ZoneLocation {
     onDiscover?: (state: GameState) => void
     // Called when a hero reaches this structure as their movement target.
     onHeroInteraction?: (state: GameState, hero: Hero) => void
+    onClick?: (state: GameState) => boolean
     getChildren?: (state: GameState) => UIElement[]
 }
 
@@ -123,6 +124,8 @@ interface ZoneInstance {
     name: string
     floorColor: CanvasFill
     definition?: ZoneDefinition
+    // Milliseconds passed since this zone was created.
+    // Many time fields on objects and effects will be based on this value.
     time: number
     effects: FieldEffect[]
     objects: FieldObject[]

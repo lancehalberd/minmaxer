@@ -9,6 +9,7 @@ const noWeapon: Weapon = {name: 'None', weaponStats: {damage: 0}, rarity: 0};
 const noCharm: Charm = {name: 'None', charmStats: {}, rarity: 0};
 
 
+
 export const chooseArmorPanel = new ChooseItemPanel<Armor>({
     title: 'Choose Armor',
     items(state: GameState) {

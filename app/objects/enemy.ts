@@ -1,10 +1,11 @@
 import {enemyDefinitions} from 'app/definitions/enemyDefinitionsHash';
+import {renderAbilityWarning} from 'app/draw/renderIndicator';
 import {frameLength, framesPerSecond} from 'app/gameConstants';
 import {createActiveEnemyAbilityInstance, prepareToUseEnemyAbilityOnTarget, removeEffectFromTarget} from 'app/utils/ability';
 import {damageTarget, isEnemyAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
-import {getDistance} from 'app/utils/geometry';
+import {getDistanceBetweenCircles} from 'app/utils/geometry';
 import {createModifiableStat, applyStatModifier, isEnemyStat, removeStatModifier, getModifiableStatValue} from 'app/utils/modifiableStat';
 
 export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: ZoneLocation): Enemy {
@@ -17,7 +18,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         level,
         color: definition.color,
         r: definition.r,
-        aggroRadius: definition.aggroRadius,
+        aggroRadius: definition.aggroRadius ?? 150,
         props: {...(definition.initialProps ?? {})},
         aggroPack: [],
         health: derivedStats.maxHealth,
@@ -26,10 +27,12 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         },
         stats: {
             damage: createModifiableStat<Enemy>(derivedStats.damage),
+            attacksPerSecond: createModifiableStat<Enemy>(derivedStats.attacksPerSecond),
+            attackRange: createModifiableStat<Enemy>(derivedStats.attackRange),
             speed: createModifiableStat<Enemy>(1),
             movementSpeed: createModifiableStat<Enemy>(derivedStats.movementSpeed),
-            attacksPerSecond: createModifiableStat<Enemy>(derivedStats.attacksPerSecond),
             incomingDamageMultiplier: createModifiableStat<Enemy>(1),
+            regenPerSecond: createModifiableStat<Enemy>((state: GameState) => 0),
         },
         abilities: (definition.abilities ?? []).map((abilityDefinition): EnemyAbility => {
             if (abilityDefinition.abilityType === 'activeEnemyAbility') {
@@ -45,9 +48,12 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
         zone,
         x,
         y,
+        theta: Math.atan2(y, x) + Math.PI,
         animationTime: 0,
         update: updateEnemy,
+        beforeUpdate: definition.beforeUpdate,
         afterUpdate: definition.afterUpdate,
+        onDeath: definition.onDeath,
         render: renderEnemy,
         onHit: onHitEnemy,
         cleanup: cleanupEnemy,
@@ -108,8 +114,27 @@ function aggroEnemyPack(enemy: Enemy, target: Nexus | AllyTarget) {
 }
 
 export function updateEnemy(this: Enemy, state: GameState) {
-    updateEnemyMain.apply(this, [state]);
+    if (this.beforeUpdate?.(state, this) !== false) {
+        updateEnemyMain.apply(this, [state]);
+    }
     this.afterUpdate?.(state, this);
+}
+
+export function getClosestAttackTargetInRange(state: GameState, enemy: Enemy, range = Infinity): AllyTarget|Nexus|undefined {
+    // Choose the closest valid target within the aggro radius as an attack target.
+    let attackTarget: AllyTarget|Nexus|undefined;
+    let closestDistance = range;
+    for (const object of enemy.zone.objects) {
+        if (object.objectType !== 'hero' && object.objectType !== 'nexus') {
+            continue;
+        }
+        const distance = getDistanceBetweenCircles(enemy, object);
+        if (distance < closestDistance) {
+            attackTarget = object;
+            closestDistance = distance;
+        }
+    }
+    return attackTarget;
 }
 
 export function updateEnemyMain(this: Enemy, state: GameState) {
@@ -147,19 +172,9 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
         this.attackTarget = state.nexus;
     }
     // Check to choose a new attack target.
+    const attackRange = getEnemyAttackRange(state, this);
     if (!this.attackTarget) {
-        // Choose the closest valid target within the aggro radius as an attack target.
-        let closestDistance = this.aggroRadius;
-        for (const object of this.zone.objects) {
-            if (object.objectType !== 'hero' && object.objectType !== 'nexus') {
-                continue;
-            }
-            const distance = getDistance(this, object);
-            if (distance < closestDistance) {
-                this.attackTarget = object;
-                closestDistance = distance;
-            }
-        }
+        this.attackTarget = getClosestAttackTargetInRange(state, this, attackRange);
         if (this.attackTarget) {
             aggroEnemyPack(this, this.attackTarget);
         }
@@ -192,20 +207,26 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
     if (!this.attackTarget && !this.movementTarget) {
         this.movementTarget = this.defaultTarget;
     }
+    let targetToAttack: AllyTarget|Nexus|undefined;
     if (this.attackTarget) {
-        // Attack the target when it is in range.
-        if (moveEnemyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.attackRange)) {
-            // Attack the target if the enemy's attack is not on cooldown.
-            const attackCooldown = 1000 / getEnemyAttacksPerSecond(state, this);
-            if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
-                const damage = getEnemyDamageForTarget(state, this, this.attackTarget);
-                damageTarget(state, this.attackTarget, {damage, source: this});
-                this.attackTarget.onHit?.(state, this);
-                this.lastAttackTime = this.zone.time;
-            }
-            return;
+        // Move towards the primary target.
+        if (moveEnemyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + attackRange)) {
+            // Attack the main target once it is in range.
+            targetToAttack = this.attackTarget;
         }
-        return;
+    }
+    if (!targetToAttack) {
+        // If no other attack target is in range, just try attacking the nearest target.
+        targetToAttack = getClosestAttackTargetInRange(state, this, attackRange);
+    }
+    if (targetToAttack) {
+        const attackCooldown = 1000 / getEnemyAttacksPerSecond(state, this);
+        if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
+            const damage = getEnemyDamageForTarget(state, this, targetToAttack);
+            damageTarget(state, targetToAttack, {damage, source: this});
+            targetToAttack.onHit?.(state, this);
+            this.lastAttackTime = this.zone.time;
+        }
     }
     if (!this.attackTarget && this.movementTarget) {
         // Remove the target once they reach their destination.
@@ -223,6 +244,9 @@ function getEnemyAttacksPerSecond(state: GameState, enemy: Enemy): number {
     const attacksPerSecond = getModifiableStatValue(state, enemy, enemy.stats.attacksPerSecond);
     const speed = getModifiableStatValue(state, enemy, enemy.stats.speed);
     return attacksPerSecond * speed;
+}
+function getEnemyAttackRange(state: GameState, enemy: Enemy): number {
+    return getModifiableStatValue(state, enemy, enemy.stats.attackRange);
 }
 function getEnemyCooldownSpeed(state: GameState, enemy: Enemy): number {
     return getModifiableStatValue(state, enemy, enemy.stats.speed);
@@ -250,6 +274,7 @@ function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityT
     // Slightly perturb the target so enemies don't get stacked with the exact same heading.
     const dx = target.x - 0.5 + Math.random() - enemy.x;
     const dy = target.y - 0.5 + Math.random() - enemy.y;
+    enemy.theta = Math.atan2(dy, dx);
     const mag = Math.sqrt(dx * dx + dy * dy);
     // Attack the target when it is in range.
     if (mag <= distance) {
@@ -325,46 +350,6 @@ export function renderEnemy(this: Enemy, context: CanvasRenderingContext2D, stat
     renderLifeBarOverCircle(context, this, this.health, this.maxHealth);
 }
 
-function renderAbilityWarning(context: CanvasRenderingContext2D, state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<any>) {
-    if (!ability.target) {
-        return;
-    }
-    if (ability.definition.renderWarning) {
-        return ability.definition.renderWarning(context, state, enemy, ability, ability.target);
-    }
-    const p = ability.warningTime / ability.warningDuration;
-    defaultRenderWarning(context, state, p, enemy, ability.definition.getTargetingInfo(state, enemy, ability), ability.target);
-}
-
-function defaultRenderWarning(context: CanvasRenderingContext2D, state: GameState, p: number, enemy: Enemy, targetingInfo: AbilityTargetingInfo, target: ZoneLocation) {
-    // Don't show warnings for enemy skills that target their allies.
-    if (targetingInfo.canTargetAlly) {
-        return;
-    }
-    if (targetingInfo.hitRadius) {
-        // Attacks can hit units barely inside their range, so we increase the range of the warning to make
-        // it more obvious that a player might be in range when they are on the very edge of the range.
-        const drawnRadius = 10 + targetingInfo.hitRadius;
-        // const center: Point = targetingInfo.range > 0 ? {} : {x: enemy.x, y: enemy.y};
-        fillCircle(context, {x: target.x, y: target.y, r: drawnRadius});
-        context.lineWidth = 2;
-        context.strokeStyle = '#F00';
-        context.stroke();
-        fillCircle(context, {x: target.x, y: target.y, r: p * drawnRadius, color: 'rgba(255, 0, 0, 0.4)'});
-    }
-    if (targetingInfo.projectileRadius) {
-        /*context.strokeStyle = 'rgba(0, 0, 255, 0.5)';
-        context.lineWidth = 2 * targetingInfo.projectileRadius;
-        const dx = target.x - state.selectedHero.x, dy = target.y - state.selectedHero.y;
-        const mag = Math.sqrt(dx*dx + dy*dy);
-        context.beginPath();
-        context.moveTo(state.selectedHero.x, state.selectedHero.y);
-        context.lineTo(
-            state.selectedHero.x + targetingInfo.range * dx / mag,
-            state.selectedHero.y + targetingInfo.range * dy / mag
-        );*/
-    }
-}
 
 function checkToAutocastAbility(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<any>) {
     const targetingInfo = ability.definition.getTargetingInfo(state, enemy, ability);

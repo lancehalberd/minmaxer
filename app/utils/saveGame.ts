@@ -2,7 +2,7 @@ import {archerJobDefinition, gainArcherLevel} from 'app/city/archers';
 import {gainWallLevel} from 'app/city/cityWall';
 import {requireItem} from 'app/definitions/itemDefinitions';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
-import {getNewGameState} from 'app/state';
+import {getNewGameState, setState} from 'app/state';
 import {clearCraftingBench, createCraftedItem} from 'app/ui/craftingBenchPanel';
 import {updateWaveScale} from 'app/ui/waveComponent';
 import {gainEssence} from 'app/utils/essence';
@@ -30,13 +30,18 @@ function exportSavedNexusData(state: GameState): SavedNexusData {
     };
     return nexus;
 }
-function applySavedNexusDataToState(state: GameState, nexusData: SavedNexusData) {
-    // This will cause the nexus to level up appropriately.
-    gainEssence(state, nexusData.essence, false);
-    for (const ability of state.nexusAbilities) {
-        ability.level = nexusData.abilityLevels[ability.definition.abilityKey] ?? 0;
+function applySavedNexusDataToState(state: GameState, nexusData?: Partial<SavedNexusData>) {
+    if (!nexusData) {
+        return;
     }
-    state.nexusAbilitySlots = nexusData.abilitySlots.map(key => state.nexusAbilities.find(ability => ability?.definition.abilityKey === key));
+    // This will cause the nexus to level up appropriately.
+    gainEssence(state, nexusData.essence ?? 0, false);
+    for (const ability of state.nexusAbilities) {
+        ability.level = nexusData.abilityLevels?.[ability.definition.abilityKey] ?? 0;
+    }
+    if (nexusData.abilitySlots) {
+        state.nexusAbilitySlots = nexusData.abilitySlots.map(key => state.nexusAbilities.find(ability => ability?.definition.abilityKey === key));
+    }
     // We don't save cooldown state, so start all nexus abilities at max cooldown on load.
     for (const ability of state.nexusAbilitySlots) {
         if (!ability) {
@@ -64,17 +69,17 @@ function exportSavedCityData(state: GameState): SavedCityData {
     };
     return cityData;
 }
-function applySavedCityDataToState(state: GameState, cityData: SavedCityData) {
+function applySavedCityDataToState(state: GameState, cityData?: Partial<SavedCityData>) {
     if (!cityData) {
         return;
     }
-    state.city.population = cityData.population;
+    state.city.population = cityData.population ?? 0;
     let safety = 0;
-    while (state.city.wall.level < cityData.wallLevel && safety++ < 1000) {
+    while (state.city.wall.level < (cityData.wallLevel ?? 0) && safety++ < 1000) {
         gainWallLevel(state);
     }
-    state.city.wall.health = Math.min(state.city.wall.maxHealth, cityData.wallHealth);
-    for (let i = 0; i < cityData.archerLevel; i++) {
+    state.city.wall.health = Math.min(state.city.wall.maxHealth, cityData.wallHealth ?? state.city.wall.maxHealth);
+    for (let i = 0; i < (cityData.archerLevel ?? 0); i++) {
         gainArcherLevel(state);
     }
     getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted = cityData.archerJobProgress ?? 0;
@@ -115,7 +120,7 @@ function exportSavedHeroData(hero: Hero|undefined): SavedHeroData|undefined {
         skills,
     };
 }
-function importSavedHero(state: GameState, savedHeroData: undefined|SavedHeroData): Hero|undefined {
+function importSavedHero(state: GameState, savedHeroData: undefined|Partial<SavedHeroData>): Hero|undefined {
     if (!savedHeroData) {
         return undefined;
     }
@@ -125,10 +130,10 @@ function importSavedHero(state: GameState, savedHeroData: undefined|SavedHeroDat
             continue;
         }
         state.availableHeroes.splice(i--, 1);
-        hero.level = savedHeroData.level;
-        hero.experience = savedHeroData.experience;
+        hero.level = savedHeroData.level ?? 1;
+        hero.experience = savedHeroData.experience ?? 0 ;
         for (let i = 0; i < hero.abilities.length; i++) {
-            hero.abilities[i].level = savedHeroData.abilityLevels[i] ?? 0;
+            hero.abilities[i].level = savedHeroData.abilityLevels?.[i] ?? 0;
             hero.spentSkillPoints += hero.abilities[i].level;
         }
         if (savedHeroData.weapon) {
@@ -153,8 +158,8 @@ function importSavedHero(state: GameState, savedHeroData: undefined|SavedHeroDat
                 hero.equipment.armor = item;
             }
         }
-        for (let i = 0; i < savedHeroData.charms.length; i++) {
-            const savedCharm = savedHeroData.charms[i];
+        for (let i = 0; i < (savedHeroData.charms?.length ?? 0); i++) {
+            const savedCharm = savedHeroData.charms?.[i];
             if (!savedCharm) {
                 hero.equipment.charms[i] = undefined;
                 continue;
@@ -170,7 +175,7 @@ function importSavedHero(state: GameState, savedHeroData: undefined|SavedHeroDat
             }
         }
         for (const key of typedKeys(savedHeroData.skills ?? {})){
-            const skill = savedHeroData.skills[key];
+            const skill = savedHeroData.skills?.[key];
             if (skill) {
                 hero.skills[key] = {...skill};
                 hero.totalSkillLevels += skill.level;
@@ -220,6 +225,7 @@ interface SavedGameState {
     inventory: {[key in InventoryKey]?: number}
     worldTime: number
     nextWaveIndex: number
+    prestige: PrestigeStats
 }
 function exportSavedGameState(state: GameState): SavedGameState {
     // Rather than save the crafting bench state, we just return items to the inventory before saving.
@@ -236,15 +242,18 @@ function exportSavedGameState(state: GameState): SavedGameState {
         inventory: {...state.inventory},
         worldTime: state.world.time,
         nextWaveIndex: state.nextWaveIndex,
+        prestige: {...state.prestige},
     };
 }
 
-function importStateFromSavedGameState(savedGameState: SavedGameState): GameState {
+function importStateFromSavedGameState(savedGameState: Partial<SavedGameState>): GameState {
     let state = getNewGameState();
     applySavedNexusDataToState(state, savedGameState.nexus);
     applySavedCityDataToState(state, savedGameState.city);
-    state.heroSlots = savedGameState.heroSlots.map(savedHeroData => importSavedHero(state, savedHeroData));
-    for (const craftedItem of savedGameState.craftedItems.map(item => importSavedCraftedItem(state, item))) {
+    if (savedGameState.heroSlots) {
+        state.heroSlots = savedGameState.heroSlots.map(savedHeroData => importSavedHero(state, savedHeroData));
+    }
+    for (const craftedItem of (savedGameState.craftedItems?.map(item => importSavedCraftedItem(state, item)) ?? [])) {
         if (craftedItem.equipmentType === 'weapon') {
             state.craftedWeapons.push(craftedItem);
         } else if (craftedItem.equipmentType === 'armor') {
@@ -257,8 +266,8 @@ function importStateFromSavedGameState(savedGameState: SavedGameState): GameStat
     for (const key of typedKeys(state.inventory)) {
         state.discoveredItems.add(key);
     }
-    state.world.time = savedGameState.worldTime;
-    state.nextWaveIndex = savedGameState.nextWaveIndex;
+    state.world.time = savedGameState.worldTime ?? 0;
+    state.nextWaveIndex = savedGameState.nextWaveIndex ?? 0;
     state.selectedHero = state.heroSlots[0];
     // For now just simulate the world to catch up to the approximate state they saved in.
     let safety = 0;
@@ -277,6 +286,10 @@ function importStateFromSavedGameState(savedGameState: SavedGameState): GameStat
     updateWaveScale(state, true);
     // Add the crafting bench/jobs on load.
     state.nexus.update(state);
+    state.prestige = {
+        ...state.prestige,
+        ...savedGameState.prestige,
+    };
     return state;
 }
 
@@ -294,6 +307,19 @@ export function saveGame(state: GameState): void {
     saveGameToLocalStorage(exportSavedGameState(state));
 }
 window.saveGame = saveGame;
+function exportGameToClipboard(state: GameState): void {
+    const savedGameState = exportSavedGameState(state);
+    const jsonString = JSON.stringify(savedGameState);
+    console.log('Writing saved game to clipboard');
+    console.log(jsonString);
+    navigator.clipboard.writeText(jsonString);
+}
+window.exportGameToClipboard = exportGameToClipboard;
+function importSavedGameFromJson(jsonString: string): void {
+    const savedGameState = JSON.parse(jsonString) as SavedGameState;
+    setState(importStateFromSavedGameState(savedGameState));
+}
+window.importSavedGameFromJson = importSavedGameFromJson;
 
 export function loadGame(): GameState {
     try {

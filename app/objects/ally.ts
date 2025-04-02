@@ -112,7 +112,7 @@ export class AllyObject implements Ally {
         return getModifiableStatValue(state, this, this.stats.attacksPerSecond);
     }
     getAttackRange(state: GameState): number {
-        return this.attackRange;
+        return getModifiableStatValue(state, this, this.stats.attackRange);
     }
     getDamageForTarget(state: GameState, target: AbilityTarget): number {
         let damage = this.getDamage(state);
@@ -140,9 +140,11 @@ export class AllyObject implements Ally {
             return this.level;
         }),
         maxHealth: createModifiableStat<Ally>((state: GameState) => this.maxHealth + 2 * this.getStr(state)),
+        regenPerSecond: createModifiableStat<Ally>((state: GameState) => 0),
         movementSpeed: createModifiableStat<Ally>(this.movementSpeed),
         damage: createModifiableStat<Ally>((state: GameState) => this.damage),
         attacksPerSecond: createModifiableStat<Ally>(this.attacksPerSecond),
+        attackRange: createModifiableStat<Ally>(this.attackRange),
         extraHitChance: createModifiableStat<Ally>((state: GameState) => this.getDex(state) / 100),
         criticalChance: createModifiableStat<Ally>((state: GameState) => this.getInt(state) / 100),
         criticalMultiplier: createModifiableStat<Ally>((state: GameState) => 0.5),
@@ -237,7 +239,6 @@ export class AllyObject implements Ally {
             }
         }
 
-        // TODO: Handle moving to use an ability on a selected target.
         if (this.selectedAbility) {
             if (this.abilityTarget && !isTargetAvailable(state, this.abilityTarget)) {
                 delete this.abilityTarget;
@@ -261,13 +262,14 @@ export class AllyObject implements Ally {
         if (this.selectedAttackTarget && !isTargetAvailable(state, this.selectedAttackTarget)) {
             delete this.selectedAttackTarget;
         }
+        const attackRange = this.getAttackRange(state);
         // Replace the current attack target with the selected attack taret(if any)
         // if it is becomes invalid (it dies, for example).
         if (this.attackTarget && (
             !isTargetAvailable(state, this.attackTarget)
             // Cancel targeting an enemy outside of attack range each frame so that we potentially can choose
             // a new closer target.
-            || getDistance(this, this.attackTarget) - this.r - this.attackTarget.r > this.attackRange
+            || getDistance(this, this.attackTarget) - this.r - this.attackTarget.r > attackRange
         )) {
             this.attackTarget = this.selectedAttackTarget
         }
@@ -287,7 +289,7 @@ export class AllyObject implements Ally {
         }
         if (this.attackTarget) {
             // Attack the target when it is in range.
-            if (moveAllyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + this.getAttackRange(state))) {
+            if (moveAllyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + attackRange)) {
                 // Attack the target if the enemy's attack is not on cooldown.
                 // Note that this could be `Infinity` so don't use this in any assignments.
                 const attackCooldown = 1000 / this.getAttacksPerSecond(state);

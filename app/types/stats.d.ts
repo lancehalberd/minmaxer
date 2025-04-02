@@ -13,7 +13,9 @@ interface ModifiableStat<T> {
 type CoreStat = 'dex' | 'str' | 'int';
 
 // These stats can be modified on all units.
-type CommonModifiableStats = 'speed' | 'movementSpeed' | 'attacksPerSecond' | 'damage' | 'incomingDamageMultiplier';
+type CommonModifiableStats = 'speed' | 'movementSpeed'
+| 'attacksPerSecond' | 'damage' | 'attackRange'
+| 'incomingDamageMultiplier' | 'regenPerSecond';
 
 type ModifiableHeroStat = CoreStat | CommonModifiableStats | 'maxHealth'
     | 'extraHitChance' | 'criticalChance' | 'criticalMultiplier'
