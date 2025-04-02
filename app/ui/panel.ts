@@ -98,7 +98,7 @@ const tabWidth = 150;
 const shadedBorderFill = '#AAA';
 export class TabbedPanel implements UIContainer {
     objectType = <const>'uiContainer';
-    comutableTabs = this.props.tabs;
+    computableTabs = this.props.tabs;
     selectedTabIndex = this.props.selectedTabIndex ?? 0;
     onSelectTab = this.props.onSelectTab;
     w = this.props.w ?? 250;
@@ -121,7 +121,7 @@ export class TabbedPanel implements UIContainer {
     prevButton = new CharacterIconButton({
         character: '<',
         onClick: (state: GameState) => {
-            const tabs = computeValue(state, undefined, this.comutableTabs, []);
+            const tabs = computeValue(state, undefined, this.computableTabs, []);
             const newIndex = (this.selectedTabIndex + tabs.length - 1) % tabs.length;
             this.selectTabIndex(state, newIndex);
             return true;
@@ -134,7 +134,7 @@ export class TabbedPanel implements UIContainer {
     nextButton = new CharacterIconButton({
         character: '>',
         onClick: (state: GameState) => {
-            const tabs = computeValue(state, undefined, this.comutableTabs, []);
+            const tabs = computeValue(state, undefined, this.computableTabs, []);
             const newIndex = (this.selectedTabIndex + 1) % tabs.length;
             this.selectTabIndex(state, newIndex);
             return true;
@@ -148,7 +148,7 @@ export class TabbedPanel implements UIContainer {
     children: UIElement[] = [];
     constructor(public props: TabbedPanelProps) {}
     update(state: GameState) {
-        const tabs = computeValue(state, undefined, this.comutableTabs, []);
+        const tabs = computeValue(state, undefined, this.computableTabs, []);
         const content = tabs[this.selectedTabIndex].content;
         this.children = [content];
         if (this.onClose) {
@@ -208,7 +208,7 @@ export class TabbedPanel implements UIContainer {
             fillRect(context, {x: 0, y: titleHeight, w: this.w, h: dividerThickness}, '#FFF');
             fillRect(context, {x: 2, y: titleHeight + dividerThickness, w: this.w - 4, h: this.h - 4 - titleHeight - dividerThickness}, '#444');
             if (this.isNarrow(state)) {
-                const tabs = computeValue(state, undefined, this.comutableTabs, []);
+                const tabs = computeValue(state, undefined, this.computableTabs, []);
                 // Narrow view just shows the title of the current tab with prev/next arrow buttons on the left and right of it.
                 const selectedTab = tabs[this.selectedTabIndex];
                 if (selectedTab) {
@@ -225,11 +225,11 @@ export class TabbedPanel implements UIContainer {
         context.restore();
     }
     isNarrow(state: GameState): boolean {
-        const tabs = computeValue(state, undefined, this.comutableTabs, []);
+        const tabs = computeValue(state, undefined, this.computableTabs, []);
         return this.w < (tabWidth + 5) * tabs.length;
     }
     selectTabIndex(state: GameState, index: number) {
-        const tabs = computeValue(state, undefined, this.comutableTabs, []);
+        const tabs = computeValue(state, undefined, this.computableTabs, []);
         this.selectedTabIndex = index % tabs.length;
         this.onSelectTab?.(state, index);
     }
