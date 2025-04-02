@@ -1,6 +1,6 @@
 import {canvas, uiPadding, uiSize} from 'app/gameConstants';
 import {ChooseItemPanel} from 'app/ui/chooseItemPanel';
-import {TabbedPanel} from 'app/ui/panel';
+import {PanelPadding, TabbedPanel} from 'app/ui/panel';
 import {CloseIconButton} from 'app/ui/iconButton';
 import {TextButton} from 'app/ui/textButton';
 import {showSimpleTooltip} from 'app/ui/tooltip';
@@ -295,7 +295,7 @@ class ItemPreview implements UIContainer {
     }
 }
 
-const craftingBenchPanelContent = new CraftingBenchContent();
+const craftingBenchPanelContent = new PanelPadding(new CraftingBenchContent());
 
 export const craftingBenchPanel = new TabbedPanel({
     w: 550,

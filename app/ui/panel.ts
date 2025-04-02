@@ -226,7 +226,7 @@ export class TabbedPanel implements UIContainer {
     }
     isNarrow(state: GameState): boolean {
         const tabs = computeValue(state, undefined, this.comutableTabs, []);
-        return this.w > tabWidth + 5 * tabs.length;
+        return this.w < (tabWidth + 5) * tabs.length;
     }
     selectTabIndex(state: GameState, index: number) {
         const tabs = computeValue(state, undefined, this.comutableTabs, []);
