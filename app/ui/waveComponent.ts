@@ -23,12 +23,30 @@ export function updateWaveScale(state: GameState, instant = false) {
     }
 }
 
-export const waveComponent: UIContainer & {waveStones: WaveStone[]} = {
+export const waveComponent: UIContainer & {waveStones: WaveStone[], children: UIElement[]} = {
     objectType: 'uiContainer',
     w: 40, h: canvas.height, x: 0, y: 0,
     waveStones: [],
+    children: [],
     update(state: GameState) {
+        this.children = [];
         updateWaveScale(state);
+        for (let i = state.nextWaveIndex - 1; i < state.waves.length; i++) {
+            if (!state.waves[i]) {
+                continue;
+            }
+            if (!this.waveStones[i]) {
+                this.waveStones[i] = new WaveStone(state, this, state.waves[i]);
+            } else {
+                this.waveStones[i].wave = state.waves[i];
+            }
+            const waveButton = this.waveStones[i];
+            waveButton.updatePosition(state);
+            if (waveButton.y >= canvas.height) {
+                break;
+            }
+            this.children.push(waveButton);
+        }
     },
     render(context: CanvasRenderingContext2D, state: GameState) {
         fillRect(context, this, '#000');
@@ -38,22 +56,7 @@ export const waveComponent: UIContainer & {waveStones: WaveStone[]} = {
         }
     },
     getChildren(state: GameState) {
-        const buttons: UIButton[] = []
-        for (let i = state.nextWaveIndex - 1; i < state.waves.length; i++) {
-            if (!state.waves[i]) {
-                continue;
-            }
-            if (!this.waveStones[i]) {
-                this.waveStones[i] = new WaveStone(state, this, state.waves[i]);
-            }
-            const waveButton = this.waveStones[i];
-            waveButton.updatePosition(state);
-            if (waveButton.y >= canvas.height) {
-                break;
-            }
-            buttons.push(waveButton);
-        }
-        return buttons;
+        return this.children;
     }
 };
 
