@@ -20,7 +20,7 @@ interface GameState {
     itemsToSelectFrom?: InventoryItem[]
     openInventoryPanel?: boolean
     openCraftingBenchPanel?: boolean
-    openCraftingJobsPanel?: boolean
+    openJobsPanel?: boolean
     // Used for tracking which charm is being updated.
     selectedCharmIndex?: number
     hoveredAbility?: Ability

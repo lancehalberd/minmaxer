@@ -6,7 +6,7 @@ import {updateHudUIElements} from 'app/hud';
 import {isGameKeyDown, gameKeys, wasGameKeyPressed, updateKeyboardState} from 'app/keyboard';
 import {updateMouseActions} from 'app/mouse';
 import {toggleCraftingBenchPanel} from 'app/ui/craftingBenchPanel';
-import {toggleCraftingJobsPanel} from 'app/ui/craftingJobsPanel';
+import {toggleJobsPanel} from 'app/ui/jobsPanel';
 import {toggleHeroPanel} from 'app/ui/heroPanel';
 import {toggleInventoryPanel} from 'app/ui/inventoryPanel';
 import {activateHeroAbility} from 'app/utils/hero';
@@ -110,15 +110,15 @@ function update() {
     if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
         toggleHeroPanel(state);
     }
-    if (wasGameKeyPressed(state, gameKeys.craftingJobsPanel)) {
-        toggleCraftingJobsPanel(state);
+    if (wasGameKeyPressed(state, gameKeys.jobsPanel)) {
+        toggleJobsPanel(state);
     }
     if (wasGameKeyPressed(state, gameKeys.inventoryPanel)) {
         toggleInventoryPanel(state);
     }
     if (wasGameKeyPressed(state, gameKeys.closeAll)) {
         toggleHeroPanel(state, false);
-        toggleCraftingJobsPanel(state, false);
+        toggleJobsPanel(state, false);
         toggleInventoryPanel(state, false);
         toggleCraftingBenchPanel(state, false);
         delete state.selectedNexusAbilitySlot;

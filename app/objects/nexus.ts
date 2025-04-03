@@ -1,12 +1,10 @@
-import {archerJobDefinition, archerJobElement, updateArchers} from 'app/city/archers';
-import {healerJobElement} from 'app/city/healer';
-import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
+import {archerJobDefinition, updateArchers} from 'app/city/archers';
 import {renderRangeCircle} from 'app/draw/renderIndicator';
-import {CraftingBench} from 'app/objects/structure';
+import {BuildingSite, CraftingBench} from 'app/objects/structure';
 import {frameLength} from 'app/gameConstants';
 import {fillCircle, renderGameStatus} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
-import {applyHeroToJob, isJobDiscovered} from 'app/utils/job';
+import {applyHeroToJob} from 'app/utils/job';
 import {getOrCreateJob} from 'app/utils/job';
 import {getJobMultiplierFromTools} from 'app/utils/inventory';
 
@@ -61,6 +59,14 @@ export function createNexus(zone: ZoneInstance): Nexus {
                     craftingBench.y = this.r - craftingBench.r;
                 }
             }
+            if (state.discoveredItems.has('wood')) {
+                let buildingSite = state.world.objects.find(object => object instanceof BuildingSite);
+                if (!buildingSite) {
+                    buildingSite = new BuildingSite({zone: this.zone, x: 0, y: 0});
+                    state.world.objects.push(buildingSite);
+                }
+
+            }
             // If we are tracking gained essence, remove it linearly for 1 second following the last time
             // essence was gained.
             if (this.gainedEssence) {
@@ -109,20 +115,6 @@ function getNexusElements(this: Nexus, state: GameState): UIElement[] {
                 elements.push(heroElement);
             }
         }
-    }
-    for (const wallElement of [buildWallElement, repairWallElement, upgradeWallElement]) {
-        const definition = wallElement.jobDefinition;
-         if (!definition.isValid || definition.isValid(state)) {
-             elements.push(wallElement);
-         }
-    }
-
-    // Archers and healers occupy the city wall.
-    if (state.city.wall.level && isJobDiscovered(state, archerJobElement.jobDefinition)) {
-        elements.push(archerJobElement);
-    }
-    if (state.city.wall.level && isJobDiscovered(state, healerJobElement.jobDefinition)) {
-        elements.push(healerJobElement);
     }
     return elements;
 }

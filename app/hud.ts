@@ -2,7 +2,7 @@ import {buttonSize, canvas, uiSize} from 'app/gameConstants';
 import {calculatePrestigeStats, restartGame} from 'app/state';
 import {getHeroAbilityButtons} from 'app/ui/abilityButton';
 import {craftingBenchPanel} from 'app/ui/craftingBenchPanel';
-import {CraftingJobsPanel, toggleCraftingJobsPanel} from 'app/ui/craftingJobsPanel';
+import {jobsPanel, toggleJobsPanel} from 'app/ui/jobsPanel';
 import {chooseArmorPanel, chooseCharmPanel, chooseWeaponPanel} from 'app/ui/equipmentPanels';
 import {getHeroButtons} from 'app/ui/heroButton';
 import {HeroPanel, toggleHeroPanel} from 'app/ui/heroPanel';
@@ -63,20 +63,19 @@ const inventoryPanelButton = new CharacterIconButton({
     },
 });
 
-const craftingJobsPanelButton = new CharacterIconButton({
+const jobsPanelButton = new CharacterIconButton({
     x: 40 + uiSize + 2 * (buttonSize + uiSize),
     y: canvas.height - buttonSize - uiSize,
     w: buttonSize, h: buttonSize,
-    character: 'M',
+    character: 'J',
     onClick: (state: GameState) => {
-        toggleCraftingJobsPanel(state);
+        toggleJobsPanel(state);
         return true;
     },
 });
 
 
 const heroPanel = new HeroPanel();
-const craftingJobsPanel = new CraftingJobsPanel();
 const nexusAbilityPanel = new NexusAbilityPanel({});
 
 // Get buttons that appear as part of the HUD, fixed relative to the screen and on top of the field elements.
@@ -95,9 +94,8 @@ export function updateHudUIElements(state: GameState) {
     if (state.city.population) {
         state.hudUIElements.push(populationDisplay);
     }
-    craftingJobsPanel.updateCraftingElements(state);
-    if (craftingJobsPanel.craftingElements.length) {
-        panelButtons.push(craftingJobsPanelButton);
+    if (state.discoveredItems.has('wood')) {
+        panelButtons.push(jobsPanelButton);
     }
     if (state.openCharacterPanel) {
         leftAlignedPanels.push(heroPanel);
@@ -111,8 +109,8 @@ export function updateHudUIElements(state: GameState) {
     if (state.openChooseCharmPanel) {
         leftAlignedPanels.push(chooseCharmPanel);
     }
-    if (state.openCraftingJobsPanel) {
-        leftAlignedPanels.push(craftingJobsPanel);
+    if (state.openJobsPanel) {
+        leftAlignedPanels.push(jobsPanel);
     }
     if (state.openCraftingBenchPanel) {
         leftAlignedPanels.push(craftingBenchPanel);

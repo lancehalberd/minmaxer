@@ -15,7 +15,7 @@ import {typedKeys, isArmor, isCharm, isWeapon} from 'app/utils/types';
 export function toggleCraftingBenchPanel(state: GameState, open = !state.openCraftingBenchPanel) {
     state.openCraftingBenchPanel = open;
     if (open) {
-        state.openCraftingJobsPanel = false;
+        state.openJobsPanel = false;
         state.openCharacterPanel = false;
         state.openChooseArmorPanel = false;
         state.openChooseWeaponPanel = false;

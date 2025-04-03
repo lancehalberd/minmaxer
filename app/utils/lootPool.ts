@@ -134,7 +134,7 @@ export function gainLoot(state: GameState, itemKey: InventoryKey, target: FieldT
             text: getItemLabel(itemKey),
             color: (state) => getRarityColor(state, item.rarity),
             delay: existingItemEffect ? 400 : 0,
-            duration: 100 * (1 + item.rarity / 2),
+            duration: 1000 * (1 + item.rarity / 2),
             creator: 'lootText',
         });
     }

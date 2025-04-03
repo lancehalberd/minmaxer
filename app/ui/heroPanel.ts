@@ -96,7 +96,6 @@ export class EquipHeroPanel implements UIContainer {
 }
 
 export function toggleHeroPanel(state: GameState, open = !state.openCharacterPanel) {
-    state.openCraftingJobsPanel = false;
     if (!open) {
         state.openCharacterPanel = false;
         state.openChooseArmorPanel = false;

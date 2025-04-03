@@ -14,7 +14,7 @@ interface CraftingJobDefinition {
     essenceCost?: number
     workerSeconds: number
     jobDefinition?: JobDefinition
-    element?: UIElement
+    element?: JobUIElement
     repeat?: boolean
 }
 
@@ -60,11 +60,13 @@ export const craftingJobDefinitions: CraftingJobDefinition[] = [
     },
     {
         item: 'stoneAxe',
+        itemIcon: axeIcon,
         resourceCost: {stone: 2},
         workerSeconds: 60,
     },
     {
         item: 'stoneHammer',
+        itemIcon: hammerIcon,
         resourceCost: {stone: 2},
         workerSeconds: 60,
     },
@@ -77,7 +79,7 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
     const jobDefinition: JobDefinition = {
         key: 'craft-' + craftingJobDefinition.item,
         labelIcon: craftingJobDefinition.itemIcon,
-        label: '+' + label,
+        label: label,
         resourceCost: craftingJobDefinition.resourceCost,
         essenceCost: craftingJobDefinition.essenceCost,
         workerSeconds: craftingJobDefinition.workerSeconds,

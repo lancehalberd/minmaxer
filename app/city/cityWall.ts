@@ -73,7 +73,7 @@ const buildWallJobDefinition: JobDefinition = {
 };
 
 export const buildWallElement = createJobComponent({
-    x: -3 * uiSize, y: -uiSize,
+    x: -3 * uiSize, y: -uiSize, scale: 2,
     jobDefinition: buildWallJobDefinition,
     getHeroTarget: (state: GameState) => state.nexus
 });
@@ -112,7 +112,7 @@ const repairWallJobDefinition: JobDefinition = {
 };
 
 export const repairWallElement = createJobComponent({
-    x: -3 * uiSize, y: 1.5 * uiSize,
+    x: -3 * uiSize, y: 1.5 * uiSize, scale: 2,
     jobDefinition: repairWallJobDefinition,
     getHeroTarget: (state: GameState) => state.nexus
 });
@@ -139,7 +139,7 @@ const upgradeWallJobDefinition: JobDefinition = {
 };
 
 export const upgradeWallElement = createJobComponent({
-    x: -3 * uiSize, y: -uiSize,
+    x: -3 * uiSize, y: -uiSize, scale: 2,
     jobDefinition: upgradeWallJobDefinition,
     getHeroTarget: (state: GameState) => state.nexus
 });
