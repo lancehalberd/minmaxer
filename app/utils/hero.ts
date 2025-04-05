@@ -1,5 +1,8 @@
 import {framesPerSecond} from 'app/gameConstants';
+import {useHeroAbility} from 'app/utils/ability';
+import {isAbilityTargetValid} from 'app/utils/combat';
 import {spendEssence} from 'app/utils/essence';
+import {getDistanceBetweenCircles} from 'app/utils/geometry';
 
 export function getHeroSkill(state: GameState, hero: Hero, skillType: HeroSkillType): HeroSkill {
     let heroSkill = hero.skills[skillType];
@@ -107,8 +110,25 @@ export function activateNexusAbility(state: GameState, ability: NexusAbility<any
     }
 }
 
+export function getClosestAttackTargetInRange(state: GameState, hero: Hero|Ally, range = Infinity): EnemyTarget|undefined {
+    // Choose the closest valid target within the aggro radius as an attack target.
+    let attackTarget: EnemyTarget|undefined;
+    let closestDistance = range;
+    for (const object of hero.zone.objects) {
+        if (object.objectType !== 'enemy' && object.objectType !== 'spawner') {
+            continue;
+        }
+        const distance = getDistanceBetweenCircles(hero, object);
+        if (distance < closestDistance) {
+            attackTarget = object;
+            closestDistance = distance;
+        }
+    }
+    return attackTarget;
+}
 
 export function moveAllyTowardsTarget(state: GameState, ally: Hero|Ally, target: AbilityTarget, distance = 0): boolean {
+    ally.movementWasBlocked = false;
     const pixelsPerFrame = ally.getMovementSpeed(state) / framesPerSecond;
     // Move this until it reaches the target.
     const dx = target.x - ally.x, dy = target.y - ally.y;
@@ -146,13 +166,54 @@ export function moveAllyTowardsTarget(state: GameState, ally: Hero|Ally, target:
         //} else if (object.objectType === '')
         const dx = ally.x - object.x, dy = ally.y - object.y;
         if (!dx && !dy) {
+            ally.movementWasBlocked = true;
             continue;
         }
         const mag = Math.sqrt(dx * dx + dy * dy);
         if (mag < minDistance) {
+            ally.movementWasBlocked = true;
             ally.x = object.x + dx * minDistance / mag;
             ally.y = object.y + dy * minDistance / mag;
         }
     }
     return false;
+}
+
+
+export function onHitAlly(state: GameState, ally: Ally|Hero, attacker: Enemy) {
+    ally.lastTimeDamageTaken = ally.zone.time;
+    for (const ability of ally.abilities) {
+        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
+            ability.definition.onHit?.(state, ally, ability, attacker);
+        }
+    }
+    // Ally will ignore being attacked if they are completing a movement command.
+    if (ally.movementTarget) {
+        return;
+    }
+    // Allyes will prioritize attacking an enemy over an enemy spawner or other targets.
+    if (ally.attackTarget?.objectType !== 'enemy') {
+        ally.attackTarget = attacker;
+    }
+}
+
+// Automatically use ability if there is a target in range.
+export function checkToAutocastAbility(state: GameState, ally: Ally|Hero, ability: ActiveAbility) {
+    const targetingInfo = ability.definition.getTargetingInfo(state, ally, ability);
+    // prioritize the current attack target over other targets.
+    // TODO: prioritize the closest target out of other targets.
+    for (const object of [ally.attackTarget, ...ally.zone.objects]) {
+        if (!object) {
+            continue;
+        }
+        // Skip this object if the ability doesn't target this type of object.
+        if (!isAbilityTargetValid(state, targetingInfo, object)) {
+            continue;
+        }
+        // Use the ability on the target if it is in range.
+        if (getDistanceBetweenCircles(ally, object) < ally.r + object.r + targetingInfo.range + (targetingInfo.hitRadius ?? 0)) {
+            useHeroAbility(state, ally, ability, object);
+            return;
+        }
+    }
 }

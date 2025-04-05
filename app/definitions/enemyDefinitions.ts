@@ -69,15 +69,14 @@ enemyDefinitions.kobold = {
     getStatsForLevel: getBasicEnemyStatsForLevel,
     aggroRadius: baseAggroRadius,
     getLootPool: enemyLootPoolfFromKeys([
-        'leatherStrap',
-        'leather', 'chippedRuby',
-        'fineLeather', 'ruby',
-        'flawlessRuby', ],[
-        'woodHammer', 'woodHatchet',
-        'stoneHammer', 'stoneAxe',
+        'leatherStrap', 'leather', 'fineLeather',
+        'woodHammer','stoneHammer',
+        'woodHatchet','stoneAxe',
+        'chippedRuby', 'ruby', 'flawlessRuby',
+        ...commonLegendaryItems,
+    ],[
         'ironHammer', 'ironHatchet',
         'steelHammer', 'steelAxe',
-        ...commonLegendaryItems,
     ]),
 };
 
@@ -98,12 +97,13 @@ enemyDefinitions.koboldArcher = {
     },
     lootChance: 0.15,
     getLootPool: enemyLootPoolfFromKeys([
-        'leatherStrap',
-        'leather', 'chippedEmerald',
-        'fineLeather', 'emerald',
-        'flawlessEmerald'],[
-        'shortBow', 'longBow', 'crossbow',
+        'leatherStrap', 'leather', 'fineLeather',
+        'shortBow', 'longBow',
+        'chippedEmerald', 'emerald', 'flawlessEmerald',
         ...commonLegendaryItems,
+    ],[
+         'crossbow',
+
     ]),
     aggroRadius: baseAggroRadius,
 };
@@ -123,12 +123,12 @@ enemyDefinitions.koboldCleric = {
     },
     lootChance: 0.15,
     getLootPool: enemyLootPoolfFromKeys([
-        'leatherStrap',
-        'leather', 'chippedSapphire',
-        'fineLeather', 'sapphire',
-        'flawlessSapphire'],[
-        'woodStaff', 'bronzeStaff', 'steelStaff',
+        'leatherStrap', 'leather','fineLeather',
+        'woodStaff',
+        'chippedSapphire', 'sapphire', 'flawlessSapphire',
         ...commonLegendaryItems,
+    ],[
+        'bronzeStaff', 'steelStaff',
     ]),
     aggroRadius: baseAggroRadius,
 };

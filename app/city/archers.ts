@@ -7,7 +7,7 @@ import {getOrCreateJob} from 'app/utils/job';
 import {getJobMultiplierFromTools} from 'app/utils/inventory';
 
 export const archerJobDefinition: JobDefinition = {
-    key: 'archer',
+    key: 'trainArchers',
     label: (state: GameState) => 'Lv ' + state.city.archers.level + ' Archers',
     requiredToolType: 'bow',
     onComplete: (state: GameState) => {

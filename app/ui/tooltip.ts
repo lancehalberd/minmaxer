@@ -3,6 +3,7 @@ import {drawFrame} from 'app/utils/animations';
 import {fillBorderedRect, fillText, measureText} from 'app/utils/draw';
 import {getAvailableToolCount, getItemLabel, getToolIcon, toolTypeLabels} from 'app/utils/inventory';
 import {statModifierStrings} from 'app/utils/modifiableStat';
+import {calculatePrestigeStats} from 'app/utils/prestige';
 import {typedKeys} from 'app/utils/types';
 
 
@@ -203,4 +204,18 @@ export function showRequirementsTooltip(state: GameState, {essenceCost, toolType
     }
     state.hoverToolTip = new ToolTip(state, {textProps: toolTipText, lines: requirementLines});
     return true;
+}
+
+
+export function showPrestigeTooltip(state: GameState) {
+    const prestigeStats = calculatePrestigeStats(state);
+    showSimpleTooltip(state, [
+        'Prestige Bonuses:',
+        'Loot Rarity Bonus: ' + prestigeStats.lootRarityBonus,
+        '+' + prestigeStats.essenceGainBonus + '% Essence gained',
+        '+' + prestigeStats.heroExperienceBonus + '% Hero XP gained',
+        '+' + prestigeStats.skillExperienceBonus + '% Skill XP gained',
+        '+' + prestigeStats.archerExperienceBonus + '% Archer XP gained',
+        '+' + prestigeStats.mageExperienceBonus + '% Mage XP gained',
+    ]);
 }

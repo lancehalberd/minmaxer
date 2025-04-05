@@ -1,7 +1,8 @@
 import {archerJobElement} from 'app/city/archers';
 import {craftingJobDefinitions} from 'app/city/crafting';
 import {buildWallElement, repairWallElement, upgradeWallElement} from 'app/city/cityWall';
-import {healerJobElement} from 'app/city/healer';
+import {mageJobElement} from 'app/city/mages';
+import {buildCabinJobElement,buildCottageJobElement, buildHutJobElement, buildTowerJobElement} from 'app/city/houses';
 import {canvas, uiPadding, uiSize} from 'app/gameConstants';
 import {CharacterIconButton} from 'app/ui/iconButton';
 import {PanelPadding, TabbedPanel} from 'app/ui/panel';
@@ -111,9 +112,13 @@ function getCraftingJobElements(state: GameState): JobUIElement[] {
     return jobElements;
 }
 
+const buildingJobs = [
+    buildWallElement, repairWallElement, upgradeWallElement,
+    buildHutJobElement, buildCabinJobElement,buildCottageJobElement, buildTowerJobElement,
+];
 function getBuildingJobElements(state: GameState): JobUIElement[] {
     const jobElements: JobUIElement[] = [];
-    for (const wallElement of [buildWallElement, repairWallElement, upgradeWallElement]) {
+    for (const wallElement of buildingJobs) {
         const definition = wallElement.jobDefinition;
          if (!definition.isValid || definition.isValid(state)) {
              jobElements.push(wallElement);
@@ -124,7 +129,7 @@ function getBuildingJobElements(state: GameState): JobUIElement[] {
 
 function getTrainingJobElements(state: GameState): JobUIElement[] {
     const jobElements: JobUIElement[] = [];
-    for (const wallElement of [archerJobElement, healerJobElement]) {
+    for (const wallElement of [archerJobElement, mageJobElement]) {
         const definition = wallElement.jobDefinition;
          if (!definition.isValid || definition.isValid(state)) {
              jobElements.push(wallElement);

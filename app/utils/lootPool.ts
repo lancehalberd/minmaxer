@@ -16,7 +16,7 @@ export function enemyLootPoolfFromKeys(
 }
 
 
-const totalPoolWeight = 1e9;
+const totalPoolWeight = 1e8;
 // Rarity chance is basically 1 / ( 10 ** itemRarity) with certain factors making items more common like level of enemy.
 export function generatePoolFromKeys(
     state: GameState,
@@ -39,7 +39,6 @@ export function generatePoolFromKeys(
     for (const key of priorityKeys) {
         const item = requireItem(key);
         if (item.rarity < 1) {
-            console.error('Common items should not be included in priority item pool:', item.key);
             priorityCommonKeys.push(key);
             continue;
         }
@@ -71,7 +70,9 @@ export function generatePoolFromKeys(
         remainingWeight -= weight;
     }
     if (remainingWeight <= 0) {
-        console.error('No reamining weight for common items:', remainingWeight);
+        console.error('No remaining weight for common items:', remainingWeight, normalKeys, priorityKeys);
+        console.error('This will make rare and legendary items less likely to drop in this pool.');
+        console.error('This typically means there are too many uncommon items in the pool', uncommonKeys);
     }
     const weight = Math.max(remainingWeight, totalPoolWeight / 2);
     if (normalCommonKeys.length && priorityCommonKeys.length) {
@@ -114,7 +115,7 @@ export function rollLoot(weightedDrops: WeightedDrop[]): InventoryKey {
             const key = drop.keys[Math.floor(Math.random() * drop.keys.length)];
             if (requireItem(key).rarity) {
                 //console.log('Drop chance for ' + key + ' was ' + (100 * drop.weight / total).toFixed(4) + '%, ' + drop.weight + '/' + total);
-                // console.log('Drop chance for ' + key + ' was 1 in ' + (total / drop.weight).toFixed(1));
+                //console.log('Drop chance for ' + key + ' was 1 in ' + (total / drop.weight).toFixed(1));
             }
             return key;
         }

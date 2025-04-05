@@ -51,7 +51,7 @@ export function createActiveEnemyAbilityInstance<T extends FieldTarget|undefined
     };
 }
 
-export function activateHeroAbility(state: GameState, hero: Hero, ability: ActiveAbility, target: AbilityTarget) {
+export function useHeroAbility(state: GameState, hero: Ally|Hero, ability: ActiveAbility, target: AbilityTarget) {
     // TODO: Consume all charges here but make the ability more powerful.
     ability.charges--;
     ability.definition.onActivate(state, hero, ability, target);

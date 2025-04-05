@@ -87,6 +87,8 @@ interface Hero extends Circle, ZoneLocation {
     lastAttackTime?: number
     lastTimeDamageTaken?: number
     movementTarget?: FieldTarget
+    // Indicates whether movement was hindered during the most recent movement attempt.
+    movementWasBlocked?: boolean
     assignedJob?: Job
     // The target of the last explicit command the hero was given, if any.
     // Their actual attack target may be changed to an enemy that attacks them,

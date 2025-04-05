@@ -47,14 +47,17 @@ interface Ally extends Circle, ZoneLocation {
     // create effects that cause the hero to take increased or decreased damage.
     getIncomingDamageMultiplier: (state: GameState) => number
 
-    effects: ObjectEffect<Hero|Ally>[]
+    effects: ObjectEffect[]
     addStatModifiers: (modifiers?: StatModifier[]) => void
     removeStatModifiers: (modifiers?: StatModifier[]) => void
 
     // Properties that are often being updated during game play
     lastAttackTime?: number
+    autocastCooldown: number
     lastTimeDamageTaken?: number
     movementTarget?: FieldTarget
+    // Indicates whether movement was hindered during the most recent movement attempt.
+    movementWasBlocked?: boolean
     // The target of the last explicit command the hero was given, if any.
     // Their actual attack target may be changed to an enemy that attacks them,
     // but they will go back to this target once the enemy is defeated.

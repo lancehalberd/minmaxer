@@ -2,12 +2,11 @@ import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {renderRangeCircle} from 'app/draw/renderIndicator';
 import {frameLength, heroLevelCap} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
-import {activateHeroAbility, removeEffectFromTarget} from 'app/utils/ability';
-import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
+import {removeEffectFromTarget, useHeroAbility} from 'app/utils/ability';
+import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
 import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
-import {getDistanceBetweenCircles} from 'app/utils/geometry';
-import {moveAllyTowardsTarget, summonHero} from 'app/utils/hero';
+import {checkToAutocastAbility, getClosestAttackTargetInRange, moveAllyTowardsTarget, onHitAlly, summonHero} from 'app/utils/hero';
 import {applyHeroToJob} from 'app/utils/job';
 import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
 import {followCameraTarget} from 'app/utils/world';
@@ -26,6 +25,7 @@ class HeroObject implements Hero {
     health = 0;
 
     lastAttackTime?: number;
+    lastTimeDamageTaken?: number;
     movementTarget?: FieldTarget;
     assignedJob?: Job;
     selectedAttackTarget?: EnemyTarget;
@@ -38,6 +38,7 @@ class HeroObject implements Hero {
         charms: [undefined]
     };
     zone: ZoneInstance | World
+    movementWasBlocked = false;
 
     equipArmor(state: GameState, armor: Armor): boolean {
         if (this.equipment.armor) {
@@ -153,7 +154,7 @@ class HeroObject implements Hero {
     }
 
     getAttacksPerSecond(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.attacksPerSecond) * getModifiableStatValue(state, this, this.stats.speed);
+        return Math.max(0, getModifiableStatValue(state, this, this.stats.attacksPerSecond) * getModifiableStatValue(state, this, this.stats.speed));
     }
     getAttackRange(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.attackRange);
@@ -172,7 +173,9 @@ class HeroObject implements Hero {
     enemyDefeatCount = 0;
     getChildren = getHeroFieldButtons;
     effects: ObjectEffect[] = [];
-    onHit = onHitHero;
+    onHit(state: GameState, attacker: Enemy) {
+        onHitAlly(state, this, attacker);
+    }
     autocastCooldown = 0;
     abilities: Ability[] = this.definition.abilities.map(abilityDefinition => {
         if (abilityDefinition.abilityType === 'activeAbility') {
@@ -241,7 +244,7 @@ class HeroObject implements Hero {
         return getModifiableStatValue(state, this, this.stats.maxHealth);
     }
     getMovementSpeed(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.movementSpeed) * getModifiableStatValue(state, this, this.stats.speed);
+        return Math.max(0, getModifiableStatValue(state, this, this.stats.movementSpeed) * getModifiableStatValue(state, this, this.stats.speed));
     }
     getDamage(state: GameState): number {
         return getModifiableStatValue(state, this, this.stats.damage);
@@ -282,7 +285,7 @@ class HeroObject implements Hero {
         return getModifiableStatValue(state, this, this.stats.criticalChance);
     }
     getCooldownSpeed(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.cooldownSpeed) * getModifiableStatValue(state, this, this.stats.speed);
+        return Math.max(0, getModifiableStatValue(state, this, this.stats.cooldownSpeed) * getModifiableStatValue(state, this, this.stats.speed));
     }
     getMaxAbilityCharges(state: GameState): number {
         // Generating charge N takes N*baseCooldown seconds.
@@ -370,7 +373,7 @@ class HeroObject implements Hero {
             } else {
                 const targetingInfo = this.selectedAbility.definition.getTargetingInfo(state, this, this.selectedAbility);
                 if (moveAllyTowardsTarget(state, this, this.abilityTarget, this.r + (this.abilityTarget.r ?? 0) + targetingInfo.range)) {
-                    activateHeroAbility(state, this, this.selectedAbility, this.abilityTarget);
+                    useHeroAbility(state, this, this.selectedAbility, this.abilityTarget);
                     delete this.selectedAbility;
                     delete this.abilityTarget;
                 }
@@ -388,6 +391,7 @@ class HeroObject implements Hero {
             this.attackTarget = this.selectedAttackTarget
         }
         const attackRange = this.getAttackRange(state);
+        const priorityTarget = this.attackTarget || this.movementTarget;
         // The hero will automatically attack an enemy within its range if it is idle.
         if (!this.attackTarget && !this.movementTarget) {
             this.attackTarget = getClosestAttackTargetInRange(state, this, attackRange);
@@ -399,7 +403,10 @@ class HeroObject implements Hero {
                 targetToAttack = this.attackTarget;
             }
         }
-        if (!targetToAttack) {
+        // The hero will attack a random nearby target in two circumstances:
+        // 1) They are not currently moving/attacking anything
+        // 2) Their movement was blocked and their primary target is not in range.
+        if (!targetToAttack && (!priorityTarget || this.movementWasBlocked)) {
             // If no other attack target is in range, just try attacking the nearest target.
             targetToAttack = getClosestAttackTargetInRange(state, this, attackRange);
         }
@@ -531,24 +538,6 @@ class HeroObject implements Hero {
     }
 }
 
-
-export function getClosestAttackTargetInRange(state: GameState, hero: Hero, range = Infinity): EnemyTarget|undefined {
-    // Choose the closest valid target within the aggro radius as an attack target.
-    let attackTarget: EnemyTarget|undefined;
-    let closestDistance = range;
-    for (const object of hero.zone.objects) {
-        if (object.objectType !== 'enemy' && object.objectType !== 'spawner') {
-            continue;
-        }
-        const distance = getDistanceBetweenCircles(hero, object);
-        if (distance < closestDistance) {
-            attackTarget = object;
-            closestDistance = distance;
-        }
-    }
-    return attackTarget;
-}
-
 export function addBasicHeroes(state: GameState) {
     const warrior: Hero = new HeroObject('warrior', {zone: state.world, x: -60, y: 45});
     const ranger: Hero = new HeroObject('ranger', {zone: state.world, x: 60, y: 45});
@@ -558,22 +547,6 @@ export function addBasicHeroes(state: GameState) {
     state.availableHeroes.push(wizard);
 }
 
-function onHitHero(this: Hero, state: GameState, attacker: Enemy) {
-    this.lastTimeDamageTaken = this.zone.time;
-    for (const ability of this.abilities) {
-        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
-            ability.definition.onHit?.(state, this, ability, attacker);
-        }
-    }
-    // Hero will ignore being attacked if they are completing a movement command.
-    if (this.movementTarget) {
-        return;
-    }
-    // Heroes will prioritize attacking an enemy over an enemy spawner or other targets.
-    if (this.attackTarget?.objectType !== 'enemy') {
-        this.attackTarget = attacker;
-    }
-}
 
 function getHeroFieldButtons(this: Hero, state: GameState): UIButton[] {
     const buttons: UIButton[] = [];
@@ -596,26 +569,6 @@ function getHeroFieldButtons(this: Hero, state: GameState): UIButton[] {
     return buttons;
 }
 
-// Automatically use ability if there is a target in range.
-function checkToAutocastAbility(state: GameState, hero: Hero, ability: ActiveAbility) {
-    const targetingInfo = ability.definition.getTargetingInfo(state, hero, ability);
-    // prioritize the current attack target over other targets.
-    // TODO: prioritize the closest target out of other targets.
-    for (const object of [hero.attackTarget, ...hero.zone.objects]) {
-        if (!object) {
-            continue;
-        }
-        // Skip this object if the ability doesn't target this type of object.
-        if (!isAbilityTargetValid(state, targetingInfo, object)) {
-            continue;
-        }
-        // Use the ability on the target if it is in range.
-        if (getDistanceBetweenCircles(hero, object) < targetingInfo.range + (targetingInfo.hitRadius ?? 0)) {
-            activateHeroAbility(state, hero, ability, object);
-            return;
-        }
-    }
-}
 
 function checkForOnHitTargetAbilities(state: GameState, hero: Hero, target: AttackTarget) {
     for (const ability of hero.abilities) {

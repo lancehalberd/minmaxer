@@ -125,7 +125,7 @@ export function getClosestAttackTargetInRange(state: GameState, enemy: Enemy, ra
     let attackTarget: AllyTarget|Nexus|undefined;
     let closestDistance = range;
     for (const object of enemy.zone.objects) {
-        if (object.objectType !== 'hero' && object.objectType !== 'nexus') {
+        if (object.objectType !== 'ally' && object.objectType !== 'hero' && object.objectType !== 'nexus') {
             continue;
         }
         const distance = getDistanceBetweenCircles(enemy, object);
@@ -174,7 +174,7 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
     // Check to choose a new attack target.
     const attackRange = getEnemyAttackRange(state, this);
     if (!this.attackTarget) {
-        this.attackTarget = getClosestAttackTargetInRange(state, this, attackRange);
+        this.attackTarget = getClosestAttackTargetInRange(state, this, this.aggroRadius);
         if (this.attackTarget) {
             aggroEnemyPack(this, this.attackTarget);
         }
@@ -208,6 +208,7 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
         this.movementTarget = this.defaultTarget;
     }
     let targetToAttack: AllyTarget|Nexus|undefined;
+    const priorityTarget = this.attackTarget || this.movementTarget;
     if (this.attackTarget) {
         // Move towards the primary target.
         if (moveEnemyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + attackRange)) {
@@ -215,7 +216,10 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
             targetToAttack = this.attackTarget;
         }
     }
-    if (!targetToAttack) {
+    // The enemy will attack a random nearby target in two circumstances:
+    // 1) They are not currently moving/attacking anything
+    // 2) Their movement was blocked and their primary target is not in range.
+    if (!targetToAttack && (!priorityTarget || this.movementWasBlocked)) {
         // If no other attack target is in range, just try attacking the nearest target.
         targetToAttack = getClosestAttackTargetInRange(state, this, attackRange);
     }
@@ -238,18 +242,18 @@ export function updateEnemyMain(this: Enemy, state: GameState) {
 function getEnemyMovementSpeed(state: GameState, enemy: Enemy): number {
     const movementSpeed = getModifiableStatValue(state, enemy, enemy.stats.movementSpeed);
     const speed = getModifiableStatValue(state, enemy, enemy.stats.speed);
-    return movementSpeed * speed;
+    return Math.max(0, movementSpeed * speed);
 }
 function getEnemyAttacksPerSecond(state: GameState, enemy: Enemy): number {
     const attacksPerSecond = getModifiableStatValue(state, enemy, enemy.stats.attacksPerSecond);
     const speed = getModifiableStatValue(state, enemy, enemy.stats.speed);
-    return attacksPerSecond * speed;
+    return Math.max(0, attacksPerSecond * speed);
 }
 function getEnemyAttackRange(state: GameState, enemy: Enemy): number {
     return getModifiableStatValue(state, enemy, enemy.stats.attackRange);
 }
 function getEnemyCooldownSpeed(state: GameState, enemy: Enemy): number {
-    return getModifiableStatValue(state, enemy, enemy.stats.speed);
+    return Math.max(0, getModifiableStatValue(state, enemy, enemy.stats.speed));
 }
 export function getEnemyDamageForTarget(state: GameState, enemy: Enemy, target?: AbilityTarget): number {
     let damage = getModifiableStatValue(state, enemy, enemy.stats.damage);
@@ -269,6 +273,7 @@ export function getEnemyDamageForTarget(state: GameState, enemy: Enemy, target?:
 }
 
 function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityTarget, distance = 0): boolean {
+    enemy.movementWasBlocked = false;
     const pixelsPerFrame = getEnemyMovementSpeed(state, enemy) / framesPerSecond;
     // Move this until it reaches the target.
     // Slightly perturb the target so enemies don't get stacked with the exact same heading.
@@ -301,10 +306,12 @@ function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityT
         //} else if (object.objectType === '')
         const dx = enemy.x - object.x, dy = enemy.y - object.y;
         if (!dx && !dy) {
+            enemy.movementWasBlocked = true;
             continue;
         }
         const mag = Math.sqrt(dx * dx + dy * dy);
         if (mag < minDistance) {
+            enemy.movementWasBlocked = true;
             //console.log(mag, ' < ', minDistance);
             //console.log(enemy.x, enemy.y);
             enemy.x = object.x + dx * minDistance / mag;

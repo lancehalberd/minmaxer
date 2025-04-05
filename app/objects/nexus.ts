@@ -1,4 +1,5 @@
 import {archerJobDefinition, updateArchers} from 'app/city/archers';
+import {mageJobDefinition, updateMages} from 'app/city/mages';
 import {renderRangeCircle} from 'app/draw/renderIndicator';
 import {BuildingSite, CraftingBench} from 'app/objects/structure';
 import {frameLength} from 'app/gameConstants';
@@ -46,6 +47,12 @@ export function createNexus(zone: ZoneInstance): Nexus {
                 const jobMultiplier = getJobMultiplierFromTools(state, archerJob.workers, archerJob.definition.requiredToolType);
                 const range = state.city.archers.range * (1 + jobMultiplier / 100 / 10);
                 renderRangeCircle(context, {x: this.x, y: this.y, r: this.r + range, color: 'rgba(255, 255, 255, 0.4)'});
+            }
+            if (state.city.mages.level > 0) {
+                const mageJob = getOrCreateJob(state, mageJobDefinition);
+                const jobMultiplier = getJobMultiplierFromTools(state, mageJob.workers, mageJob.definition.requiredToolType);
+                const range = state.city.mages.range * (1 + jobMultiplier / 100 / 10);
+                renderRangeCircle(context, {x: this.x, y: this.y, r: this.r + range, color: 'rgba(255, 0, 200, 0.4)'});
             }
         },
         update(state: GameState) {
@@ -97,6 +104,7 @@ export function createNexus(zone: ZoneInstance): Nexus {
             gainEssence(state, this.essenceGrowth * frameLength / 1000, false);
 
             updateArchers(state);
+            updateMages(state);
         },
         onHeroInteraction(state: GameState, hero: Hero) {
             if (hero.assignedJob) {

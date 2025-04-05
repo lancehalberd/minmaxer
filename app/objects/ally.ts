@@ -1,9 +1,8 @@
 import {frameLength} from 'app/gameConstants';
 import {checkForOnHitTargetAbilities, removeEffectFromTarget} from 'app/utils/ability';
-import {damageTarget, isAbilityTargetValid, isTargetAvailable} from 'app/utils/combat';
+import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {fillCircle, renderLifeBarOverCircle} from 'app/utils/draw';
-import {getDistance} from 'app/utils/geometry';
-import {moveAllyTowardsTarget} from 'app/utils/hero';
+import {checkToAutocastAbility, getClosestAttackTargetInRange, moveAllyTowardsTarget, onHitAlly} from 'app/utils/hero';
 import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
 
 interface AllyObjectProps extends Partial<Ally> {
@@ -41,6 +40,7 @@ export class AllyObject implements Ally {
     renderAlly = this.props.renderAlly;
 
     lastAttackTime?: number;
+    autocastCooldown = 0;
     movementTarget?: FieldTarget;
     selectedAttackTarget?: EnemyTarget;
     attackTarget?: EnemyTarget;
@@ -50,6 +50,7 @@ export class AllyObject implements Ally {
     source = this.props.source;
 
     zone = this.props.zone;
+    movementWasBlocked = false;
 
     constructor(state: GameState, public props: AllyObjectProps) {
         this.zone.objects.push(this);
@@ -127,7 +128,9 @@ export class AllyObject implements Ally {
     }
     enemyDefeatCount = 0;
     effects: ObjectEffect[] = [];
-    onHit = onHitAlly;
+    onHit(state: GameState, attacker: Enemy) {
+        onHitAlly(state, this, attacker);
+    }
     abilities = this.props.abilities ?? [];
     stats: ModifiableAllyStats = {
         dex: createModifiableStat<Ally>((state: GameState) => {
@@ -262,72 +265,61 @@ export class AllyObject implements Ally {
         if (this.selectedAttackTarget && !isTargetAvailable(state, this.selectedAttackTarget)) {
             delete this.selectedAttackTarget;
         }
-        const attackRange = this.getAttackRange(state);
         // Replace the current attack target with the selected attack taret(if any)
         // if it is becomes invalid (it dies, for example).
-        if (this.attackTarget && (
-            !isTargetAvailable(state, this.attackTarget)
-            // Cancel targeting an enemy outside of attack range each frame so that we potentially can choose
-            // a new closer target.
-            || getDistance(this, this.attackTarget) - this.r - this.attackTarget.r > attackRange
-        )) {
+        if (this.attackTarget && !isTargetAvailable(state, this.attackTarget)) {
             this.attackTarget = this.selectedAttackTarget
         }
+        const attackRange = this.getAttackRange(state);
+        const priorityTarget = this.attackTarget || this.movementTarget;
         // The hero will automatically attack an enemy within its range if it is idle.
         if (!this.attackTarget && !this.movementTarget) {
-            // Choose the closest valid target within the aggro radius as an attack target.
-            let closestDistance = Math.max(this.aggroRadius, this.getAttackRange(state));
-            for (const object of this.zone.objects) {
-                if (object.objectType === 'enemy') {
-                    const distance = getDistance(this, object) - this.r - object.r;
-                    if (distance < closestDistance) {
-                        this.attackTarget = object;
-                        closestDistance = distance;
-                    }
-                }
-            }
+            this.attackTarget = getClosestAttackTargetInRange(state, this, this.aggroRadius);
         }
+        let targetToAttack: EnemyTarget|undefined;
         if (this.attackTarget) {
             // Attack the target when it is in range.
             if (moveAllyTowardsTarget(state, this, this.attackTarget, this.r + this.attackTarget.r + attackRange)) {
-                // Attack the target if the enemy's attack is not on cooldown.
-                // Note that this could be `Infinity` so don't use this in any assignments.
-                const attackCooldown = 1000 / this.getAttacksPerSecond(state);
-                if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
-                    let hitCount = 1;
-                    const strengthDamageBonus = 1 + this.getStr(state) / 100;
-                    const extraHitChance = this.getExtraHitChance(state);
-                    while (Math.random() < extraHitChance / hitCount) {
-                        hitCount++;
-                    }
-                    for (let i = 0; i < hitCount; i++) {
-                        let damage = this.getDamageForTarget(state, this.attackTarget);
-                        damage *= strengthDamageBonus;
-                        // TODO: Replace with this.rollCriticalMultiplier that supports multi crit.
-                        const critChance = this.getCriticalChance(state);
-                        const isCrit = Math.random() < critChance;
-                        if (isCrit) {
-                            damage *= (1 + this.getCriticalMultipler(state));
-                        }
-                        // floor damage value.
-                        damage = damage | 0;
-                        damageTarget(state, this.attackTarget, {damage, isCrit, source: this, delayDamageNumber: 200 * i});
-                        checkForOnHitTargetAbilities(state, this, this.attackTarget);
-                    }
-                    this.attackTarget.onHit?.(state, this);
-                    this.lastAttackTime = this.zone.time;
-                    if (this.attackTarget.objectType === 'enemy') {
-                        this.attackTarget.attackTarget = this;
-                    }
-                }
-
+                targetToAttack = this.attackTarget;
             }
-            return;
         }
-        if (this.movementTarget) {
-            const distance = this.movementTarget.objectType === 'point' ? 0 : this.r + this.movementTarget.r;
-            if (moveAllyTowardsTarget(state, this, this.movementTarget, distance)) {
-                delete this.movementTarget;
+        // The hero will attack a random nearby target in two circumstances:
+        // 1) They are not currently moving/attacking anything
+        // 2) Their movement was blocked and their primary target is not in range.
+        if (!targetToAttack && (!priorityTarget || this.movementWasBlocked)) {
+            // If no other attack target is in range, just try attacking the nearest target.
+            targetToAttack = getClosestAttackTargetInRange(state, this, attackRange);
+        }
+        if (targetToAttack) {
+            // Attack the target if the enemy's attack is not on cooldown.
+            // Note that this could be `Infinity` so don't use this in any assignments.
+            const attackCooldown = 1000 / this.getAttacksPerSecond(state);
+            if (!this.lastAttackTime || this.lastAttackTime + attackCooldown <= this.zone.time) {
+                let hitCount = 1;
+                const strengthDamageBonus = 1 + this.getStr(state) / 100;
+                const extraHitChance = this.getExtraHitChance(state);
+                while (Math.random() < extraHitChance / hitCount) {
+                    hitCount++;
+                }
+                for (let i = 0; i < hitCount; i++) {
+                    let damage = this.getDamageForTarget(state, targetToAttack);
+                    damage *= strengthDamageBonus;
+                    // TODO: Replace with this.rollCriticalMultiplier that supports multi crit.
+                    const critChance = this.getCriticalChance(state);
+                    const isCrit = Math.random() < critChance;
+                    if (isCrit) {
+                        damage *= (1 + this.getCriticalMultipler(state));
+                    }
+                    // floor damage value.
+                    damage = damage | 0;
+                    damageTarget(state, targetToAttack, {damage, isCrit, source: this, delayDamageNumber: 200 * i});
+                    checkForOnHitTargetAbilities(state, this, targetToAttack);
+                }
+                targetToAttack.onHit?.(state, this);
+                this.lastAttackTime = this.zone.time;
+                if (targetToAttack.objectType === 'enemy') {
+                    targetToAttack.attackTarget = this;
+                }
             }
         }
     }
@@ -352,47 +344,5 @@ export class AllyObject implements Ally {
 
         const isInvincible = this.getIncomingDamageMultiplier(state) === 0;
         renderLifeBarOverCircle(context, this, this.health, this.getMaxHealth(state), isInvincible ? '#FF0' : undefined);
-    }
-}
-
-
-function onHitAlly(this: Ally, state: GameState, attacker: Enemy) {
-    this.lastTimeDamageTaken = this.zone.time;
-    for (const ability of this.abilities) {
-        if (ability.level > 0 && ability.abilityType === 'passiveAbility') {
-            ability.definition.onHit?.(state, this, ability, attacker);
-        }
-    }
-    // Ally will ignore being attacked if they are completing a movement command.
-    if (this.movementTarget) {
-        return;
-    }
-    // Allyes will prioritize attacking an enemy over an enemy spawner or other targets.
-    if (this.attackTarget?.objectType !== 'enemy') {
-        this.attackTarget = attacker;
-    }
-}
-
-
-
-// Automatically use ability if there is a target in range.
-function checkToAutocastAbility(state: GameState, hero: Ally, ability: ActiveAbility) {
-    const targetingInfo = ability.definition.getTargetingInfo(state, hero, ability);
-    // prioritize the current attack target over other targets.
-    // TODO: prioritize the closest target out of other targets.
-    for (const object of [hero.attackTarget, ...hero.zone.objects]) {
-        if (!object) {
-            continue;
-        }
-        // Skip this object if the ability doesn't target this type of object.
-        if (!isAbilityTargetValid(state, targetingInfo, object)) {
-            continue;
-        }
-        // Use the ability on the target if it is in range.
-        if (getDistance(hero, object) < hero.r + object.r + targetingInfo.range + (targetingInfo.hitRadius ?? 0)) {
-            ability.definition.onActivate(state, hero, ability, object);
-            ability.cooldown = ability.definition.getCooldown(state, hero, ability);
-            return;
-        }
     }
 }

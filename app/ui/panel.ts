@@ -4,23 +4,24 @@ import {computeValue} from 'app/utils/computed';
 import {fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 
-
-const titleHeight = 2 * uiPadding + uiSize;
+const smallTitleHeight = 2 * uiPadding + uiSize;
 const dividerThickness = 2;
 interface TitlePanelProps extends Partial<UIContainer> {
     title: Computed<string, undefined>
+    titleHeight?: number
     content: UIElement
     onClose?: (state: GameState) => void
 }
 export class TitlePanel implements UIContainer {
     objectType = <const>'uiContainer';
     title = this.props.title;
-    w = this.props.w ?? 250;
-    h = this.props.h ?? 400;
-    x = this.props.x ?? 300;
-    y = this.props.y ?? (canvas.height - this.h) / 2;
+    titleHeight = this.props.titleHeight ?? smallTitleHeight;
     onClose = this.props.onClose;
     content = this.props.content;
+    w = this.props.w ?? this.content.w;
+    h = this.props.h ?? this.content.h + this.titleHeight;
+    x = this.props.x ?? (canvas.width - this.w) / 2;
+    y = this.props.y ?? (canvas.height - this.h) / 2;
     closeButton = new CloseIconButton({
         x: this.w - uiPadding - uiSize,
         y: uiPadding,
@@ -31,13 +32,17 @@ export class TitlePanel implements UIContainer {
             return true;
         },
     });
-    children: UIElement[] = [this.closeButton, this.content];
+    children: UIElement[] = [this.content];
     constructor(public props: TitlePanelProps) {}
     update(state: GameState) {
+        this.children = [this.content];
+        if (this.onClose) {
+            this.children.push(this.closeButton);
+        }
         this.content.x = uiPadding;
-        this.content.y = titleHeight + dividerThickness + uiPadding;
+        this.content.y = this.titleHeight + dividerThickness + uiPadding;
         this.content.w = this.w - 2 * uiPadding;
-        this.content.h = this.h - (titleHeight + dividerThickness + 2 * uiPadding);
+        this.content.h = this.h - (this.titleHeight + dividerThickness + 2 * uiPadding);
         this.content.update?.(state);
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -46,8 +51,8 @@ export class TitlePanel implements UIContainer {
         context.save();
             context.translate(this.x, this.y);
             const title = computeValue(state, undefined, this.title, '');
-            fillText(context, {text: title, x: this.w / 2, y: titleHeight / 2, size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF'});
-            fillRect(context, {x: 0, y: titleHeight, w: this.w, h: dividerThickness}, '#FFF');
+            fillText(context, {text: title, x: this.w / 2, y: 10, size: this.titleHeight - 16, textAlign: 'center', textBaseline: 'top', color: '#FFF'});
+            fillRect(context, {x: 0, y: this.titleHeight - dividerThickness, w: this.w, h: dividerThickness}, '#FFF');
             const children = this.getChildren?.(state) ?? [];
             for (const child of children) {
                 child.render(context, state);
@@ -90,6 +95,7 @@ interface PanelTab {
 }
 interface TabbedPanelProps extends Partial<UIContainer> {
     tabs: Computed<PanelTab[], undefined>
+    titleHeight?: number
     selectedTabIndex?: number
     onSelectTab?: (state: GameState, index: number) => void
     onClose?: (state: GameState) => void
@@ -101,6 +107,7 @@ export class TabbedPanel implements UIContainer {
     computableTabs = this.props.tabs;
     selectedTabIndex = this.props.selectedTabIndex ?? 0;
     onSelectTab = this.props.onSelectTab;
+    titleHeight = this.props.titleHeight ?? smallTitleHeight;
     w = this.props.w ?? 250;
     h = this.props.h ?? 400;
     x = this.props.x ?? 300;
@@ -126,9 +133,9 @@ export class TabbedPanel implements UIContainer {
             this.selectTabIndex(state, newIndex);
             return true;
         },
-        resize(state: GameState, container: UIContainer) {
-            this.x = 3 * uiPadding;
-            this.y = (titleHeight - this.h) / 2;
+        resize: (state: GameState, container: UIContainer) => {
+            this.prevButton.x = 3 * uiPadding;
+            this.prevButton.y = (this.titleHeight - this.prevButton.h) / 2;
         },
     });
     nextButton = new CharacterIconButton({
@@ -139,9 +146,9 @@ export class TabbedPanel implements UIContainer {
             this.selectTabIndex(state, newIndex);
             return true;
         },
-        resize(state: GameState, container: UIContainer) {
-            this.x = container.w - this.w - 3 * uiPadding;
-            this.y = (titleHeight - this.h) / 2;
+        resize: (state: GameState, container: UIContainer) => {
+            this.nextButton.x = container.w - this.nextButton.w - 3 * uiPadding;
+            this.nextButton.y = (this.titleHeight - this.nextButton.h) / 2;
         },
     });
     tabButtons: UIElement[] = [];
@@ -162,7 +169,7 @@ export class TabbedPanel implements UIContainer {
                     this.tabButtons[i] = {
                         objectType: 'uiContainer',
                         w: tabWidth,
-                        h: titleHeight,
+                        h: this.titleHeight,
                         y: 0,
                         x: (tabWidth + 5) * i,
                         onClick: (state: GameState) => {
@@ -181,7 +188,8 @@ export class TabbedPanel implements UIContainer {
                                     fillRect(context, {x: 2, y: 2, w: this.w - 4, h: this.h - 2}, '#222');
                                 }
                                 const title = computeValue(state, undefined, tabs[i].title, '');
-                                fillText(context, {text: title, x: this.w / 2, y: this.h / 2, size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF'});
+
+                                fillText(context, {text: title, x: this.w / 2, y: 10, size: tabbedPanel.titleHeight - 16, textAlign: 'center', textBaseline: 'top', color: '#FFF'});
                             context.restore();
                         }
                     }
@@ -193,9 +201,9 @@ export class TabbedPanel implements UIContainer {
             this.children.push(this.nextButton);
         }
         content.x = 0;
-        content.y = titleHeight + dividerThickness;
+        content.y = this.titleHeight + dividerThickness;
         content.w = this.w;
-        content.h = this.h - (titleHeight + dividerThickness);
+        content.h = this.h - (this.titleHeight + dividerThickness);
         for (const child of this.children) {
             child.resize?.(state, this);
             child.update?.(state);
@@ -205,8 +213,8 @@ export class TabbedPanel implements UIContainer {
         fillRect(context, this, '#222');
         context.save();
             context.translate(this.x, this.y);
-            fillRect(context, {x: 0, y: titleHeight, w: this.w, h: dividerThickness}, '#FFF');
-            fillRect(context, {x: 2, y: titleHeight + dividerThickness, w: this.w - 4, h: this.h - 4 - titleHeight - dividerThickness}, '#444');
+            fillRect(context, {x: 0, y: this.titleHeight, w: this.w, h: dividerThickness}, '#FFF');
+            fillRect(context, {x: 2, y: this.titleHeight + dividerThickness, w: this.w - 4, h: this.h - 4 - this.titleHeight - dividerThickness}, '#444');
             if (this.isNarrow(state)) {
                 const tabs = computeValue(state, undefined, this.computableTabs, []);
                 // Narrow view just shows the title of the current tab with prev/next arrow buttons on the left and right of it.
@@ -214,8 +222,9 @@ export class TabbedPanel implements UIContainer {
                 if (selectedTab) {
                     const title = computeValue(state, undefined, selectedTab.title, '');
                     // Draw the standard panel background instead of the darker background that normally goes behind tabs.
-                    fillRect(context, {x: 2, y: 2, w: this.w - 4, h: titleHeight - dividerThickness - 2}, '#444');
-                    fillText(context, {text: title, x: this.w / 2, y: titleHeight / 2, size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF'});
+                    fillRect(context, {x: 2, y: 2, w: this.w - 4, h: this.titleHeight - dividerThickness - 2}, '#444');
+                    fillText(context, {text: title, x: this.w / 2, y: 10, size: this.titleHeight - 16, textAlign: 'center', textBaseline: 'top', color: '#FFF'});
+                    //fillText(context, {text: title, x: this.w / 2, y: this.titleHeight / 2, size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF'});
                 }
             }
             const children = this.getChildren?.(state) ?? [];

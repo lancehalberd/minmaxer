@@ -53,6 +53,7 @@ export const gameKeys = {
     jobsPanel: 10,
     inventoryPanel: 11,
     closeAll: 12,
+    optionsPanel: 13,
 };
 
 const KEYBOARD_MAPPINGS = {
@@ -69,6 +70,7 @@ const KEYBOARD_MAPPINGS = {
     [gameKeys.inventoryPanel]: [KEY.I],
     [gameKeys.cameraLock]: [KEY.Y],
     [gameKeys.closeAll]: [KEY.ESCAPE],
+    [gameKeys.optionsPanel]: [KEY.O],
 };
 
 

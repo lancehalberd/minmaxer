@@ -1,3 +1,4 @@
+import {getItemKeys} from 'app/definitions/itemDefinitions';
 import {arcticBlast, inferno, healingWind, summonGolems, createNexusAbility} from 'app/definitions/nexusAbilities';
 import {bossGauntletZones} from 'app/definitions/zones/bossGauntlet';
 import {snakePit} from 'app/definitions/zones/snakePit';
@@ -5,10 +6,7 @@ import {Cave} from 'app/objects/structure';
 import {addBasicHeroes} from 'app/objects/hero';
 import {createNexus} from 'app/objects/nexus';
 import {initializeSpawners} from 'app/objects/spawner';
-import {typedKeys} from 'app/utils/types';
-
-
-import {getItemKeys} from 'app/definitions/itemDefinitions';
+import {calculatePrestigeStats} from 'app/utils/prestige';
 
 function gainAllItems(state: GameState, amount: number) {
     for (const key of getItemKeys()) {
@@ -68,6 +66,21 @@ export function getNewGameState(): GameState {
                 attacksPerSecond: 0,
                 range: 0,
             },
+            mages: {
+                level: 0,
+                power: 0,
+                cooldownSpeed: 0,
+                range: 0,
+                cooldowns: {},
+                globalCooldown: 0,
+            },
+            houses: {
+                maxHouses: 0,
+                huts: 0,
+                cabins: 0,
+                cottages: 0,
+                towers: 0,
+            },
         },
         inventory: {},
         craftedWeapons: [],
@@ -109,10 +122,11 @@ export function getNewGameState(): GameState {
             gameKeysReleased: new Set(),
             mostRecentKeysPressed: new Set(),
         },
-        autosaveEnabled: true,
+        autosaveEnabled: false,
         prestige: {
             lootRarityBonus: 0,
             archerExperienceBonus: 0,
+            mageExperienceBonus: 0,
             essenceGainBonus: 0,
             heroExperienceBonus: 0,
             skillExperienceBonus: 0,
@@ -137,26 +151,11 @@ export function setState(newState: GameState) {
     window.state = state;
 }
 window.setState = setState;
-
-export function calculatePrestigeStats(state: GameState): PrestigeStats {
-    let totalHeroLevels = 0, totalSkillLevels = 0;
-    for (const hero of state.heroSlots) {
-        totalHeroLevels += (hero?.level ?? 0);
-        totalSkillLevels += (hero?.totalSkillLevels ?? 0);
-    }
-    const newPrestigeStats: PrestigeStats = {
-        lootRarityBonus: state.highestLevelEnemyDefeated,
-        archerExperienceBonus: 5 * state.city.archers.level,
-        essenceGainBonus: 5 * state.nexus.level,
-        heroExperienceBonus: 5 * totalHeroLevels,
-        skillExperienceBonus: 5 * totalSkillLevels,
-    };
-    // Keep the highest prestigate stats from the current run.
-    for (const key of typedKeys(newPrestigeStats)) {
-        newPrestigeStats[key] = Math.max(state.prestige[key], newPrestigeStats[key]);
-    }
-    return newPrestigeStats;
+export function resetGame(): GameState {
+    setState(getNewGameState());
+    return state;
 }
+window.resetGame = resetGame;
 
 export function restartGame(state: GameState) {
     const newGameState = getNewGameState();
@@ -164,7 +163,6 @@ export function restartGame(state: GameState) {
     setState(newGameState);
 }
 window.restartGame = restartGame;
-
 
 /*
 state.craftingBench.baseMaterialSlots.push(undefined);

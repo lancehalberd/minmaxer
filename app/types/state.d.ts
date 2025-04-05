@@ -13,6 +13,7 @@ interface GameState {
     previewRequiredToolType?: ToolType
     previewResourceCost?: ComputedResourceCost
     selectedHero?: Hero
+    openOptionsPanel?: boolean
     openCharacterPanel?: boolean
     openChooseArmorPanel?: boolean
     openChooseWeaponPanel?: boolean
@@ -73,6 +74,7 @@ interface GameState {
 interface PrestigeStats {
     lootRarityBonus: number
     archerExperienceBonus: number
+    mageExperienceBonus: number
     essenceGainBonus: number
     heroExperienceBonus: number
     skillExperienceBonus: number

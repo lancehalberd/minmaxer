@@ -66,6 +66,8 @@ interface CityStats {
     }
     wall: CityWallStats
     archers: CityArcherStats
+    mages: CityMageStats
+    houses: CityHouseStats
 }
 
 interface CityArcherStats {
@@ -73,9 +75,25 @@ interface CityArcherStats {
     damage: number
     attacksPerSecond: number
     range: number
-    // Number of people assigned as archers.
     target?: EnemyTarget
     lastAttackTime?: number
+}
+
+interface CityMageStats {
+    level: number
+    power: number
+    cooldownSpeed: number
+    range: number
+    cooldowns: {[key in NexusAbilityKey]?: number}
+    globalCooldown: number
+}
+
+interface CityHouseStats {
+    maxHouses: number
+    huts: number
+    cabins: number
+    cottages: number
+    towers: number
 }
 
 interface CityWallStats {

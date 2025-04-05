@@ -1,4 +1,5 @@
 import {archerJobDefinition, gainArcherLevel} from 'app/city/archers';
+import {mageJobDefinition, gainMageLevel} from 'app/city/mages';
 import {gainWallLevel} from 'app/city/cityWall';
 import {requireItem} from 'app/definitions/itemDefinitions';
 import {checkToAddNewSpawner} from 'app/objects/spawner';
@@ -8,6 +9,8 @@ import {updateWaveScale} from 'app/ui/waveComponent';
 import {gainEssence} from 'app/utils/essence';
 import {getOrCreateJob} from 'app/utils/job';
 import {isWeapon, isArmor, isCharm, isCraftedWeapon, isCraftedArmor, isCraftedCharm, typedKeys} from 'app/utils/types';
+
+
 
 // TDDO
 // jobs, assigned workers, job progress,
@@ -54,18 +57,46 @@ function applySavedNexusDataToState(state: GameState, nexusData?: Partial<SavedN
 
 interface SavedCityData {
     population: number
-    wallLevel: number
-    wallHealth: number
-    archerLevel: number
-    archerJobProgress: number
+    wall: {
+        level: number
+        health: number
+    }
+    archers: {
+        level: number
+        jobProgress: number
+    }
+    mages: {
+        level: number
+        jobProgress: number
+    }
+    houses: {
+        huts: number
+        cabins: number
+        cottages: number
+        towers: number
+    }
 }
 function exportSavedCityData(state: GameState): SavedCityData {
     const cityData: SavedCityData = {
         population: state.city.population,
-        wallLevel: state.city.wall.level,
-        wallHealth: state.city.wall.health,
-        archerLevel: state.city.archers.level,
-        archerJobProgress: getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted,
+        wall: {
+            level: state.city.wall.level,
+            health: state.city.wall.health,
+        },
+        archers: {
+            level: state.city.archers.level,
+            jobProgress: getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted,
+        },
+        mages: {
+            level: state.city.mages.level,
+            jobProgress: getOrCreateJob(state, mageJobDefinition).workerSecondsCompleted,
+        },
+        houses: {
+            huts: state.city.houses.huts,
+            cabins: state.city.houses.cabins,
+            cottages: state.city.houses.cottages,
+            towers: state.city.houses.towers,
+        },
     };
     return cityData;
 }
@@ -75,14 +106,22 @@ function applySavedCityDataToState(state: GameState, cityData?: Partial<SavedCit
     }
     state.city.population = cityData.population ?? 0;
     let safety = 0;
-    while (state.city.wall.level < (cityData.wallLevel ?? 0) && safety++ < 1000) {
+    while (state.city.wall.level < (cityData.wall?.level ?? 0) && safety++ < 1000) {
         gainWallLevel(state);
     }
-    state.city.wall.health = Math.min(state.city.wall.maxHealth, cityData.wallHealth ?? state.city.wall.maxHealth);
-    for (let i = 0; i < (cityData.archerLevel ?? 0); i++) {
+    state.city.wall.health = Math.min(state.city.wall.maxHealth, cityData.wall?.health ?? state.city.wall.maxHealth);
+    for (let i = 0; i < (cityData.archers?.level ?? 0); i++) {
         gainArcherLevel(state);
     }
-    getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted = cityData.archerJobProgress ?? 0;
+    getOrCreateJob(state, archerJobDefinition).workerSecondsCompleted = cityData.archers?.jobProgress ?? 0;
+    for (let i = 0; i < (cityData.mages?.level ?? 0); i++) {
+        gainMageLevel(state);
+    }
+    getOrCreateJob(state, mageJobDefinition).workerSecondsCompleted = cityData.mages?.jobProgress ?? 0;
+    state.city.houses = {
+        ...state.city.houses,
+        ...cityData.houses,
+    };
 }
 
 type SavedEquipment = SavedCraftedItem|InventoryKey|undefined

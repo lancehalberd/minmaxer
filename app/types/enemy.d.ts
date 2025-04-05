@@ -78,6 +78,8 @@ interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     // The last time the enemy attacked.
     lastAttackTime?: number
     movementTarget?: AbilityTarget
+    // Indicates whether movement was hindered during the most recent movement attempt.
+    movementWasBlocked?: boolean
     attackTarget?: Nexus | AllyTarget
     // If set the enemy will attack this target when idle.
     defaultTarget?:  Nexus | AllyTarget

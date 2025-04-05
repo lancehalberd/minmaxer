@@ -10,12 +10,12 @@ import {availableWorkersForJob, getMaxWorkersForJob, getOrCreateJob, updateAssig
 
 interface JobComponentProps {
     jobDefinition: JobDefinition
-    x: number
-    y: number
+    x?: number
+    y?: number
     scale?: number
     getHeroTarget?: (state: GameState) => FieldTarget
 }
-export function createJobComponent({jobDefinition, x, y, scale = 1, getHeroTarget}: JobComponentProps): JobUIElement {
+export function createJobComponent({jobDefinition, x = 0, y = 0, scale = 1, getHeroTarget}: JobComponentProps): JobUIElement {
     const scaledSize = scale * uiSize;
     const w = 6 * scaledSize;
     // TODO: Turn fill bar into histogram based on the quality of the Tool, full saturation for best tool, in increments down to half saturation for worst tool.

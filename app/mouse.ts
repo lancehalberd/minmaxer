@@ -1,5 +1,5 @@
 import {canvas, canvasScale} from 'app/gameConstants'
-import {activateHeroAbility} from 'app/utils/ability';
+import {useHeroAbility} from 'app/utils/ability';
 import {isAbilityMouseTargetValid} from 'app/utils/combat';
 import {isPointInCircle, isPointInRect} from 'app/utils/geometry';
 import {convertToZoneLocation} from 'app/utils/world';
@@ -227,7 +227,7 @@ function checkToHandleMousePress(state: GameState) {
                     } else {
                         // Activate the ability immediately if the hero should just use it where they are
                         // standing.
-                        activateHeroAbility(state, state.selectedHero, state.selectedAbility, target);
+                        useHeroAbility(state, state.selectedHero, state.selectedAbility, target);
                     }
                     delete state.selectedAbility;
                     state.mouse.pressHandled = true;

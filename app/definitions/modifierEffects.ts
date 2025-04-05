@@ -26,7 +26,7 @@ export class StackingAllyEffectDefinition {
                 effect.stacks = Math.min(effect.stacks + stacks, this.maxStacks)
             }
             effect.apply(state, target);
-            effect.duration = Math.max(effect.duration, this.duration);
+            effect.duration = Math.max(effect.duration ?? 0, this.duration);
             return;
         }
         const definition = this;
@@ -66,7 +66,7 @@ export class ModifierEffectDefinition {
         let effect = target.effects.find(e => e.creator === this);
         // If the effect is already present, just update the duration.
         if (effect?.effectType === 'simpleEffect') {
-            effect.duration = Math.max(effect.duration, duration);
+            effect.duration = Math.max(effect.duration ?? 0, duration);
             return;
         }
         const definition = this;
@@ -110,6 +110,7 @@ export class ModifierEffect implements SimpleEffect {
     modifiers = this.props.modifiers;
     renderOver = this.props.renderOver;
     renderUnder = this.props.renderUnder;
+    creator = this.props.creator;
     constructor(public props: ModifierEffectProps) { }
     apply(state: GameState, target: ModifiableTarget) {
         target.addStatModifiers(this.modifiers)

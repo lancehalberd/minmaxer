@@ -9,6 +9,7 @@ import {toggleCraftingBenchPanel} from 'app/ui/craftingBenchPanel';
 import {toggleJobsPanel} from 'app/ui/jobsPanel';
 import {toggleHeroPanel} from 'app/ui/heroPanel';
 import {toggleInventoryPanel} from 'app/ui/inventoryPanel';
+import {toggleOptionsPanel} from 'app/ui/optionsPanel';
 import {activateHeroAbility} from 'app/utils/hero';
 import {computeIdleToolCounts} from 'app/utils/inventory';
 import {updateJobs} from 'app/utils/job';
@@ -16,6 +17,8 @@ import {advanceDebugGameState} from 'app/utils/debug';
 
 /*
 TODO:
+Why do Kobold clerics seem to heal entire lines of undamaged enemies.
+
 Replace healer job with train mages that works similar to train archers.
     Mages use weaker versions of nexus spells
 
@@ -107,6 +110,9 @@ function update() {
     if (wasGameKeyPressed(state, gameKeys.pause)) {
         state.isPaused = !state.isPaused;
     }
+    if (wasGameKeyPressed(state, gameKeys.optionsPanel)) {
+        toggleOptionsPanel(state);
+    }
     if (wasGameKeyPressed(state, gameKeys.characterPanel)) {
         toggleHeroPanel(state);
     }
@@ -117,13 +123,29 @@ function update() {
         toggleInventoryPanel(state);
     }
     if (wasGameKeyPressed(state, gameKeys.closeAll)) {
-        toggleHeroPanel(state, false);
-        toggleJobsPanel(state, false);
-        toggleInventoryPanel(state, false);
-        toggleCraftingBenchPanel(state, false);
-        delete state.selectedNexusAbilitySlot;
-        // Also cancel any ability targeting.
-        delete state.selectedAbility;
+        // If something can be cancled/close, do that first.
+        if (state.openCharacterPanel
+            || state.openInventoryPanel
+            || state.openJobsPanel
+            || state.openCraftingBenchPanel
+            || state.openOptionsPanel
+            || state.selectedNexusAbilitySlot
+            || state.selectedAbility
+            || state.openPanels.length
+        ) {
+            toggleOptionsPanel(state, false);
+            toggleHeroPanel(state, false);
+            toggleJobsPanel(state, false);
+            toggleInventoryPanel(state, false);
+            toggleCraftingBenchPanel(state, false);
+            state.openPanels = [];
+            // Also cancel any ability targeting.
+            delete state.selectedNexusAbilitySlot;
+            delete state.selectedAbility;
+        } else {
+            // If there is nothing to be cancled, open the options menu.
+            toggleOptionsPanel(state, true);
+        }
     }
 
     if (wasGameKeyPressed(state, gameKeys.cameraLock)) {
@@ -146,13 +168,15 @@ function update() {
         }
     }
 
+    const gameIsPaused = state.isPaused || state.openOptionsPanel || !state.heroSlots[0];
+
     // If the nexus is destroyed, stop update function
     // Pan world.camera to nexus, change background color (gray) and return.
     if (state.nexus.essence <= 0) {
         if (state.selectedHero){
             delete state.selectedHero;
         }
-    } else if (!state.isPaused){
+    } else if (!gameIsPaused){
         const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? 10 : 1;
         for (let i = 0; i < frameCount; i++) {
             computeIdlePopulation(state);

@@ -9,6 +9,7 @@ interface WallLevelDefinition {
     maxHealth: number
     returnDamage: number
     populationIncrease: number
+    houseIncrease: number
     nexusSize: number
 }
 const wallLevels: WallLevelDefinition[] = [
@@ -16,26 +17,31 @@ const wallLevels: WallLevelDefinition[] = [
         resourceCost: {wood: 100}, workerSeconds: 100,
         maxHealth: 100, returnDamage: 1,
         populationIncrease: 5, nexusSize: 60,
+        houseIncrease: 4,
     },
     {
         resourceCost: {wood: 500}, workerSeconds: 500,
         maxHealth: 300, returnDamage: 5,
         populationIncrease: 10, nexusSize: 70,
+        houseIncrease: 4,
     },
     {
         resourceCost: {wood: 2000, stone: 100}, workerSeconds: 2000,
         maxHealth: 500, returnDamage: 10,
         populationIncrease: 10, nexusSize: 80,
+        houseIncrease: 4,
     },
     {
         resourceCost: {wood: 10000, stone: 500}, workerSeconds: 10000,
         maxHealth: 1000, returnDamage: 20,
         populationIncrease: 10, nexusSize: 90,
+        houseIncrease: 4,
     },
     {
         resourceCost: {wood: 100000, stone: 2000}, workerSeconds: 100000,
         maxHealth: 2000, returnDamage: 50,
         populationIncrease: 20, nexusSize: 100,
+        houseIncrease: 4,
     },
 ];
 
@@ -44,6 +50,7 @@ export function gainWallLevel(state: GameState) {
     state.city.wall.maxHealth = levelDefinition.maxHealth;
     state.city.wall.returnDamage = levelDefinition.returnDamage;
     state.city.maxPopulation += levelDefinition.populationIncrease;
+    state.city.houses.maxHouses += levelDefinition.houseIncrease;
     state.nexus.r = levelDefinition.nexusSize;
     state.city.wall.level++;
     state.city.wall.health = state.city.wall.maxHealth;

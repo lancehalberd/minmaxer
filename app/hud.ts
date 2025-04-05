@@ -1,5 +1,5 @@
 import {buttonSize, canvas, uiSize} from 'app/gameConstants';
-import {calculatePrestigeStats, restartGame} from 'app/state';
+import {restartGame} from 'app/state';
 import {getHeroAbilityButtons} from 'app/ui/abilityButton';
 import {craftingBenchPanel} from 'app/ui/craftingBenchPanel';
 import {jobsPanel, toggleJobsPanel} from 'app/ui/jobsPanel';
@@ -9,11 +9,12 @@ import {HeroPanel, toggleHeroPanel} from 'app/ui/heroPanel';
 import {inventoryPanel, toggleInventoryPanel} from 'app/ui/inventoryPanel';
 import {CharacterIconButton} from 'app/ui/iconButton';
 import {getNexusAbilityButtons, NexusAbilityPanel} from 'app/ui/nexusAbilityPanel';
+import {optionsPanel} from 'app/ui/optionsPanel';
 import {TextButton} from 'app/ui/textButton';
-import {showSimpleTooltip} from 'app/ui/tooltip';
+import {showPrestigeTooltip} from 'app/ui/tooltip';
 import {requireFrame, drawFrame} from 'app/utils/animations';
-import {waveComponent} from 'app/ui/waveComponent';
 import {fillText} from 'app/utils/draw';
+import {waveComponent} from 'app/ui/waveComponent';
 
 
 const restartButton = new TextButton({
@@ -24,15 +25,7 @@ const restartButton = new TextButton({
     textProps: {size: 30,},
     text: 'Rewind',
     onHover(state: GameState) {
-        const prestigeStats = calculatePrestigeStats(state);
-        showSimpleTooltip(state, [
-            'Prestige Bonuses:',
-            'Loot Rarity Bonus: ' + prestigeStats.lootRarityBonus,
-            '+' + prestigeStats.essenceGainBonus + '% Essence gained',
-            '+' + prestigeStats.heroExperienceBonus + '% Hero XP gained',
-            '+' + prestigeStats.skillExperienceBonus + '% Skill XP gained',
-            '+' + prestigeStats.archerExperienceBonus + '% Archer XP gained',
-        ]);
+        showPrestigeTooltip(state);
         return true;
     },
     onClick(state: GameState)  {
@@ -82,6 +75,7 @@ const nexusAbilityPanel = new NexusAbilityPanel({});
 export function updateHudUIElements(state: GameState) {
     let leftAlignedPanels: UIElement[] = [];
     let rightAlignedPanels: UIElement[] = [];
+    let centeredPanels: UIElement[] = [];
     const panelButtons: UIElement[] = [];
     state.hudUIElements = getNexusAbilityButtons(state);
     if (state.selectedHero) {
@@ -118,13 +112,17 @@ export function updateHudUIElements(state: GameState) {
     if (state.openInventoryPanel) {
         rightAlignedPanels.push(inventoryPanel);
     }
-    leftAlignedPanels = [...leftAlignedPanels, ...state.openPanels];
+    if (state.openOptionsPanel) {
+        centeredPanels.push(optionsPanel);
+    }
+    leftAlignedPanels = [...leftAlignedPanels];
     state.hudUIElements = [...state.hudUIElements, ...getHeroButtons(state)];
 
     if (state.selectedNexusAbilitySlot !== undefined) {
         state.hudUIElements.push(nexusAbilityPanel);
     }
 
+    state.hudUIElements.push(menuButton);
     state.hudUIElements.push(playPauseButton);
     state.hudUIElements.push(waveComponent);
 
@@ -138,6 +136,14 @@ export function updateHudUIElements(state: GameState) {
     for (const openPanel of rightAlignedPanels) {
         openPanel.x = x - openPanel.w;
         x -= (openPanel.w + 5);
+        state.hudUIElements.push(openPanel);
+    }
+    for (const openPanel of centeredPanels) {
+        openPanel.x = (canvas.width - openPanel.w ) / 2;
+        openPanel.y = (canvas.height - openPanel.h) / 2;
+        state.hudUIElements.push(openPanel);
+    }
+    for (const openPanel of state.openPanels) {
         state.hudUIElements.push(openPanel);
     }
     x = 50;
@@ -160,25 +166,40 @@ export function updateHudUIElements(state: GameState) {
 
 const padding = 10;
 
-const playButton = requireFrame('gfx/playButton.png', {x: 0, y: 0, w: 139, h: 138});
-const pauseButton = requireFrame('gfx/pauseButton.png', {x: 0, y: 0, w: 139, h: 138});
+const playButtonFrame = requireFrame('gfx/playButton.png', {x: 0, y: 0, w: 139, h: 138});
+const pauseButtonFrame = requireFrame('gfx/pauseButton.png', {x: 0, y: 0, w: 139, h: 138});
+const menuButtonFrame = requireFrame('gfx/menuButton.png', {x: 0, y: 0, w: 139, h: 138});
 
 let scale = 1/3;
+export const menuButton: UIButton = {
+    objectType: 'uiButton',
+    x: canvas.width - menuButtonFrame.w * scale - padding,
+    y: padding,
+    w: menuButtonFrame.w * scale,
+    h: menuButtonFrame.h * scale,
+    render(context: CanvasRenderingContext2D, state: GameState) {
+        drawFrame(context, menuButtonFrame, this);
+    },
+    onPress(state: GameState) {
+        state.openOptionsPanel = !state.openOptionsPanel;
+        return true;
+    }
+};
 export const playPauseButton: UIButton = {
     objectType: 'uiButton',
-    x: canvas.width - playButton.w * scale - padding,
+    x: menuButton.x - playButtonFrame.w * scale - padding,
     y: padding,
-    w: playButton.w * scale,
-    h: playButton.h * scale,
+    w: playButtonFrame.w * scale,
+    h: playButtonFrame.h * scale,
     render(context: CanvasRenderingContext2D, state: GameState) {
-        let frame = state.isPaused ? playButton : pauseButton;
+        let frame = state.isPaused ? playButtonFrame : pauseButtonFrame;
         drawFrame(context, frame, this);
     },
     onPress(state: GameState) {
         state.isPaused = !state.isPaused;
         return true;
     }
-}
+};
 
 const personFrame = requireFrame('gfx/militaryIcons.png', {x: 173, y: 159, w: 10, h: 16});
 const populationDisplay: UIContainer = {

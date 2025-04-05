@@ -25,6 +25,8 @@ export class TextButton implements UIButton {
     onHover = this.props.onHover;
     onPress = this.props.onPress;
     onClick = this.props.onClick;
+    update = this.props.update;
+    resize = this.props.resize;
     uniqueId = this.props.uniqueId;
     constructor(public props: TextButtonProps) {}
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {

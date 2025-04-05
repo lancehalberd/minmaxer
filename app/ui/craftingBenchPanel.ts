@@ -392,6 +392,8 @@ function showChooseMaterialPanel(state: GameState, equipmentType: EquipmentType,
             removeItemFromArray(state.openPanels, chooseMaterialPanel);
         },
     });
+    chooseMaterialPanel.x = (canvas.width - chooseMaterialPanel.w) / 2;
+    chooseMaterialPanel.y = (canvas.height - chooseMaterialPanel.h) / 2;
     state.openPanels.push(chooseMaterialPanel);
 }
 

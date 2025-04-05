@@ -248,14 +248,14 @@ function renderFireballProjectile(this: Projectile, context: CanvasRenderingCont
 function getFortressDamageReduction(abilityLevel: number): number {
     return [0.5, .45, .4, .35, .3][abilityLevel - 1]
 }
-function applyFortressEffect(this: AbilityEffect, state: GameState, ally: Hero|Ally) {
-    ally.addStatModifiers([{
+function applyFortressEffect(this: AbilityEffect, state: GameState, target: ModifiableTarget) {
+    target.addStatModifiers([{
         stat: 'incomingDamageMultiplier',
         multiplier: getFortressDamageReduction(this.abilityLevel),
     }]);
 }
-function removeFortressffect(this: AbilityEffect, state: GameState, ally: Hero|Ally) {
-    ally.removeStatModifiers([{
+function removeFortressffect(this: AbilityEffect, state: GameState, target: ModifiableTarget) {
+    target.removeStatModifiers([{
         stat: 'incomingDamageMultiplier',
         multiplier: getFortressDamageReduction(this.abilityLevel),
     }]);
@@ -288,7 +288,7 @@ export const fortress: PassiveAbilityDefinition = {
                 if (effect?.effectType === 'abilityEffect') {
                     effect.stacks = maxStacks
                 } else {
-                    effect = {
+                    const newEffect: ObjectEffect = {
                         effectType: 'abilityEffect',
                         creator: ability,
                         abilityLevel: ability.level,
@@ -296,7 +296,7 @@ export const fortress: PassiveAbilityDefinition = {
                         apply: applyFortressEffect,
                         remove: removeFortressffect,
                     };
-                    applyEffectToTarget(state, effect, ally);
+                    applyEffectToTarget(state, newEffect, ally);
                 }
             }
         }
