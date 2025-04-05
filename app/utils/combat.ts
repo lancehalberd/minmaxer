@@ -258,7 +258,9 @@ export function isEnemyAbilityTargetValid(state: GameState, targetingInfo: Abili
 export function getValidAbilityTargets(state: GameState, zone: ZoneInstance, targetingInfo: AbilityTargetingInfo): AttackTarget[] {
     const validTargets: AttackTarget[] = [];
     for (const object of zone.objects) {
-        if (!object || object.objectType === 'nexus' || object.objectType === 'waveSpawner' || object.objectType === 'loot' || object.objectType === 'structure') {
+        if (!object || object.objectType === 'nexus' || object.objectType === 'waveSpawner' || object.objectType === 'loot'
+            || object.objectType === 'structure'
+        ) {
             continue;
         }
         // Skip this object if the ability doesn't target this type of object.

@@ -6,7 +6,7 @@ import {createJobComponent} from 'app/ui/jobComponent';
 import {drawFrame, requireFrame} from 'app/utils/animations';
 import {fillCircle, fillText} from 'app/utils/draw';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
-import {applyHeroToJob, progressJob} from 'app/utils/job'
+import {applyHeroToJob, getOrCreateJob, progressJob} from 'app/utils/job'
 import {gainLoot, rollLoot} from 'app/utils/lootPool'
 import {followCameraTarget, removeFieldObject} from 'app/utils/world';
 
@@ -19,8 +19,14 @@ interface StructureProps extends Partial<Structure> {
     zone: ZoneInstance
 }
 
-interface ForestProps extends StructureProps {
-    jobKey: string
+interface SavedStructureProps extends StructureProps {
+    structureId: string
+}
+
+interface SavedForestData {
+    wood: number
+}
+interface ForestProps extends SavedStructureProps {
     wood: number
     drops: WeightedDrop[]
 }
@@ -33,8 +39,9 @@ export class Forest implements Structure {
     color = this.props.color ?? '#080';
     drops = this.props.drops;
     wood = this.props.wood;
+    structureId = this.props.structureId;
     jobDefinition: JobDefinition = {
-        key: this.props.jobKey,
+        key: this.structureId,
         label: () => 'Wood: ' + this.wood,
         requiredToolType: 'axe',
         workerSeconds: 1,
@@ -84,10 +91,20 @@ export class Forest implements Structure {
     getChildren(state: GameState): UIElement[] {
         return this.wood > 0 ? [this.jobElement] : [];
     }
+    exportData(state: GameState): SavedForestData {
+        return {wood: this.wood};
+    }
+    importData(state: GameState, data: SavedForestData) {
+        // Make sure the job is registered so job data will load for it.
+        getOrCreateJob(state, this.jobDefinition);
+        this.wood = data.wood;
+    }
 }
 
-interface QuaryProps extends StructureProps {
-    jobKey: string
+interface SavedQuaryData {
+    stone: number
+}
+interface QuaryProps extends SavedStructureProps {
     stone: number
     drops: WeightedDrop[]
 }
@@ -97,12 +114,12 @@ export class Quary implements Structure {
     x = this.props.x;
     y = this.props.y;
     r = this.props.r ?? 40;
-    jobKey = this.props.jobKey;
     color = this.props.color ?? '#888';
     drops = this.props.drops;
     stone = this.props.stone;
+    structureId = this.props.structureId;
     jobDefinition: JobDefinition = {
-        key: this.jobKey,
+        key: this.structureId,
         label: () => 'Stone: ' + this.stone,
         requiredToolType: 'pickaxe',
         workerSeconds: 5,
@@ -140,9 +157,20 @@ export class Quary implements Structure {
     getChildren(state: GameState): UIElement[] {
         return this.stone > 0 ? [this.jobElement] : [];
     }
+    exportData(state: GameState): SavedQuaryData {
+        return {stone: this.stone};
+    }
+    importData(state: GameState, data: SavedQuaryData) {
+        // Make sure the job is registered so job data will load for it.
+        getOrCreateJob(state, this.jobDefinition);
+        this.stone = data.stone;
+    }
 }
 
-interface VillageProps extends StructureProps {
+interface SavedVillageData {
+    population: number
+}
+interface VillageProps extends SavedStructureProps {
     population: number
 }
 export class Village implements Structure {
@@ -154,6 +182,7 @@ export class Village implements Structure {
     color = this.props.color ?? '#860';
     originalPopulation = this.props.population;
     population = this.props.population;
+    structureId = this.props.structureId;
 
     constructor(public props: VillageProps) {}
     update(state: GameState) {
@@ -169,6 +198,12 @@ export class Village implements Structure {
     render(context: CanvasRenderingContext2D, state: GameState) {
         fillCircle(context, this);
         fillText(context, {x: this.x, y: this.y - uiSize, size: 16, text: this.population, color: '#FFF'});
+    }
+    exportData(state: GameState): SavedVillageData {
+        return {population: this.population};
+    }
+    importData(state: GameState, data: SavedVillageData) {
+        this.population = data.population;
     }
 }
 

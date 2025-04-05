@@ -10,7 +10,7 @@ import {registerKeyboardEventHandlers} from 'app/keyboard';
 import {startRendering} from 'app/render';
 import {startUpdating} from 'app/update';
 import {setState} from 'app/state';
-import {loadGame} from 'app/utils/saveGame';
+import {loadGame} from 'app/utils/loadGame';
 
 
 setState(loadGame());

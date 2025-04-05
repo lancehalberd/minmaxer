@@ -1,3 +1,5 @@
+import {registerWallJobs} from 'app/city/cityWall';
+import {registerCraftingJobs} from 'app/city/crafting';
 import {getItemKeys} from 'app/definitions/itemDefinitions';
 import {arcticBlast, inferno, healingWind, summonGolems, createNexusAbility} from 'app/definitions/nexusAbilities';
 import {bossGauntletZones} from 'app/definitions/zones/bossGauntlet';
@@ -106,7 +108,7 @@ export function getNewGameState(): GameState {
             scale: 2,
             x: 0,
             y: 0,
-            speed: 200,
+            speed: 400,
             target: {x: 0, y: 0},
             isLocked: true,
         },
@@ -136,6 +138,8 @@ export function getNewGameState(): GameState {
 
     addBasicHeroes(state);
     initializeSpawners(state);
+    registerWallJobs(state);
+    registerCraftingJobs(state);
 
     return state;
 }

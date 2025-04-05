@@ -141,6 +141,9 @@ export function getOrCreateJob(state: GameState, definition: JobDefinition): Job
     };
     return state.city.jobs[definition.key] = job;
 }
+export function getJob(state: GameState, key: string): Job|undefined {
+    return state.city.jobs[key];
+}
 
 
 export function getMaxWorkersForJob(state: GameState, job: Job) {

@@ -14,6 +14,7 @@ import {activateHeroAbility} from 'app/utils/hero';
 import {computeIdleToolCounts} from 'app/utils/inventory';
 import {updateJobs} from 'app/utils/job';
 import {advanceDebugGameState} from 'app/utils/debug';
+import {checkToAutosave} from 'app/utils/saveGame';
 
 /*
 TODO:
@@ -207,6 +208,7 @@ function update() {
             }
             updateZone(state, state.world);
         }
+        checkToAutosave(state);
     } else {
         computeIdlePopulation(state);
         computeIdleToolCounts(state);
@@ -254,25 +256,25 @@ function getScrollAmount(state: GameState, distanceFromEdge: number, gameKey: nu
 }
 function updateCamera(state: GameState) {
     const camera = state.camera;
+    // How many pixels the camera moves per frame.
+    const pixelsPerFrame = camera.speed * frameLength / 1000;
     if (camera.isLocked) {
         const target = state.selectedHero ?? state.nexus;
         camera.zone = target.zone;
-        camera.x = camera.target.x = target.x;
-        camera.y = camera.target.y = target.y;
-        return;
-    }
-    // How many pixels the camera moves per frame.
-    const pixelsPerFrame = camera.speed * frameLength / 1000;
-    // Move the camera so the hero is in the center of the screen:
-    if (state.nexus.essence <= 0) {
-        camera.speed = 600;
-        camera.target.x = state.nexus.x;
-        camera.target.y = state.nexus.y;
+        camera.target.x = target.x;
+        camera.target.y = target.y;
     } else {
-        camera.target.y -= pixelsPerFrame * getScrollAmount(state, state.mouse.currentPosition.y, gameKeys.up);
-        camera.target.y += pixelsPerFrame * getScrollAmount(state, canvas.height - state.mouse.currentPosition.y, gameKeys.down);
-        camera.target.x -= pixelsPerFrame * getScrollAmount(state, state.mouse.currentPosition.x, gameKeys.left);
-        camera.target.x += pixelsPerFrame * getScrollAmount(state, canvas.width - state.mouse.currentPosition.x, gameKeys.right);
+        // Move the camera so the hero is in the center of the screen:
+        if (state.nexus.essence <= 0) {
+            camera.speed = 600;
+            camera.target.x = state.nexus.x;
+            camera.target.y = state.nexus.y;
+        } else {
+            camera.target.y -= pixelsPerFrame * getScrollAmount(state, state.mouse.currentPosition.y, gameKeys.up);
+            camera.target.y += pixelsPerFrame * getScrollAmount(state, canvas.height - state.mouse.currentPosition.y, gameKeys.down);
+            camera.target.x -= pixelsPerFrame * getScrollAmount(state, state.mouse.currentPosition.x, gameKeys.left);
+            camera.target.x += pixelsPerFrame * getScrollAmount(state, canvas.width - state.mouse.currentPosition.x, gameKeys.right);
+        }
     }
     const dx = camera.target.x - camera.x, dy = camera.target.y - camera.y;
     const mag = Math.sqrt(dx * dx + dy * dy);

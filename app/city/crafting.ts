@@ -2,7 +2,7 @@ import {frameLength, uiSize} from 'app/gameConstants';
 import {computeValue} from 'app/utils/computed';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
 import {hammerIcon, axeIcon, pickaxeIcon, staffIcon, bowIcon, getItemLabel} from 'app/utils/inventory';
-import {progressJob} from 'app/utils/job';
+import {getOrCreateJob, progressJob} from 'app/utils/job';
 import {createJobComponent} from 'app/ui/jobComponent';
 
 interface CraftingJobDefinition {
@@ -105,3 +105,12 @@ for (const craftingJobDefinition of craftingJobDefinitions) {
     }
 };
 
+export function registerCraftingJobs(state: GameState) {
+    for (const craftingJobDefinition of craftingJobDefinitions) {
+        if (craftingJobDefinition.jobDefinition) {
+            getOrCreateJob(state, craftingJobDefinition.jobDefinition);
+        } else {
+            throw new Error('Missing crafting job definition.');
+        }
+    }
+}

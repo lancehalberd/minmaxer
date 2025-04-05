@@ -84,6 +84,9 @@ interface Structure extends Circle, ZoneLocation {
     onHeroInteraction?: (state: GameState, hero: Hero) => void
     onClick?: (state: GameState) => boolean
     getChildren?: (state: GameState) => UIElement[]
+    structureId?: string
+    exportData?: (state: GameState) => any
+    importData?: (state: GameState, data: any) => void
 }
 
 interface Nexus extends Circle, ZoneLocation {

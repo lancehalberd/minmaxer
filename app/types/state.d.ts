@@ -69,6 +69,7 @@ interface GameState {
     autosaveEnabled: boolean
     highestLevelEnemyDefeated: number
     prestige: PrestigeStats
+    lastSavedState?: SavedGameState,
 }
 
 interface PrestigeStats {
@@ -78,4 +79,73 @@ interface PrestigeStats {
     essenceGainBonus: number
     heroExperienceBonus: number
     skillExperienceBonus: number
+}
+
+
+
+interface SavedJobData {
+    jobKey: string
+    isPaidFor: boolean
+    shouldRepeatJob: boolean
+    workers: number
+    workerSecondsCompleted: number
+}
+interface SavedWorldData {
+    structureData: {[key: string]: any}
+}
+interface SavedNexusData {
+    essence: number
+    abilityLevels: {[key in NexusAbilityKey]?: number}
+    abilitySlots: (NexusAbilityKey|undefined)[]
+}
+interface SavedCityData {
+    population: number
+    wall: {
+        level: number
+        health: number
+    }
+    archers: {
+        level: number
+        jobProgress: number
+    }
+    mages: {
+        level: number
+        jobProgress: number
+    }
+    houses: {
+        huts: number
+        cabins: number
+        cottages: number
+        towers: number
+    }
+}
+type SavedEquipment = SavedCraftedItem|InventoryKey|undefined
+interface SavedHeroData {
+    heroType: HeroType
+    level: number
+    experience: number
+    abilityLevels: number[]
+    weapon: SavedEquipment
+    armor: SavedEquipment
+    charms: (SavedEquipment)[]
+    skills: {
+        [key in HeroSkillType]?: HeroSkill
+    }
+}
+interface SavedCraftedItem {
+    equipmentType: EquipmentType
+    materials: InventoryKey[]
+    decorations: InventoryKey[]
+}
+interface SavedGameState {
+    nexus: SavedNexusData
+    city: SavedCityData
+    heroSlots: (SavedHeroData|undefined)[]
+    craftedItems: SavedCraftedItem[]
+    inventory: {[key in InventoryKey]?: number}
+    worldTime: number
+    nextWaveIndex: number
+    prestige: PrestigeStats
+    world: SavedWorldData
+    jobs: SavedJobData[]
 }

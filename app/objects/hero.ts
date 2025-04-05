@@ -539,9 +539,9 @@ class HeroObject implements Hero {
 }
 
 export function addBasicHeroes(state: GameState) {
-    const warrior: Hero = new HeroObject('warrior', {zone: state.world, x: -60, y: 45});
-    const ranger: Hero = new HeroObject('ranger', {zone: state.world, x: 60, y: 45});
-    const wizard: Hero = new HeroObject('wizard', {zone: state.world, x: 0, y: -75});
+    const warrior: Hero = new HeroObject('warrior', {zone: state.world, x: -100, y: 75});
+    const ranger: Hero = new HeroObject('ranger', {zone: state.world, x: 100, y: 75});
+    const wizard: Hero = new HeroObject('wizard', {zone: state.world, x: 0, y: -125});
     state.availableHeroes.push(warrior);
     state.availableHeroes.push(ranger);
     state.availableHeroes.push(wizard);

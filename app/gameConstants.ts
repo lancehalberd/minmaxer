@@ -20,3 +20,5 @@ export const uiSize = 12;
 export const uiPadding = uiSize;
 export const buttonSize = 4 * uiSize;
 export const tinyButtonSize = 2 * uiSize;
+
+export const savedGameKey = 'minmaxer-savedGame';

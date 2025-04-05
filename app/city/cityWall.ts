@@ -1,6 +1,6 @@
 import {frameLength, uiSize} from 'app/gameConstants';
 import {gainSkillExperience, getHeroSkill} from 'app/utils/hero';
-import {progressJob} from 'app/utils/job';
+import {getOrCreateJob, progressJob} from 'app/utils/job';
 import {createJobComponent} from 'app/ui/jobComponent';
 
 interface WallLevelDefinition {
@@ -151,3 +151,8 @@ export const upgradeWallElement = createJobComponent({
     getHeroTarget: (state: GameState) => state.nexus
 });
 
+export function registerWallJobs(state: GameState) {
+    getOrCreateJob(state, buildWallJobDefinition);
+    getOrCreateJob(state, repairWallJobDefinition);
+    getOrCreateJob(state, upgradeWallJobDefinition);
+}

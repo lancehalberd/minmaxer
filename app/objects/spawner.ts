@@ -256,7 +256,7 @@ export function checkToAddNewSpawner(state: GameState): boolean {
     if (level % 3 === 0) {
         structure = new Quary({
             zone: state.world,
-            jobKey: 'quary-' + level,
+            structureId: 'quary-' + level,
             drops: generatePoolFromKeys(state, 0.1,
                 ['stone',
                 'ironOre', 'chippedRuby', 'chippedEmerald', 'chippedSapphire',
@@ -271,7 +271,7 @@ export function checkToAddNewSpawner(state: GameState): boolean {
     } else if (level % 3 === 1) {
         structure = new Forest({
             zone: state.world,
-            jobKey: 'forest-' + level,
+            structureId: 'forest-' + level,
             drops: forestLootPool(state, level),
             wood: 5 * level * 1000,
             x,
@@ -279,7 +279,7 @@ export function checkToAddNewSpawner(state: GameState): boolean {
         });
         bossEnemyType = 'medusa';
     } else {
-        structure = new Village({zone: state.world, population: 5, x, y});
+        structure = new Village({zone: state.world, structureId: 'village-' + level, population: 5, x, y});
         bossEnemyType = 'mummy';
     }
     const newSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 500 * level, structure});
@@ -434,18 +434,18 @@ function forestLootPool(state: GameState, bonus: number) {
 
 export function initializeSpawners(state: GameState) {
 
-    const smallSnakeForest = new Forest({jobKey: 'smallSnakeForest', wood: 100, drops: forestLootPool(state, 0), zone: state.world, x: 190, y: 150, r: 20});
+    const smallSnakeForest = new Forest({structureId: 'smallSnakeForest', wood: 100, drops: forestLootPool(state, 0), zone: state.world, x: 190, y: 150, r: 20});
     const smallSnakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 150, structure: smallSnakeForest});
 
-    const snakeForest = new Forest({jobKey: 'snakeForest', wood: 1000, drops: forestLootPool(state, 1), zone: state.world,x: 200, y: 200});
+    const snakeForest = new Forest({structureId: 'snakeForest', wood: 1000, drops: forestLootPool(state, 1), zone: state.world,x: 200, y: 200});
     const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: snakeForest});
 
-    const smallVillage = new Village({population: 20, zone: state.world,x: -200, y: 200});
+    const smallVillage = new Village({structureId: 'smallVillage', population: 20, zone: state.world,x: -200, y: 200});
     const koboldSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: smallVillage});
 
 
     // TODO: Make this a bridge or something that allows seeing more of the map when completed.
-    const town = new Village({population: 50, zone: state.world,x: 200, y: -200});
+    const town = new Village({structureId: 'smallTown',population: 50, zone: state.world,x: 200, y: -200});
     const mummySpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 1000, structure: town});
     // Test forest code.
     state.world.objects.push(smallSnakeSpawner);
