@@ -241,22 +241,22 @@ class HeroObject implements Hero {
         }
     }
     getMaxHealth(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.maxHealth);
+        return Math.floor(getModifiableStatValue(state, this, this.stats.maxHealth));
     }
     getMovementSpeed(state: GameState): number {
         return Math.max(0, getModifiableStatValue(state, this, this.stats.movementSpeed) * getModifiableStatValue(state, this, this.stats.speed));
     }
     getDamage(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.damage);
+        return Math.floor(getModifiableStatValue(state, this, this.stats.damage));
     }
     getDex(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.dex);
+        return Math.floor(getModifiableStatValue(state, this, this.stats.dex));
     }
     getStr(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.str);
+        return Math.floor(getModifiableStatValue(state, this, this.stats.str));
     }
     getInt(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.int);
+        return Math.floor(getModifiableStatValue(state, this, this.stats.int));
     }
     getPrimaryStat(state: GameState) {
         if (this.definition.coreState === 'dex') {
@@ -268,7 +268,7 @@ class HeroObject implements Hero {
         }
     }
     getArmor(state: GameState): number {
-        return getModifiableStatValue(state, this, this.stats.armor);
+        return Math.floor(getModifiableStatValue(state, this, this.stats.armor));
     }
     getArmorClass(state: GameState): number {
         const dex = this.getDex(state);
@@ -318,6 +318,12 @@ class HeroObject implements Hero {
         // Calculate Hero level increase
         const newHeroLevel = heroLevel(this.experience, this.level, heroLevelCap)
         if (newHeroLevel > this.level) {
+            if (newHeroLevel >= 15 && this.equipment.charms.length < 2) {
+                this.equipment.charms.push(undefined);
+            }
+            if (newHeroLevel >= 45 && this.equipment.charms.length < 3) {
+                this.equipment.charms.push(undefined);
+            }
             // Level up hero
             this.level = newHeroLevel;
             // Update hero stats based on level
@@ -614,7 +620,7 @@ export function reviveHero(state: GameState, hero: Hero) {
         hero.effects.splice(i--, 1);
         effect.remove(state, hero);
     }
-    if (!state.selectedHero) {
+    if (!state.selectedHero || (state.selectedHero === hero && state.camera.zone !== hero.zone)) {
         state.selectedHero = hero;
         followCameraTarget(state, hero);
     }

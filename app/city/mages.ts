@@ -26,19 +26,22 @@ export function gainMageLevel(state: GameState) {
     } else if (state.city.mages.level % 3 === 2) {
         state.city.mages.power *= 1.2;
     } else if (state.city.mages.level % 3 === 0) {
-        state.city.mages.cooldownSpeed += 0.2;
+        state.city.mages.cooldownSpeed += 0.1;
     } else if (state.city.mages.level % 3 === 1) {
         state.city.mages.range += 5;
     }
 }
 
 const mageAbilityMap = <const>{
-    flame: mageFlame,
-    frost: mageFrost,
     heal: mageHeal,
     summon: mageSummon,
+    frost: mageFrost,
+    flame: mageFlame,
 };
 
+// Keep track of the next mage ability to cast globally so that mages cycle through all spells even when the
+// spell cooldown is low enough that they could keep casting the same spell each frame.
+let mageAbilityIndex = 0;
 export function updateMages(state: GameState) {
     if (state.city.mages.level <= 0) {
         return;
@@ -52,7 +55,9 @@ export function updateMages(state: GameState) {
     const powerMultiplier = (1 + jobMultiplier / 100);
     const range = state.city.mages.range * (1 + jobMultiplier / 100 / 10);
     const hitCircle = {x: state.nexus.x, y: state.nexus.y, r: state.nexus.r + range}
-    for (const nexusAbility of state.nexusAbilities) {
+    for (let i = 0; i < state.nexusAbilities.length; i++) {
+        mageAbilityIndex = (mageAbilityIndex + 1) % state.nexusAbilities.length;
+        const nexusAbility = state.nexusAbilities[mageAbilityIndex];
         const abilityKey = nexusAbility.definition.abilityKey;
         if (nexusAbility.level <= 0) {
             continue;

@@ -29,7 +29,6 @@ export const snakePit: ZoneDefinition = {
                 const enemy: Enemy = createEnemy(type, level, {zone, x: cx + smallRadius * Math.cos(theta), y: cy + smallRadius * Math.sin(theta)});
                 enemy.aggroPack = aggroPack;
                 aggroPack.push(enemy);
-                zone.objects.push(enemy);
             }
         }
     }

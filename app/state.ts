@@ -1,5 +1,6 @@
 import {registerWallJobs} from 'app/city/cityWall';
 import {registerCraftingJobs} from 'app/city/crafting';
+import {registerHouseJobs} from 'app/city/houses';
 import {getItemKeys} from 'app/definitions/itemDefinitions';
 import {arcticBlast, inferno, healingWind, summonGolems, createNexusAbility} from 'app/definitions/nexusAbilities';
 import {bossGauntletZones} from 'app/definitions/zones/bossGauntlet';
@@ -9,6 +10,7 @@ import {addBasicHeroes} from 'app/objects/hero';
 import {createNexus} from 'app/objects/nexus';
 import {initializeSpawners} from 'app/objects/spawner';
 import {calculatePrestigeStats} from 'app/utils/prestige';
+import {saveGame} from 'app/utils/saveGame';
 
 function gainAllItems(state: GameState, amount: number) {
     for (const key of getItemKeys()) {
@@ -41,7 +43,7 @@ export function getNewGameState(): GameState {
         nexus,
         maxHeroSkillPoints: 7,
         heroSlots: [undefined],
-        maxNexusAbilityLevel: 1,
+        maxNexusAbilityLevel: 0,
         nexusAbilities: [
             createNexusAbility(healingWind),
             createNexusAbility(inferno),
@@ -124,7 +126,8 @@ export function getNewGameState(): GameState {
             gameKeysReleased: new Set(),
             mostRecentKeysPressed: new Set(),
         },
-        autosaveEnabled: false,
+        autosaveEnabled: true,
+        fastForwardSpeed: 10,
         prestige: {
             lootRarityBonus: 0,
             archerExperienceBonus: 0,
@@ -140,6 +143,7 @@ export function getNewGameState(): GameState {
     initializeSpawners(state);
     registerWallJobs(state);
     registerCraftingJobs(state);
+    registerHouseJobs(state);
 
     return state;
 }
@@ -165,6 +169,7 @@ export function restartGame(state: GameState) {
     const newGameState = getNewGameState();
     newGameState.prestige = calculatePrestigeStats(state);
     setState(newGameState);
+    saveGame(newGameState);
 }
 window.restartGame = restartGame;
 

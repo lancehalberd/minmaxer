@@ -10,7 +10,8 @@ export const canvasScale = 1;
 
 export const context: CanvasRenderingContext2D = canvas.getContext('2d')!;
 
-export const heroLevelCap = 20;
+// TODO: Start with this at 10 and increase it at various points in the game.
+export const heroLevelCap = 100;
 
 // Level buffer for penalties to experience gain from level disparities.
 export const levelBuffer = 2;

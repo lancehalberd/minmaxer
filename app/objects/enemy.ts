@@ -83,6 +83,7 @@ export function createEnemy(enemyType: EnemyType, level: number, {zone, x, y}: Z
             }
         }
     };
+    enemy.zone.objects.push(enemy);
     return enemy;
 }
 
@@ -295,6 +296,10 @@ function moveEnemyTowardsTarget(state: GameState, enemy: Enemy, target: AbilityT
     // Push the enemy away from any objects they get too close to.
     for (const object of enemy.zone.objects) {
         if (object === enemy) {
+            continue;
+        }
+        // Boss cannot be blocked by hero/allies.
+        if (enemy.isBoss && object.objectType === 'ally' || object.objectType === 'hero') {
             continue;
         }
         let minDistance = enemy.r + object.r - 6;

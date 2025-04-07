@@ -12,6 +12,20 @@ import {followCameraTarget, removeFieldObject} from 'app/utils/world';
 
 
 const treeFrame = requireFrame('gfx/world/tree.png', {x: 0, y: 0, w: 80, h: 76});
+///const treeDoorFrame = requireFrame('gfx/world/treeDoor.png', {x: 0, y: 0, w: 80, h: 74});
+const caveDoorFrame = requireFrame('gfx/world/caveDoor.png', {x: 0, y: 0, w: 32, h: 32});
+
+function drawFrameScaledToCircle(context: CanvasRenderingContext2D, circle: Circle, frame: Frame) {
+    if (2 * circle.r > frame.w) {
+        const scale = Math.floor(2 * circle.r / frame.w)
+        const w = scale * frame.w, h = scale * frame.h;
+        drawFrame(context, frame, {w, h, x: circle.x - w / 2, y: circle.y - h / 2});
+    } else {
+        const scale = Math.ceil(frame.w / 2 / circle.r);
+        const w = frame.w / scale, h = frame.h / scale;
+        drawFrame(context, frame, {w, h, x: circle.x - w / 2, y: circle.y - h / 2});
+    }
+}
 
 interface StructureProps extends Partial<Structure> {
     x: number
@@ -29,6 +43,8 @@ interface SavedForestData {
 interface ForestProps extends SavedStructureProps {
     wood: number
     drops: WeightedDrop[]
+    difficulty?: number
+    canUsePopulation?: boolean
 }
 export class Forest implements Structure {
     objectType = <const>'structure';
@@ -39,13 +55,15 @@ export class Forest implements Structure {
     color = this.props.color ?? '#080';
     drops = this.props.drops;
     wood = this.props.wood;
+    difficulty = this.props.difficulty ?? 1;
     structureId = this.props.structureId;
     jobDefinition: JobDefinition = {
         key: this.structureId,
         label: () => 'Wood: ' + this.wood,
         requiredToolType: 'axe',
-        workerSeconds: 1,
+        workerSeconds: this.difficulty,
         repeat: true,
+        canUsePopulation: this.props.canUsePopulation,
         canProgress: (state: GameState) => {
             return this.wood > 0
         },
@@ -68,7 +86,6 @@ export class Forest implements Structure {
     };
     jobElement = createJobComponent({jobDefinition: this.jobDefinition, x: this.x - 2 * uiSize, y: this.y, getHeroTarget: () => this});
 
-
     constructor(public props: ForestProps) {}
     update(state: GameState) {
         this.jobElement.zone = this.zone;
@@ -78,15 +95,7 @@ export class Forest implements Structure {
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
         //fillCircle(context, this);
-        if (2 * this.r > treeFrame.w) {
-            const scale = Math.floor(2 * this.r / treeFrame.w)
-            const w = scale * treeFrame.w, h = scale * treeFrame.h;
-            drawFrame(context, treeFrame, {w, h, x: this.x - w / 2, y: this.y - h / 2});
-        } else {
-            const scale = Math.ceil(treeFrame.w / 2 / this.r);
-            const w = treeFrame.w / scale, h = treeFrame.h / scale;
-            drawFrame(context, treeFrame, {w, h, x: this.x - w / 2, y: this.y - h / 2});
-        }
+        drawFrameScaledToCircle(context, this, treeFrame);
     }
     getChildren(state: GameState): UIElement[] {
         return this.wood > 0 ? [this.jobElement] : [];
@@ -212,6 +221,7 @@ interface CaveProps extends StructureProps {
     // hero to the containing zone/overworld.
     zoneDefinition?: ZoneDefinition
     exitToOverworld?: boolean
+    doorFrame?: Frame
 }
 export class Cave implements Structure {
     objectType = <const>'structure';
@@ -219,7 +229,7 @@ export class Cave implements Structure {
     x = this.props.x;
     y = this.props.y;
     r = this.props.r ?? 20;
-    color = this.props.color ?? '#999';
+    doorFrame = this.props.doorFrame ?? caveDoorFrame
     zoneDefinition = this.props.zoneDefinition;
     exitToOverworld = this.props.exitToOverworld;
 
@@ -235,8 +245,7 @@ export class Cave implements Structure {
     }
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
-        fillCircle(context, this);
-        fillCircle(context, {...this, r: this.r -5, color: '#000'});
+        drawFrameScaledToCircle(context, this, this.doorFrame);
         const text = this.zoneDefinition?.name ?? 'Exit';
         fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text, color: '#FFF'});
     }

@@ -77,7 +77,7 @@ export const mageHeal = {
         return (target.objectType === 'hero' || target.objectType === 'ally') && target.health < target.getMaxHealth(state);
     },
     getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
-        return ability.definition.getCooldown(state, ability) / 5;
+        return ability.definition.getCooldown(state, ability) / 3;
     },
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget, power: number) {
         const targetingInfo = this.getTargetingInfo(state, ability);
@@ -202,7 +202,7 @@ export const mageFlame = {
         return true;
     },
     getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
-        return ability.definition.getCooldown(state, ability) / 5;
+        return ability.definition.getCooldown(state, ability) / 3;
     },
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget, power: number) {
         const targetingInfo = this.getTargetingInfo(state, ability);
@@ -311,7 +311,7 @@ export const mageFrost = {
         return true;
     },
     getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
-        return ability.definition.getCooldown(state, ability) / 5;
+        return ability.definition.getCooldown(state, ability) / 3;
     },
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget, power: number) {
         const targetingInfo = this.getTargetingInfo(state, ability);
@@ -387,6 +387,7 @@ export const summonGolems: NexusAbilityDefinition<LocationTarget> = {
     getTargetingInfo(state: GameState, ability: NexusAbility<LocationTarget>) {
         return {
             canTargetLocation: true,
+            canTargetEnemy: true,
             hitRadius: [30, 40, 50][ability.level - 1],
             range: 0,
         };
@@ -450,7 +451,7 @@ export const mageSummon = {
         return true;
     },
     getCooldown(state: GameState, ability: NexusAbility<AbilityTarget>) {
-        return ability.definition.getCooldown(state, ability) / 5;
+        return ability.definition.getCooldown(state, ability) / 3;
     },
     onActivate(state: GameState, ability: NexusAbility<AbilityTarget>, target: AbilityTarget, power: number) {
         const targetingInfo = this.getTargetingInfo(state, ability);

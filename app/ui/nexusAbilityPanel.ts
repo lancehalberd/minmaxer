@@ -196,7 +196,7 @@ export class NexusAbilityPanel implements UIContainer {
             if (!this.abilityButtons[i]) {
                 this.abilityButtons[i] = new NexusAbilityButton({
                     ability, x, y,
-                    onPress() {
+                    onPress(state: GameState) {
                         if (this.ability?.level) {
                             assignNexusAbility(state, this.ability, state.selectedNexusAbilitySlot);
                             delete state.selectedNexusAbilitySlot;

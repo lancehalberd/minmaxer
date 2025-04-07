@@ -303,10 +303,16 @@ export function createSummonMinionAbility(props: CreateSummonMinionAbilityProps)
                 range: 100,
             };
         },
+        isTargetValid(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<EnemyTarget> , target: AbilityTarget) {
+            // Don't use the ability if all minions are already active.
+            return enemy.zone.objects.filter(e => e.objectType === 'enemy' && e.creator === ability).length !== props.enemyTypes.length;
+        },
         cooldown: props.cooldown ?? 8000,
         zoneCooldown: props.zoneCooldown ?? 1000,
         warningTime: 0,
         onActivate(state: GameState, enemy: Enemy, ability: ActiveEnemyAbility<FieldTarget>, target: LocationTarget) {
+            // Remove existing summons.
+            enemy.zone.objects = enemy.zone.objects.filter(e => e.objectType !== 'enemy' || e.creator !== ability);
             const targetingInfo = this.getTargetingInfo(state, enemy, ability);
             const spawnCircle = {
                 x: target.x,
@@ -327,13 +333,13 @@ export function createSummonMinionAbility(props: CreateSummonMinionAbilityProps)
                 });
                 // TODO: prevent enemy from spawning in invalid positions.
                 aggroPack.push(minion);
+                minion.creator = ability;
                 minion.defaultTarget = enemy.defaultTarget;
                 minion.aggroPack = aggroPack;
                 if (!target.zone) {
                     debugger;
                     return;
                 }
-                target.zone.objects.push(minion);
                 new CircleEffect({
                     zone: target.zone,
                     duration: 200,

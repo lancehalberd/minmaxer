@@ -1,10 +1,12 @@
+import {snakeWoods} from 'app/definitions/zones/snakeWoods';
 import {canvas, frameLength} from 'app/gameConstants';
 import {createEnemy} from 'app/objects/enemy';
-import {Forest, Quary, Village} from 'app/objects/structure';
+import {Cave, Forest, Quary, Village} from 'app/objects/structure';
+import {requireFrame} from 'app/utils/animations';
 import {fillCircle, fillRing, renderCooldownCircle} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
 import {removeFieldObject} from 'app/utils/world';
-import {generatePoolFromKeys} from 'app/utils/lootPool'
+import {forestLootPool, generatePoolFromKeys} from 'app/utils/lootPool'
 
 /*class EnemySpawner implements Spawner {
     objectType = 'spawner' as const;
@@ -75,7 +77,6 @@ import {generatePoolFromKeys} from 'app/utils/lootPool'
                 enemy.x = this.x + this.r * Math.cos(theta);
                 enemy.y = this.y + this.r * Math.sin(theta);
                 this.spawnedEnemies.push(enemy);
-                state.world.objects.push(enemy);
                 this.lastSpawnTime = state.world.time;
                 theta += Math.PI / 6;
             }
@@ -219,7 +220,6 @@ class EnemyWaveSpawner implements WaveSpawner {
             enemy.y = this.y + (this.r + enemy.r - 4) * Math.sin(theta);
             this.lastSpawnTime = this.zone.time;
             this.spawnedEnemies.push(enemy);
-            this.zone.objects.push(enemy);
             // The spawn angle increases in magnitude and swaps signs between spawnings
             if (this.spawnAngle >= spawnAngleDelta / 2) {
                 this.spawnAngle = -this.spawnAngle;
@@ -279,7 +279,7 @@ export function checkToAddNewSpawner(state: GameState): boolean {
         });
         bossEnemyType = 'medusa';
     } else {
-        structure = new Village({zone: state.world, structureId: 'village-' + level, population: 5, x, y});
+        structure = new Village({zone: state.world, structureId: 'village-' + level, population: 5 + Math.floor(level / 2), x, y});
         bossEnemyType = 'mummy';
     }
     const newSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 500 * level, structure});
@@ -428,10 +428,8 @@ const kobold: SpacedSpawnProps = {type: 'kobold', level: 3, count: 2, spacing: 3
 const koboldArcher: SpacedSpawnProps = {type: 'koboldArcher', level: 3, count: 1, offset: 2, spacing: 4};
 const koboldCleric: SpacedSpawnProps = {type: 'koboldCleric', level: 5, count: 1, offset: 2, spacing: 4};
 
-function forestLootPool(state: GameState, bonus: number) {
-    return generatePoolFromKeys(state, 0.1, ['wood', 'hardwood', 'chippedEmerald', 'silverwood', 'emerald', 'enchantedWood', 'flawlessEmerald'], [], bonus);
-}
 
+const treeDoorFrame = requireFrame('gfx/world/treeDoor.png', {x: 0, y: 0, w: 80, h: 74});
 export function initializeSpawners(state: GameState) {
 
     const smallSnakeForest = new Forest({structureId: 'smallSnakeForest', wood: 100, drops: forestLootPool(state, 0), zone: state.world, x: 190, y: 150, r: 20});
@@ -439,6 +437,8 @@ export function initializeSpawners(state: GameState) {
 
     const snakeForest = new Forest({structureId: 'snakeForest', wood: 1000, drops: forestLootPool(state, 1), zone: state.world,x: 200, y: 200});
     const snakeSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: snakeForest});
+
+    const snakeForestEntrance = new Cave({zone: state.world, zoneDefinition: snakeWoods, x: 190, y: 230, doorFrame: treeDoorFrame});
 
     const smallVillage = new Village({structureId: 'smallVillage', population: 20, zone: state.world,x: -200, y: 200});
     const koboldSpawner: WaveSpawner = new EnemyWaveSpawner({zone: state.world, essenceWorth: 300, structure: smallVillage});
@@ -450,6 +450,7 @@ export function initializeSpawners(state: GameState) {
     // Test forest code.
     state.world.objects.push(smallSnakeSpawner);
     state.world.objects.push(snakeSpawner);
+    state.world.objects.push(snakeForestEntrance);
     state.world.objects.push(koboldSpawner);
     state.world.objects.push(mummySpawner);
     //state.world.objects.push(snakeSpawner);

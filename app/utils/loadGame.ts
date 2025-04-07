@@ -47,6 +47,7 @@ function applySavedNexusDataToState(state: GameState, nexusData?: Partial<SavedN
         return;
     }
     // This will cause the nexus to level up appropriately.
+    state.nexus.essence = 0;
     gainEssence(state, nexusData.essence ?? 0, false);
     for (const ability of state.nexusAbilities) {
         ability.level = nexusData.abilityLevels?.[ability.definition.abilityKey] ?? 0;

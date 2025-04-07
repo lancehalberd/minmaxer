@@ -12,7 +12,7 @@ export function toggleOptionsPanel(state: GameState, open = !state.openOptionsPa
 
 
 const buttonProps = {
-    textProps: {size: 25},
+    textProps: {size: 24},
     h: 40,
 }
 
@@ -26,10 +26,30 @@ const autosaveButton = new TextButton({
         return true;
     },
 });
+const fastForwardSpeedButton = new TextButton({
+    ...buttonProps,
+    text(state: GameState) {
+        return 'Fast Forward[F] Speed: ' + state.fastForwardSpeed;
+    },
+    onClick(state: GameState) {
+        if (state.fastForwardSpeed === 3) {
+            state.fastForwardSpeed = 10
+        } else if (state.fastForwardSpeed === 10) {
+            state.fastForwardSpeed = 30
+        } else if (state.fastForwardSpeed === 30) {
+            state.fastForwardSpeed = 60
+        } else if (state.fastForwardSpeed === 60) {
+            state.fastForwardSpeed = 100
+        } else {
+            state.fastForwardSpeed = 3
+        }
+        return true;
+    },
+});
 const cameraLockButton = new TextButton({
     ...buttonProps,
     text(state: GameState) {
-        return 'Lock Camera [Y]: ' + (state.camera.isLocked ? 'On' : 'Off')
+        return 'Lock Camera[Y]: ' + (state.camera.isLocked ? 'On' : 'Off')
     },
     onClick(state: GameState) {
         state.camera.isLocked = !state.camera.isLocked;
@@ -78,6 +98,7 @@ const restartButton = new TextButton({
 });
  const buttons = [
     autosaveButton,
+    fastForwardSpeedButton,
     cameraLockButton,
     rewindButton,
     restartButton,
@@ -86,8 +107,8 @@ export class OptionsList implements UIContainer {
     objectType = <const>'uiContainer';
     x = 0;
     y = 0;
-    w = 300;
-    h = 200;
+    w = 350;
+    h = buttons.length * (buttonProps.h + 2 * uiPadding) + 2 * uiPadding;
     children = [...buttons];
     update(state: GameState) {
         for (let i = 0; i < buttons.length; i++) {
@@ -111,8 +132,6 @@ export class OptionsList implements UIContainer {
 
 export const optionsPanel = new TitlePanel({
     title: 'Options',
-    w: 300,
-    h: buttons.length * (buttonProps.h + 2 * uiPadding) + 2 * uiPadding + 40,
     content: new PanelPadding(new OptionsList()),
     onClose(state: GameState) {
         toggleOptionsPanel(state, false);

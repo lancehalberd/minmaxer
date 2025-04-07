@@ -1,5 +1,6 @@
 import {uiSize} from 'app/gameConstants';
 import {createJobComponent} from 'app/ui/jobComponent';
+import {getOrCreateJob} from 'app/utils/job';
 
 
 export function buildHut(state: GameState) {
@@ -77,3 +78,10 @@ export const buildTowerJobDefinition: JobDefinition = {
     workerSeconds: (state: GameState) => 20000,
 };
 export const buildTowerJobElement = createJobComponent({jobDefinition: buildTowerJobDefinition, scale: 2, x: -6.5 * uiSize, y: -3.5 * uiSize});
+
+export function registerHouseJobs(state: GameState) {
+    getOrCreateJob(state, buildHutJobDefinition);
+    getOrCreateJob(state, buildCabinJobDefinition);
+    getOrCreateJob(state, buildCottageJobDefinition);
+    getOrCreateJob(state, buildTowerJobDefinition);
+}

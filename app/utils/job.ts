@@ -129,7 +129,7 @@ export function applyHeroToJob(state: GameState, definition: JobDefinition, hero
 
 export function getOrCreateJob(state: GameState, definition: JobDefinition): Job {
     let job = state.city.jobs[definition.key];
-    if (job) {
+    if (job?.definition === definition) {
         return job;
     }
     job = {

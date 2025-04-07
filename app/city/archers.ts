@@ -25,7 +25,7 @@ export function gainArcherLevel(state: GameState) {
         state.city.archers.attacksPerSecond = 3;
         state.city.archers.range = 50;
     } else if (state.city.archers.level % 3 === 2) {
-        state.city.archers.damage *= 1.2;
+        state.city.archers.damage *= 1.3;
     } else if (state.city.archers.level % 3 === 0) {
         state.city.archers.attacksPerSecond += 0.3;
     } else if (state.city.archers.level % 3 === 1) {

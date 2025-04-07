@@ -16,9 +16,9 @@ export function enemyLootPoolfFromKeys(
 }
 
 
-const totalPoolWeight = 1e8;
+const totalPoolWeight = 1e9;
 // Rarity chance is basically 1 / ( 10 ** itemRarity) with certain factors making items more common like level of enemy.
-export function generatePoolFromKeys(
+/*export function generatePoolFromKeys(
     state: GameState,
     // This multiplier will be applied to all drop chances.
     // This is intended to be set to 0.1 for resource collection points that can be farmed very rapidly.
@@ -104,6 +104,68 @@ export function generatePoolFromKeys(
     }
 
     return weightedDrops;
+}*/
+const maxRarity = 10;
+export function generatePoolFromKeys(
+    state: GameState,
+    // This multiplier will be applied to all drop chances.
+    // This is intended to be set to 0.1 for resource collection points that can be farmed very rapidly.
+    multiplier: number,
+    // These items will use standard weights.
+    normalKeys: InventoryKey[],
+    // These items will be more likely to drop than usual from this item pool.
+    priorityKeys: InventoryKey[] = [],
+    bonusValue = 0
+): WeightedDrop[] {
+    bonusValue += (state.prestige.lootRarityBonus ?? 0);
+    const totalMultiplier = multiplier * (1 + bonusValue / currentLevelCap);
+    const weightedDrops: WeightedDrop[] = [];
+
+    const normalKeysByRarity: Set<InventoryKey>[] = [];
+    const priorityKeysByRarity: Set<InventoryKey>[] = [];
+    let remainingWeight = totalPoolWeight;
+    for (const key of priorityKeys) {
+        const item = requireItem(key);
+        const itemKeys = priorityKeysByRarity[item.rarity] ?? new Set();
+        itemKeys.add(key);
+        priorityKeysByRarity[item.rarity] = itemKeys;
+    }
+    for (const key of normalKeys) {
+        const item = requireItem(key);
+        const itemKeys = normalKeysByRarity[item.rarity] ?? new Set();
+        itemKeys.add(key);
+        normalKeysByRarity[item.rarity] = itemKeys;
+    }
+    function addWeightedDrop(keys: Set<InventoryKey>, dropChance: number) {
+        const weight = Math.min(remainingWeight, keys.size * dropChance * remainingWeight);
+        weightedDrops.push({keys: [...keys], weight});
+    }
+    let remainingItemKeys: Set<InventoryKey> = new Set();
+    for (let i = maxRarity; i >= 0; i--) {
+        const priorityKeys = priorityKeysByRarity[i];
+        if (priorityKeys) {
+            addWeightedDrop(priorityKeys, 5 * totalMultiplier * (0.1 ** i));
+            remainingItemKeys = priorityKeys;
+        }
+        if (remainingWeight < 1) {
+            break;
+        }
+        const normalKeys = normalKeysByRarity[i];
+        if (normalKeys) {
+            addWeightedDrop(normalKeys, totalMultiplier * (0.1 ** i));
+            if (!priorityKeys) {
+                remainingItemKeys = normalKeys;
+            }
+        }
+        if (remainingWeight < 1) {
+            break;
+        }
+    }
+    // If any unused item weight remains, assign it all to the most common+highest priority item keys.
+    if (remainingWeight >= 1 && remainingItemKeys) {
+        weightedDrops.push({keys: [...remainingItemKeys], weight: remainingWeight});
+    }
+    return weightedDrops;
 }
 
 export function rollLoot(weightedDrops: WeightedDrop[]): InventoryKey {
@@ -113,9 +175,9 @@ export function rollLoot(weightedDrops: WeightedDrop[]): InventoryKey {
         roll -= drop.weight;
         if (roll < 0) {
             const key = drop.keys[Math.floor(Math.random() * drop.keys.length)];
-            if (requireItem(key).rarity) {
+            if (requireItem(key).rarity >= 2) {
                 //console.log('Drop chance for ' + key + ' was ' + (100 * drop.weight / total).toFixed(4) + '%, ' + drop.weight + '/' + total);
-                //console.log('Drop chance for ' + key + ' was 1 in ' + (total / drop.weight).toFixed(1));
+                console.log('Drop chance for ' + key + ' was 1 in ' + (total / drop.weight).toFixed(1));
             }
             return key;
         }
@@ -142,3 +204,8 @@ export function gainLoot(state: GameState, itemKey: InventoryKey, target: FieldT
 }
 
 export const commonLegendaryItems: InventoryKey[] = ['sprintShoes', 'hasteRing', 'berserkBelt'];
+
+
+export function forestLootPool(state: GameState, levelBonus: number, rarityMultiplier: number = 0.1) {
+    return generatePoolFromKeys(state, rarityMultiplier, ['wood', 'hardwood', 'chippedEmerald', 'silverwood', 'emerald', 'enchantedWood', 'flawlessEmerald'], [], levelBonus);
+}

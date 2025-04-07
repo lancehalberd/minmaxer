@@ -178,7 +178,7 @@ function update() {
             delete state.selectedHero;
         }
     } else if (!gameIsPaused){
-        const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? 10 : 1;
+        const frameCount = isGameKeyDown(state, gameKeys.fastForward) ? state.fastForwardSpeed : 1;
         for (let i = 0; i < frameCount; i++) {
             computeIdlePopulation(state);
             computeIdleToolCounts(state);

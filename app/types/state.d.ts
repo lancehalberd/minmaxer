@@ -67,6 +67,7 @@ interface GameState {
         gameKeysReleased: Set<number>
     },
     autosaveEnabled: boolean
+    fastForwardSpeed: number
     highestLevelEnemyDefeated: number
     prestige: PrestigeStats
     lastSavedState?: SavedGameState,

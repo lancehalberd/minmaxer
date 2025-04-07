@@ -95,6 +95,7 @@ interface Enemy<EnemyProps=any> extends Circle, ZoneLocation {
     props: EnemyProps
     animationTime: number
     cleanup: (state: GameState) => void
+    creator?: any
 }
 
 interface Spawner extends Circle, ZoneLocation {

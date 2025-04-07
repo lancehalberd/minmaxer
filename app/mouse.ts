@@ -68,7 +68,10 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
     // Second, check for button elements in the field.
     // These use the world location of the mouse point, since these elements use world coordinates.
     const locationTarget = convertToWorldTarget(state, screenPoint);
-    for (const object of [...state.camera.zone.objects].reverse()) {
+    const renderedZone = state.camera.zone;
+    const sortedObjects = [...renderedZone.objects];
+    sortedObjects.sort((A, B) => B.y - A.y);
+    for (const object of sortedObjects) {
         if (!object.getChildren) {
             continue;
         }
@@ -79,7 +82,7 @@ function getTargetAtScreenPoint(state: GameState, screenPoint: Point): MouseTarg
     }
 
     // Last, check for clickable targets in the field.
-    for (const object of [...state.camera.zone.objects].reverse()) {
+    for (const object of sortedObjects) {
         if (isPointInCircle(object, locationTarget)) {
             return object;
         }

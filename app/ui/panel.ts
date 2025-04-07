@@ -156,6 +156,7 @@ export class TabbedPanel implements UIContainer {
     constructor(public props: TabbedPanelProps) {}
     update(state: GameState) {
         const tabs = computeValue(state, undefined, this.computableTabs, []);
+        this.selectedTabIndex %= tabs.length;
         const content = tabs[this.selectedTabIndex].content;
         this.children = [content];
         if (this.onClose) {

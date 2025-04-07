@@ -27,6 +27,8 @@ interface JobDefinition {
     workerSeconds?: Computed<number, JobDefinition>
     // If true the job will repeat when completed.
     repeat?: boolean
+    // If false, the general population cannot be used to work on this job.
+    canUsePopulation?: boolean
     // If this is set and returns true, then the job should be hidden from the UI and
     // all work should be stopped.
     isValid?: (state: GameState) => boolean

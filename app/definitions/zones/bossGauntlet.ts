@@ -26,7 +26,6 @@ class BossGauntletZoneDefinition implements ZoneDefinition {
             const enemy: Enemy = createEnemy(type, level, {zone, x: cx + smallRadius * Math.cos(theta), y: cy + smallRadius * Math.sin(theta)});
             enemy.aggroPack = aggroPack;
             aggroPack.push(enemy);
-            zone.objects.push(enemy);
         }
         const nextZoneDefinition = bossGauntletZones[this.floor + 1];
         if (nextZoneDefinition) {

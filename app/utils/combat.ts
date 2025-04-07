@@ -156,6 +156,7 @@ export function checkIfTargetIsDefeated(state: GameState, target: AttackTarget, 
 
 
 // Returns whether a target is still available to target with an ability.
+// TODO: expand this to check if the target is in the same zone being checked.
 export function isTargetAvailable(state: GameState, target: AbilityTarget): boolean {
     if (target.objectType === 'waveSpawner') {
         return true;
@@ -172,7 +173,10 @@ export function isTargetAvailable(state: GameState, target: AbilityTarget): bool
     if (target.objectType === 'structure') {
         return true;
     }
-    return target.health > 0;
+    if (target.health <= 0) {
+        return false;
+    }
+    return target.zone.objects.indexOf(target) >= 0;
 }
 
 export function getTargetsInCircle<T extends AttackTarget>(state: GameState, possibleTargets: T[], circle: Circle) {

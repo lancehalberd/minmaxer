@@ -88,7 +88,7 @@ export function createJobComponent({jobDefinition, x = 0, y = 0, scale = 1, getH
                 const job = getOrCreateJob(state, jobDefinition);
                 job.getHeroTarget = getHeroTarget;
             }
-            if (state.city.population) {
+            if (jobDefinition.canUsePopulation !== false && state.city.population) {
                 this.h = 2 * scaledSize
             } else {
                 this.h = scaledSize;
@@ -111,7 +111,7 @@ export function createJobComponent({jobDefinition, x = 0, y = 0, scale = 1, getH
                 }
 
                 // Draw population controls only once the city has a population.
-                if (state.city.population > 0) {
+                if (jobDefinition.canUsePopulation !== false && state.city.population > 0) {
                     const totalSpots = getMaxWorkersForJob(state, job);
                     const availableWorkers = availableWorkersForJob(state, job);
                     // This is the number of spots that cannot be filled because workers or tools are busy in other jobs.
@@ -141,7 +141,7 @@ export function createJobComponent({jobDefinition, x = 0, y = 0, scale = 1, getH
         },
         getChildren(state: GameState) {
             const buttons: UIElement[] = [repeatToggle];
-            if (state.city.population) {
+            if (jobDefinition.canUsePopulation !== false && state.city.population) {
                 buttons.push(emptyButton);
                 buttons.push(minusButton);
                 buttons.push(plusButton);
