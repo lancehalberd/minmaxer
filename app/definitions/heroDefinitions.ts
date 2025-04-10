@@ -1,4 +1,13 @@
 import {battleRager, criticalShot, fireball, fortress, spinStrike, piercingShot} from 'app/definitions/heroAbilities';
+import {requireFrame} from 'app/utils/animations';
+
+
+//const axeFrame = requireFrame('gfx/bigIcons.png', {x: 192, y: 256, w: 64, h:64});
+//const bowFrame = requireFrame('gfx/bigIcons.png', {x: 384, y: 256, w: 64, h:64});
+//const bowFrame = requireFrame('gfx/bigIcons.png', {x: 448, y: 256, w: 64, h:64});
+const wizardFrame = requireFrame('gfx/bigIcons.png', {x: 0, y: 0, w: 64, h:64});
+const rangerFrame = requireFrame('gfx/bigIcons.png', {x: 64, y: 0, w: 64, h:64});
+const warriorFrame = requireFrame('gfx/bigIcons.png', {x: 128, y: 0, w: 64, h:64});
 
 export const heroDefinitions: {[key in HeroType]?: HeroDefinition} = {};
 
@@ -20,6 +29,7 @@ heroDefinitions.warrior = {
     radius: 10,
     cost: 50,
     abilities: [spinStrike, battleRager],
+    icon: warriorFrame,
 };
 
 heroDefinitions.ranger = {
@@ -40,6 +50,7 @@ heroDefinitions.ranger = {
     radius: 10,
     cost: 50,
     abilities: [piercingShot, criticalShot],
+    icon: rangerFrame,
 };
 
 heroDefinitions.wizard = {
@@ -60,4 +71,5 @@ heroDefinitions.wizard = {
     radius: 10,
     cost: 50,
     abilities: [fireball, fortress],
+    icon: wizardFrame,
 };

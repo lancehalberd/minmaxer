@@ -332,8 +332,7 @@ export class BuildingSite implements Structure {
     }
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
-        fillCircle(context, this);
-        fillCircle(context, {...this, r: this.r -5, color: '#000'});
+        drawFrameScaledToCircle(context, this, caveDoorFrame);
         fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text: 'Jobs', color: '#FFF'});
     }
 }
@@ -358,8 +357,7 @@ export class CraftingBench implements Structure {
     }
     update(state: GameState) {}
     render(context: CanvasRenderingContext2D, state: GameState) {
-        fillCircle(context, this);
-        fillCircle(context, {...this, r: this.r -5, color: '#000'});
+        drawFrameScaledToCircle(context, this, caveDoorFrame);
         fillText(context, {x: this.x, y: this.y + this.r - 16, size: 16, text: 'Craft', color: '#FFF'});
     }
 }

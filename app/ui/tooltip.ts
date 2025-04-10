@@ -12,7 +12,6 @@ interface TooltipProps extends Partial<UIContainer> {
     textProps?: Partial<FillTextProperties>
     color?: CanvasFill
     backgroundColor?: CanvasFill
-    hoverBackgroundColor?: CanvasFill
 }
 export class ToolTip implements UIButton {
     objectType = <const>'uiButton';
@@ -22,9 +21,8 @@ export class ToolTip implements UIButton {
     y = this.props.y ?? 0;
     w = this.props.w ?? 100;
     h = this.props.h ?? 2 * uiSize;
-    color = this.props.color ?? '#000';
-    backgroundColor = this.props.backgroundColor ?? '#AFA';
-    hoverBackgroundColor = this.props.hoverBackgroundColor ?? '#0F0';
+    color = this.props.color ?? '#FFF';// '#000';
+    backgroundColor = this.props.backgroundColor ?? '#000';// '#AFA';
     constructor(state: GameState, public props: TooltipProps) {
         this.resize();
         const {x, y} = state.mouse.currentPosition;
@@ -65,8 +63,8 @@ export class ToolTip implements UIButton {
                 h += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
             }
         }
-        this.w = uiSize + w;
-        this.h = uiSize + h;
+        this.w = (uiSize + w) | 0;
+        this.h = (uiSize + h) | 0;
     }
     drawBackground(context: CanvasRenderingContext2D, state: GameState) {
         fillBorderedRect(context, this, {
@@ -75,9 +73,11 @@ export class ToolTip implements UIButton {
         });
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
+        this.x = (this.x) | 0;
+        this.y = (this.y) | 0;
         this.drawBackground(context, state);
         const x = this.x + uiSize / 2;
-        let y = this.y + uiSize / 2;
+        let y = this.y + uiSize / 2 + 2;
         for (const line of this.lines) {
             if (!line) {
                 y += uiSize / 2;
@@ -98,6 +98,12 @@ export class ToolTip implements UIButton {
                     y += measurements.fontBoundingBoxAscent + measurements.fontBoundingBoxDescent + 2;
                 }
             } else {
+                let x = this.x + uiSize / 2;
+                if (line.textAlign === 'center') {
+                    x = this.x + this.w / 2;
+                } else if (line.textAlign === 'right') {
+                    x = this.x + this.w - uiSize / 2;
+                }
                 const measurements = fillText(context, {
                     x, y,
                     textAlign: 'left', textBaseline: 'top',

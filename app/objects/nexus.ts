@@ -3,10 +3,11 @@ import {mageJobDefinition, updateMages} from 'app/city/mages';
 import {renderRangeCircle} from 'app/draw/renderIndicator';
 import {BuildingSite, CraftingBench} from 'app/objects/structure';
 import {frameLength} from 'app/gameConstants';
-import {fillCircle, renderGameStatus} from 'app/utils/draw';
+import {drawFrameInCircle} from 'app/utils/animations';
+import {fillCircle, fillText, renderGameStatus} from 'app/utils/draw';
 import {gainEssence} from 'app/utils/essence';
-import {applyHeroToJob} from 'app/utils/job';
-import {getOrCreateJob} from 'app/utils/job';
+import {summonHero} from 'app/utils/hero';
+import {applyHeroToJob, getOrCreateJob} from 'app/utils/job';
 import {getJobMultiplierFromTools} from 'app/utils/inventory';
 
 export function createNexus(zone: ZoneInstance): Nexus {
@@ -54,23 +55,30 @@ export function createNexus(zone: ZoneInstance): Nexus {
                 const range = state.city.mages.range * (1 + jobMultiplier / 100 / 10);
                 renderRangeCircle(context, {x: this.x, y: this.y, r: this.r + range, color: 'rgba(255, 0, 200, 0.4)'});
             }
+            if (!state.selectedHero && state.heroSlots.includes(undefined)) {
+                fillText(context, {x: this.x, y: this.y - 10, size: 16, text: 'Summon', color: '#FFF'});
+                fillText(context, {x: this.x, y: this.y + 10, size: 16, text: 'Champion', color: '#FFF'});
+            }
         },
         update(state: GameState) {
             if (state.craftingBench.baseMaterialSlots.length) {
                 let craftingBench = state.world.objects.find(object => object instanceof CraftingBench);
                 if (!craftingBench) {
-                    craftingBench = new CraftingBench({zone: this.zone, x: 0, y: 0});
-                    craftingBench.y = this.r - craftingBench.r;
+                    craftingBench = new CraftingBench({zone: this.zone, x: 0, y: 20});
+                    craftingBench.x = -this.r + craftingBench.r;
                     state.world.objects.push(craftingBench);
                 } else {
-                    craftingBench.y = this.r - craftingBench.r;
+                    craftingBench.x = -this.r + craftingBench.r;
                 }
             }
             if (state.discoveredItems.has('wood')) {
                 let buildingSite = state.world.objects.find(object => object instanceof BuildingSite);
                 if (!buildingSite) {
-                    buildingSite = new BuildingSite({zone: this.zone, x: 0, y: 0});
+                    buildingSite = new BuildingSite({zone: this.zone, x: 0, y: 20});
+                    buildingSite.x = this.r - buildingSite.r;
                     state.world.objects.push(buildingSite);
+                } else {
+                    buildingSite.x = this.r - buildingSite.r;
                 }
 
             }
@@ -118,10 +126,29 @@ export function createNexus(zone: ZoneInstance): Nexus {
 function getNexusElements(this: Nexus, state: GameState): UIElement[] {
     const elements: UIElement[] = [];
     if (state.heroSlots.includes(undefined)) {
-        for (const hero of state.availableHeroes) {
-            for (const heroElement of (hero.getChildren?.(state) ?? [])) {
+        for (let i = 0; i < state.availableHeroes.length; i++) {
+            const hero = state.availableHeroes[i];
+            /*for (const heroElement of (hero.getChildren?.(state) ?? [])) {
                 elements.push(heroElement);
-            }
+            }*/
+            elements.push({
+                objectType: 'uiButton',
+                uniqueId: 'summonHero-' + i,
+                x: hero.x - 15,
+                y: hero.y - 15,
+                w: 30,
+                h: 30,
+                onClick() {
+                    summonHero(state, hero);
+                    return true;
+                },
+                render(context: CanvasRenderingContext2D, state: GameState) {
+                    const r = 15;
+                    const circle = {x: this.x + r, y: this.y + r, r, color: '#000'};
+                    fillCircle(context, circle);
+                    drawFrameInCircle(context, {...circle, r: r - 2}, hero.definition.icon);
+                },
+            })
         }
     }
     return elements;

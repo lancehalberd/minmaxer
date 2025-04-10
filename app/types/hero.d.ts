@@ -27,6 +27,7 @@ interface HeroDefinition {
     radius: number
 
     abilities: AbilityDefinition[]
+    icon: Frame
 }
 
 

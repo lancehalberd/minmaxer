@@ -2,10 +2,11 @@ import {heroDefinitions} from 'app/definitions/heroDefinitions';
 import {renderRangeCircle} from 'app/draw/renderIndicator';
 import {frameLength, heroLevelCap} from 'app/gameConstants';
 import {createPointerButtonForTarget} from 'app/ui/fieldButton';
+import {drawFrameInCircle} from 'app/utils/animations';
 import {removeEffectFromTarget, useHeroAbility} from 'app/utils/ability';
 import {damageTarget, isTargetAvailable} from 'app/utils/combat';
 import {computeValue} from 'app/utils/computed';
-import {fillCircle, fillRect, fillRing, fillText, renderLifeBarOverCircle} from 'app/utils/draw';
+import {fillCircle, fillRect, fillRing, renderLifeBarOverCircle} from 'app/utils/draw';
 import {checkToAutocastAbility, getClosestAttackTargetInRange, moveAllyTowardsTarget, onHitAlly, summonHero} from 'app/utils/hero';
 import {applyHeroToJob} from 'app/utils/job';
 import {createModifiableStat, getModifiableStatValue} from 'app/utils/modifiableStat';
@@ -516,7 +517,9 @@ class HeroObject implements Hero {
         // Render the black circle
         fillCircle(context, {...this, r: this.r - 2, color: 'black'});
         // Draw hero level
-        fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});
+        //fillText(context, {size: 10, color: '#FFF', text: this.level, x: this.x, y: this.y});
+        // Draw hero icon
+        drawFrameInCircle(context, {...this, r: r - 2}, this.definition.icon);
 
 
         for (const ability of this.abilities) {

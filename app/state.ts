@@ -166,10 +166,14 @@ export function resetGame(): GameState {
 window.resetGame = resetGame;
 
 export function restartGame(state: GameState) {
+    const autosaveEnabled = state.autosaveEnabled;
     const newGameState = getNewGameState();
     newGameState.prestige = calculatePrestigeStats(state);
     setState(newGameState);
-    saveGame(newGameState);
+    newGameState.autosaveEnabled = autosaveEnabled;
+    if (autosaveEnabled) {
+        saveGame(newGameState);
+    }
 }
 window.restartGame = restartGame;
 

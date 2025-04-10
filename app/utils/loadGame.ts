@@ -150,6 +150,7 @@ function importSavedHero(state: GameState, savedHeroData: undefined|Partial<Save
             }
         }
         hero.health = hero.getMaxHealth(state);
+        hero.totalSkillPoints = Math.min(state.maxHeroSkillPoints, hero.level);
         state.world.objects.push(hero);
         return hero;
     }

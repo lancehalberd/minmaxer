@@ -152,24 +152,26 @@ const buildingJobsList = new JobsList(getBuildingJobElements);
 const trainingJobsList = new JobsList(getTrainingJobElements);
 
 export const jobsPanel = new TabbedPanel({
+    w: 300,
+    tabWidth: 100,
+    tabStyle: 'left',
     tabs(state: GameState) {
         const tabs = [{
-            title: 'Building',
+            title: 'All Jobs',
+            content: new PanelPadding(allJobsList),
+        },{
+            title: 'Build',
             content: new PanelPadding(buildingJobsList),
         },{
-            title: 'Manufacture',
+            title: 'Make',
             content: new PanelPadding(craftingJobsList),
-        },];
+        }];
         if (state.city.wall.level) {
             tabs.push({
-                title: 'Training',
+                title: 'Train',
                 content: new PanelPadding(trainingJobsList),
             });
         }
-        tabs.push({
-            title: 'All Jobs',
-            content: new PanelPadding(allJobsList),
-        });
         return tabs;
     },
     onClose(state: GameState) {

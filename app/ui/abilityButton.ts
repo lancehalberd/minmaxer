@@ -1,6 +1,7 @@
 import {buttonSize, canvas, uiPadding, tinyButtonSize} from 'app/gameConstants';
 import {isMouseOverTarget} from 'app/mouse';
 import {PlusButton, RepeatToggle} from 'app/ui/iconButton';
+import {showSimpleTooltip} from 'app/ui/tooltip';
 import {fillCircle, fillRect, fillText, renderCooldownCircle} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 import {activateHeroAbility} from 'app/utils/hero';
@@ -91,7 +92,15 @@ class HeroAbilityButton implements UIContainer {
                         this.hero.spentSkillPoints++;
                     }
                     return true;
-                }
+                },
+                onHover: (state: GameState) => {
+                    const abilityType = ability.abilityType === 'passiveAbility' ? 'Passive Ability' : 'Active Ability'
+                    showSimpleTooltip(state, [{
+                        text: (ability.level === 0 ? 'Learn ' : 'Upgrade ') + abilityType, textAlign: 'center'},
+                        {text: ability.definition.name, textAlign: 'center'}
+                    ]);
+                    return true;
+                },
             });
             children.push(abilityLevelUpButton);
         }

@@ -137,23 +137,8 @@ const charmsList = new ChooseItemList<Charm>({
     },
 });
 
-const equipmentPanel = new TabbedPanel({
-    tabs(state: GameState) {
-        const tabs = [{
-            title: 'Weapons',
-            content: new PanelPadding(weaponsList),
-        },{
-            title: 'Armor',
-            content: new PanelPadding(armorList),
-        },{
-            title: 'Charms',
-            content: new PanelPadding(charmsList),
-        }];
-        return tabs;
-    },
-});
-
 export const inventoryPanel = new TabbedPanel({
+    w: 400,
     tabs(state: GameState) {
         const tabs = [{
             title: 'All Items',
@@ -165,8 +150,14 @@ export const inventoryPanel = new TabbedPanel({
             title: 'Materials',
             content: new PanelPadding(materialsList),
         },{
-            title: 'Equipment',
-            content: equipmentPanel,
+            title: 'Weapons',
+            content: new PanelPadding(weaponsList),
+        },{
+            title: 'Armor',
+            content: new PanelPadding(armorList),
+        },{
+            title: 'Charms',
+            content: new PanelPadding(charmsList),
         }];
         return tabs;
     },

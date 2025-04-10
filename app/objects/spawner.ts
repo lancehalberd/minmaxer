@@ -249,7 +249,7 @@ export function checkToAddNewSpawner(state: GameState): boolean {
     const level = state.world.nextSpawnerLevel;
     // This is slightly more than level * Math.PI / 4 so that the generated spawners mostly won't line up exactly.
     const theta = 21 * Math.PI * level / 80;
-    const spawnRadius = 300 + 20 * level;
+    const spawnRadius = 300 + 10 * level;
     const x = state.nexus.x + spawnRadius * Math.cos(theta);
     const y = state.nexus.y - spawnRadius * Math.sin(theta);
     let structure: Structure, bossEnemyType: EnemyType = 'mummy';
@@ -286,9 +286,9 @@ export function checkToAddNewSpawner(state: GameState): boolean {
     state.world.objects.push(newSpawner);
     state.world.nextSpawnerLevel++;
     const easyEnemyType = easyEnemyTypes[(Math.random() * easyEnemyTypes.length) | 0];
-    const easyEnemy: SpacedSpawnProps = {type: easyEnemyType, level: Math.floor(3 + level), count: 3};
+    const easyEnemy: SpacedSpawnProps = {type: easyEnemyType, level: Math.floor(3 + 2 * level), count: 3};
     const advancedEnemyType = advancedEnemyTypes[(Math.random() * advancedEnemyTypes.length) | 0];
-    const advancedEnemy: SpacedSpawnProps = {type: advancedEnemyType, level: Math.floor(4 + level), count: 3};
+    const advancedEnemy: SpacedSpawnProps = {type: advancedEnemyType, level: Math.floor(4 + 2 * level), count: 3};
     //const bossEnemy: SpacedSpawnProps = {type: bossEnemyType, level: Math.floor(9 + level), count: 3, offset: 15 + level};
     const duration = 80 + level * 5;
     const spawnDuration = duration / 5;
@@ -298,7 +298,29 @@ export function checkToAddNewSpawner(state: GameState): boolean {
             spawners: [
                 {spawner: newSpawner, spawns: spreadSpawns({
                     spawnTypes: [
-                        {...easyEnemy, count: Math.floor(10 + level / 3)},
+                        {...easyEnemy, count: Math.floor(10 + level / 6)},
+                    ], duration: spawnDuration,
+                })},
+            ],
+        },
+        {
+            duration,
+            spawners: [
+                {spawner: newSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...easyEnemy, count: Math.floor(10 + level / 6)},
+                        {...advancedEnemy, count: Math.floor(5 + level / 6)},
+                    ], duration: spawnDuration,
+                })},
+            ],
+        },
+        {
+            duration,
+            spawners: [
+                {spawner: newSpawner, spawns: spreadSpawns({
+                    spawnTypes: [
+                        {...easyEnemy, count: Math.floor(10 + level / 4)},
+                        {...advancedEnemy, count: Math.floor(5 + level / 4)},
                     ], duration: spawnDuration,
                 })},
             ],
@@ -315,38 +337,16 @@ export function checkToAddNewSpawner(state: GameState): boolean {
             ],
         },
         {
-            duration,
-            spawners: [
-                {spawner: newSpawner, spawns: spreadSpawns({
-                    spawnTypes: [
-                        {...easyEnemy, count: Math.floor(10 + level)},
-                        {...advancedEnemy, count: Math.floor(5 + level / 2)},
-                    ], duration: spawnDuration,
-                })},
-            ],
-        },
-        {
-            duration,
-            spawners: [
-                {spawner: newSpawner, spawns: spreadSpawns({
-                    spawnTypes: [
-                        {...easyEnemy, count: Math.floor(10 + level)},
-                        {...advancedEnemy, count: Math.floor(5 + 2 * level / 3)},
-                    ], duration: spawnDuration,
-                })},
-            ],
-        },
-        {
             duration: duration + 20,
             spawners: [
                 {spawner: newSpawner, isFinalWave: true, spawns: [
                     ...spreadSpawns({
                         spawnTypes: [
-                            {...easyEnemy, count: Math.floor(10 + 2 * level)},
-                            {...advancedEnemy, count: Math.floor(5 + level)},
+                            {...easyEnemy, count: Math.floor(10 + level / 2)},
+                            {...advancedEnemy, count: Math.floor(5 + level / 2)},
                         ], duration: spawnDuration,
                     }),
-                    {enemyType: bossEnemyType, level: Math.floor(5 + level), spawnTime: spawnDuration}
+                    {enemyType: bossEnemyType, level: Math.floor(5 + 2 * level), spawnTime: spawnDuration}
                 ]},
             ],
         },

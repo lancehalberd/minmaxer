@@ -3,6 +3,7 @@ import {createEnemy} from 'app/objects/enemy';
 import {gainEssence} from 'app/utils/essence';
 import {gainSkillExperience} from 'app/utils/hero';
 import {summonHero} from 'app/utils/hero';
+import {removeFieldObject} from 'app/utils/world';
 
 export function advanceDebugGameState(state: GameState) {
     const mainHero = state.heroSlots[0];
@@ -53,6 +54,7 @@ export function advanceDebugGameState(state: GameState) {
                 const enemy = createEnemy(spawn.enemyType, spawn.level, {zone: state.world, x: 0, y: 0});
                 gainEssence(state, enemy.essenceWorth);
                 mainHero.experience += enemy.experienceWorth;
+                removeFieldObject(state, enemy);
             }
             spawner.scheduledSpawns = [];
         }

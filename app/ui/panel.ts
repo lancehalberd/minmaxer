@@ -5,7 +5,7 @@ import {fillRect, fillText} from 'app/utils/draw';
 import {pad} from 'app/utils/geometry';
 
 const smallTitleHeight = 2 * uiPadding + uiSize;
-const dividerThickness = 2;
+const borderSize = 2;
 interface TitlePanelProps extends Partial<UIContainer> {
     title: Computed<string, undefined>
     titleHeight?: number
@@ -40,9 +40,9 @@ export class TitlePanel implements UIContainer {
             this.children.push(this.closeButton);
         }
         this.content.x = uiPadding;
-        this.content.y = this.titleHeight + dividerThickness + uiPadding;
+        this.content.y = this.titleHeight + borderSize + uiPadding;
         this.content.w = this.w - 2 * uiPadding;
-        this.content.h = this.h - (this.titleHeight + dividerThickness + 2 * uiPadding);
+        this.content.h = this.h - (this.titleHeight + borderSize + 2 * uiPadding);
         this.content.update?.(state);
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -52,7 +52,7 @@ export class TitlePanel implements UIContainer {
             context.translate(this.x, this.y);
             const title = computeValue(state, undefined, this.title, '');
             fillText(context, {text: title, x: this.w / 2, y: 10, size: this.titleHeight - 16, textAlign: 'center', textBaseline: 'top', color: '#FFF'});
-            fillRect(context, {x: 0, y: this.titleHeight - dividerThickness, w: this.w, h: dividerThickness}, '#FFF');
+            fillRect(context, {x: 0, y: this.titleHeight - borderSize, w: this.w, h: borderSize}, '#FFF');
             const children = this.getChildren?.(state) ?? [];
             for (const child of children) {
                 child.render(context, state);
@@ -89,18 +89,20 @@ export class PanelPadding implements UIContainer {
     }
 }
 
+type TabStyle = 'top'|'left'|'collapsed';
 interface PanelTab {
     title: Computed<string, undefined>
     content: UIElement
 }
 interface TabbedPanelProps extends Partial<UIContainer> {
     tabs: Computed<PanelTab[], undefined>
+    tabWidth?: number
     titleHeight?: number
     selectedTabIndex?: number
+    tabStyle?: TabStyle
     onSelectTab?: (state: GameState, index: number) => void
     onClose?: (state: GameState) => void
 }
-const tabWidth = 150;
 const shadedBorderFill = '#AAA';
 export class TabbedPanel implements UIContainer {
     objectType = <const>'uiContainer';
@@ -108,6 +110,8 @@ export class TabbedPanel implements UIContainer {
     selectedTabIndex = this.props.selectedTabIndex ?? 0;
     onSelectTab = this.props.onSelectTab;
     titleHeight = this.props.titleHeight ?? smallTitleHeight;
+    tabWidth = this.props.tabWidth ?? 150;
+    tabStyle = this.props.tabStyle;
     w = this.props.w ?? 250;
     h = this.props.h ?? 400;
     x = this.props.x ?? 300;
@@ -155,6 +159,7 @@ export class TabbedPanel implements UIContainer {
     children: UIElement[] = [];
     constructor(public props: TabbedPanelProps) {}
     update(state: GameState) {
+        const tabStyle = this.getTabStyle(state);
         const tabs = computeValue(state, undefined, this.computableTabs, []);
         this.selectedTabIndex %= tabs.length;
         const content = tabs[this.selectedTabIndex].content;
@@ -162,17 +167,19 @@ export class TabbedPanel implements UIContainer {
         if (this.onClose) {
             this.children.push(this.closeButton);
         }
-        if (!this.isNarrow(state)) {
-            // Wide view shows a clickable tab for each tab.
+        if (tabStyle === 'collapsed') {
+            this.children.push(this.prevButton);
+            this.children.push(this.nextButton);
+        } else {
             const tabbedPanel = this;
             for (let i = 0; i < tabs.length; i++) {
                 if (!this.tabButtons[i]) {
                     this.tabButtons[i] = {
                         objectType: 'uiContainer',
-                        w: tabWidth,
+                        w: this.tabWidth,
                         h: this.titleHeight,
-                        y: 0,
-                        x: (tabWidth + 5) * i,
+                        y: tabStyle === 'top' ? 0 : (this.titleHeight + 5) * i,
+                        x: tabStyle === 'top' ? (this.tabWidth + 5) * i : 0,
                         onClick: (state: GameState) => {
                             this.selectTabIndex(state, i);
                             return true;
@@ -182,11 +189,19 @@ export class TabbedPanel implements UIContainer {
                                 context.translate(this.x, this.y);
                                 if (tabbedPanel.selectedTabIndex === i) {
                                     fillRect(context, {x: 0, y: 0, w: this.w, h: this.h}, '#FFF');
-                                    // If this is selected, render the background over the horizontal rule.
-                                    fillRect(context, {x: 2, y: 2, w: this.w - 4, h: this.h - 2 + dividerThickness}, '#444');
+                                    // If this is selected, render the background over the divider.
+                                    if (tabbedPanel.getTabStyle(state) === 'top') {
+                                        fillRect(context, {x: borderSize, y: borderSize, w: this.w - 2 * borderSize, h: this.h}, '#444');
+                                    } else {
+                                        fillRect(context, {x: borderSize, y: borderSize, w: this.w - borderSize, h: this.h - 2 * borderSize}, '#444');
+                                    }
                                 } else {
                                     fillRect(context, {x: 0, y: 0, w: this.w, h: this.h}, shadedBorderFill);
-                                    fillRect(context, {x: 2, y: 2, w: this.w - 4, h: this.h - 2}, '#222');
+                                    if (tabbedPanel.getTabStyle(state) === 'top') {
+                                        fillRect(context, {x: borderSize, y: borderSize, w: this.w - 2 * borderSize, h: this.h - borderSize}, '#222');
+                                    } else {
+                                        fillRect(context, {x: borderSize, y: borderSize, w: this.w - borderSize, h: this.h - 2 * borderSize}, '#222');
+                                    }
                                 }
                                 const title = computeValue(state, undefined, tabs[i].title, '');
 
@@ -197,33 +212,44 @@ export class TabbedPanel implements UIContainer {
                 }
                 this.children.push(this.tabButtons[i]);
             }
-        } else {
-            this.children.push(this.prevButton);
-            this.children.push(this.nextButton);
         }
-        content.x = 0;
-        content.y = this.titleHeight + dividerThickness;
-        content.w = this.w;
-        content.h = this.h - (this.titleHeight + dividerThickness);
+        if (tabStyle === 'left') {
+            const topPadding = (uiPadding + this.closeButton.h);
+            content.x = this.tabWidth + borderSize;
+            content.y = topPadding;
+            content.w = this.w - (this.tabWidth + borderSize);
+            content.h = this.h - topPadding;
+        } else {
+            content.x = 0;
+            content.y = this.titleHeight + borderSize;
+            content.w = this.w;
+            content.h = this.h - (this.titleHeight + borderSize);
+        }
         for (const child of this.children) {
             child.resize?.(state, this);
             child.update?.(state);
         }
     }
     render(context: CanvasRenderingContext2D, state: GameState) {
+        const tabStyle = this.getTabStyle(state);
         fillRect(context, this, '#222');
         context.save();
             context.translate(this.x, this.y);
-            fillRect(context, {x: 0, y: this.titleHeight, w: this.w, h: dividerThickness}, '#FFF');
-            fillRect(context, {x: 2, y: this.titleHeight + dividerThickness, w: this.w - 4, h: this.h - 4 - this.titleHeight - dividerThickness}, '#444');
-            if (this.isNarrow(state)) {
+            if (tabStyle === 'left') {
+                fillRect(context, {x: this.tabWidth, y: 0, w: this.w - this.tabWidth, h: this.h}, '#FFF');
+                fillRect(context, {x: this.tabWidth + borderSize, y: borderSize, w: this.w - this.tabWidth - 2 * borderSize, h: this.h - 4}, '#444');
+            } else {
+                fillRect(context, {x: 0, y: this.titleHeight, w: this.w, h: this.h - this.titleHeight}, '#FFF');
+                fillRect(context, {x: borderSize, y: this.titleHeight + borderSize, w: this.w - 2 * borderSize, h: this.h - this.titleHeight - 2 * borderSize}, '#444');
+            }
+            if (tabStyle === 'collapsed') {
                 const tabs = computeValue(state, undefined, this.computableTabs, []);
                 // Narrow view just shows the title of the current tab with prev/next arrow buttons on the left and right of it.
                 const selectedTab = tabs[this.selectedTabIndex];
                 if (selectedTab) {
                     const title = computeValue(state, undefined, selectedTab.title, '');
                     // Draw the standard panel background instead of the darker background that normally goes behind tabs.
-                    fillRect(context, {x: 2, y: 2, w: this.w - 4, h: this.titleHeight - dividerThickness - 2}, '#444');
+                    fillRect(context, {x: borderSize, y: borderSize, w: this.w - 2 *  borderSize, h: this.titleHeight - 2 * borderSize}, '#444');
                     fillText(context, {text: title, x: this.w / 2, y: 10, size: this.titleHeight - 16, textAlign: 'center', textBaseline: 'top', color: '#FFF'});
                     //fillText(context, {text: title, x: this.w / 2, y: this.titleHeight / 2, size: 20, textAlign: 'center', textBaseline: 'middle', color: '#FFF'});
                 }
@@ -234,9 +260,23 @@ export class TabbedPanel implements UIContainer {
             }
         context.restore();
     }
-    isNarrow(state: GameState): boolean {
+    getTabStyle(state: GameState): 'top'|'left'|'collapsed' {
+        if (this.tabStyle) {
+            return this.tabStyle;
+        }
+        // When very narrow, tabs appear collapsed at the top of the panel with
+        // arrow buttons to cycle through the tabs one at a time.
+        if (this.w < 250 + this.tabWidth) {
+            return 'collapsed';
+        }
+        // When the panel is wide enough, each tab is displayed along the top.
         const tabs = computeValue(state, undefined, this.computableTabs, []);
-        return this.w < (tabWidth + 5) * tabs.length;
+        if (this.w >= (this.tabWidth + 5) * tabs.length) {
+            return 'top';
+        }
+        // Tabs can be displayed to the left of the panel if it is wide enough
+        // to show the tabs stacked vertically to the left of the panel.
+        return 'left';
     }
     selectTabIndex(state: GameState, index: number) {
         const tabs = computeValue(state, undefined, this.computableTabs, []);

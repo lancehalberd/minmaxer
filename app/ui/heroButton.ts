@@ -1,4 +1,5 @@
 import {getReviveCost, reviveHero} from 'app/objects/hero';
+import {drawFrameInCircle} from 'app/utils/animations';
 import {spendEssence} from 'app/utils/essence';
 import {fillArc, fillCircle, renderCooldownCircle} from 'app/utils/draw';
 
@@ -33,7 +34,8 @@ export function getHeroButtons(state: GameState): UIButton[] {
                 fillCircle(context, {...circle, r: circle.r - 2, color: '#000'});
                 if (hero) {
                     // Render the hero "portrait".
-                    fillCircle(context, {...hero, ...circle, r: circle.r - 4});
+                    //fillCircle(context, {...hero, ...circle, r: circle.r - 4});
+                    drawFrameInCircle(context, {...circle, r: circle.r - 4}, hero.definition.icon);
 
                     // Render revive cooldown timer
                     if (hero.reviveCooldown) {

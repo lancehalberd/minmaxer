@@ -1,4 +1,4 @@
-import {buttonSize, canvas, uiSize} from 'app/gameConstants';
+import {buttonSize, canvas, uiPadding, uiSize} from 'app/gameConstants';
 import {restartGame} from 'app/state';
 import {getHeroAbilityButtons} from 'app/ui/abilityButton';
 import {craftingBenchPanel} from 'app/ui/craftingBenchPanel';
@@ -16,6 +16,7 @@ import {requireFrame, drawFrame} from 'app/utils/animations';
 import {fillText} from 'app/utils/draw';
 import {waveComponent} from 'app/ui/waveComponent';
 
+const leftEdge = 100;
 
 const restartButton = new TextButton({
     x: (canvas.width - 150) / 2,
@@ -35,7 +36,7 @@ const restartButton = new TextButton({
 });
 
 const characterPanelButton = new CharacterIconButton({
-    x: 40 + uiSize,
+    x: 40 + uiPadding,
     y: canvas.height - buttonSize - uiSize,
     w: buttonSize, h: buttonSize,
     character: 'C',
@@ -46,7 +47,7 @@ const characterPanelButton = new CharacterIconButton({
 });
 
 const inventoryPanelButton = new CharacterIconButton({
-    x: 40 + uiSize + 1 * (buttonSize + uiSize),
+    x: leftEdge + 1 * (buttonSize + uiSize),
     y: canvas.height - buttonSize - uiSize,
     w: buttonSize, h: buttonSize,
     character: 'I',
@@ -57,7 +58,7 @@ const inventoryPanelButton = new CharacterIconButton({
 });
 
 const jobsPanelButton = new CharacterIconButton({
-    x: 40 + uiSize + 2 * (buttonSize + uiSize),
+    x: leftEdge + 2 * (buttonSize + uiSize),
     y: canvas.height - buttonSize - uiSize,
     w: buttonSize, h: buttonSize,
     character: 'J',
@@ -126,7 +127,7 @@ export function updateHudUIElements(state: GameState) {
     state.hudUIElements.push(playPauseButton);
     state.hudUIElements.push(waveComponent);
 
-    let x = waveComponent.x + waveComponent.w;
+    let x = leftEdge;// waveComponent.x + waveComponent.w;
     for (const openPanel of leftAlignedPanels) {
         openPanel.x = x;
         x += openPanel.w + 5;
@@ -146,7 +147,7 @@ export function updateHudUIElements(state: GameState) {
     for (const openPanel of state.openPanels) {
         state.hudUIElements.push(openPanel);
     }
-    x = 50;
+    x = 40 + uiPadding;
     for (const panelButton of panelButtons) {
         panelButton.x = x;
         x += panelButton.w + 5;
@@ -164,8 +165,6 @@ export function updateHudUIElements(state: GameState) {
     }
 }
 
-const padding = 10;
-
 const playButtonFrame = requireFrame('gfx/playButton.png', {x: 0, y: 0, w: 139, h: 138});
 const pauseButtonFrame = requireFrame('gfx/pauseButton.png', {x: 0, y: 0, w: 139, h: 138});
 const menuButtonFrame = requireFrame('gfx/menuButton.png', {x: 0, y: 0, w: 139, h: 138});
@@ -173,8 +172,8 @@ const menuButtonFrame = requireFrame('gfx/menuButton.png', {x: 0, y: 0, w: 139, 
 let scale = 1/3;
 export const menuButton: UIButton = {
     objectType: 'uiButton',
-    x: canvas.width - menuButtonFrame.w * scale - padding,
-    y: padding,
+    x: canvas.width - menuButtonFrame.w * scale - uiPadding,
+    y: uiPadding,
     w: menuButtonFrame.w * scale,
     h: menuButtonFrame.h * scale,
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -187,8 +186,8 @@ export const menuButton: UIButton = {
 };
 export const playPauseButton: UIButton = {
     objectType: 'uiButton',
-    x: menuButton.x - playButtonFrame.w * scale - padding,
-    y: padding,
+    x: menuButton.x - playButtonFrame.w * scale - uiPadding,
+    y: uiPadding,
     w: playButtonFrame.w * scale,
     h: playButtonFrame.h * scale,
     render(context: CanvasRenderingContext2D, state: GameState) {
@@ -206,7 +205,7 @@ const populationDisplay: UIContainer = {
     objectType: 'uiContainer',
     w: 100,
     h: 32,
-    y: padding + 2,
+    y: uiPadding + 2,
     x: canvas.width / 2,
     render(context: CanvasRenderingContext2D, state: GameState) {
         context.save();
@@ -218,7 +217,7 @@ const populationDisplay: UIContainer = {
                 textAlign: 'left',
                 size: 32,
                 color: '#FFF',
-                x: scale * personFrame.w + padding,
+                x: scale * personFrame.w + uiPadding,
                 y: this.h / 2,
                 text,
             });

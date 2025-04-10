@@ -52,7 +52,7 @@ export const snakeWoods: ZoneDefinition = {
                     r: 40, wood,
                     drops: forestLootPool(state, level, rarity),
                     zone, x: cx, y: cy,
-                    difficulty: rarity,
+                    difficulty: 10 * (rarity ** 0.8),
                     canUsePopulation: false,
                 });
                 zone.objects.push(forest);
