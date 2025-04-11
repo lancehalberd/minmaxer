@@ -1,0 +1,33 @@
+name: NodeJS with Webpack
+
+on:
+  push:
+    branches: [ "github-deploy" ]
+  pull_request:
+    branches: [ "github-deploy" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # This will use webpack build client.js from the app/client.ts typescript file and all of its imports.
+    - name: Build
+      run: |
+        npm install
+        npx webpack
+        
+    - name: deploy
+      with:
+        publish_dir: ./public
