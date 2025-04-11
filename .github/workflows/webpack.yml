@@ -29,10 +29,10 @@ jobs:
         npx webpack
 
     - name: Upload static files as artifact
-        id: deployment
-        uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
-        with:
-          path: public/
+      id: deployment
+      uses: actions/upload-pages-artifact@v3 # or specific "vX.X.X" version tag for this action
+      with:
+        path: public/
         
   deploy:
     # Add a dependency to the build job
