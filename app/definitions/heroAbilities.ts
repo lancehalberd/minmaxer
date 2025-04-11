@@ -223,7 +223,7 @@ export const fireball: ActiveAbilityDefinition<AbilityTarget> = {
             vy: dy * speed / mag,
             r: fireballProjectileRadius,
             duration: 1000 * getPiercingShotRange(state, ally, ability) / speed,
-            hit: {damage: 0, source: ally},
+            hit: {damage, source: ally},
             render: renderFireballProjectile,
             onExpire(this: Projectile, state: GameState) {
                 // PoisonPoolEffect automatically adds itself to the zone in the constructor.

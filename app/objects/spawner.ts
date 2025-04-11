@@ -408,7 +408,7 @@ function spreadSpawns({spawnTypes, duration = 20, offset = 0}: SreadSpawnProps):
 
 function processWaveDefinitions(state: GameState, waveDefinitions: WaveDefinition[]) {
     const lastWave = state.waves[state.waves.length - 1];
-    let nextStartTime = (lastWave?.scheduledStartTime ?? 0) + (lastWave?.duration ?? 5000);
+    let nextStartTime = (lastWave?.scheduledStartTime ?? 0) + (lastWave?.duration ?? 15000);
     for (const waveDefinition of waveDefinitions) {
         const newWave: Wave = {
             ...waveDefinition,
@@ -463,13 +463,13 @@ export function initializeSpawners(state: GameState) {
             ],
         },*/
         {
-            duration: 25,
+            duration: 45,
             spawners: [
                 {spawner: smallSnakeSpawner, spawns: spacedSpawns({...snake, count: 3})},
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: smallSnakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 2, amount: 2, spacing: 2}),
@@ -477,7 +477,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: smallSnakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 2, amount: 3, spacing: 3}),
@@ -494,7 +494,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: snakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 2, amount: 2, spacing: 2}),
@@ -505,7 +505,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: snakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 2, amount: 2, spacing: 2}),
@@ -518,7 +518,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: snakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 3, amount: 2, spacing: 2}),
@@ -531,7 +531,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: snakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 3, amount: 2, spacing: 2}),
@@ -547,7 +547,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 30,
+            duration: 45,
             spawners: [
                 {spawner: snakeSpawner, spawns: [
                     ...spacedSpawns({...snake, count: 4, amount: 2, spacing: 2}),
@@ -563,7 +563,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 60,
+            duration: 90,
             spawners: [
                 {spawner: snakeSpawner, isFinalWave: true, spawns: [
                     ...spacedSpawns({...snake, count: 3, amount: 3, spacing: 3}),
@@ -580,7 +580,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 45,
+            duration: 60,
             spawners: [
                 {spawner: koboldSpawner, spawns: spreadSpawns({
                     spawnTypes: [
@@ -592,7 +592,7 @@ export function initializeSpawners(state: GameState) {
             ],
         },
         {
-            duration: 45,
+            duration: 60,
             spawners: [
                 {spawner: koboldSpawner, spawns: spreadSpawns({
                     spawnTypes: [
