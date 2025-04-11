@@ -33,7 +33,8 @@ jobs:
       uses: actions/upload-pages-artifact@v3
       with:
         path: public/
-        
+
+
   deploy:
     # Add a dependency to the build job
     needs: build
