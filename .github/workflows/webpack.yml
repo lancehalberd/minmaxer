@@ -34,7 +34,6 @@ jobs:
       with:
         path: public/
 
-
   deploy:
     # Add a dependency to the build job
     needs: build
