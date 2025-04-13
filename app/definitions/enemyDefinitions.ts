@@ -161,7 +161,7 @@ enemyDefinitions.mummy = {
 };
 
 
-const flyingBeetleAnimation = createAnimation('gfx/enemies/flyingBeetle.png', {w: 22, h: 18}, {cols: 4});
+const flyingBeetleAnimation = createAnimation('gfx/enemies/flyingbeetle.png', {w: 22, h: 18}, {cols: 4});
 enemyDefinitions.flyingBeetle = {
     name: 'Flying Beetle',
     r: 12,
